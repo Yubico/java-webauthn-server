@@ -452,7 +452,8 @@ public class RelyingPartyV2<C extends CredentialRecord> {
                             .appidExclude(appId)
                             .credProps()
                             .build()))
-            .timeout(startRegistrationOptions.getTimeout());
+            .timeout(startRegistrationOptions.getTimeout())
+            .hints(startRegistrationOptions.getHints());
     attestationConveyancePreference.ifPresent(builder::attestation);
     return builder.build();
   }
@@ -509,7 +510,8 @@ public class RelyingPartyV2<C extends CredentialRecord> {
                 startAssertionOptions
                     .getExtensions()
                     .merge(startAssertionOptions.getExtensions().toBuilder().appid(appId).build()))
-            .timeout(startAssertionOptions.getTimeout());
+            .timeout(startAssertionOptions.getTimeout())
+            .hints(startAssertionOptions.getHints());
 
     startAssertionOptions.getUserVerification().ifPresent(pkcro::userVerification);
 

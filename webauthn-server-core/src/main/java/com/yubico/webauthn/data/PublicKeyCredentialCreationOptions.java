@@ -36,6 +36,7 @@ import com.yubico.webauthn.RelyingParty;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -94,6 +95,8 @@ public class PublicKeyCredentialCreationOptions {
    */
   private final Long timeout;
 
+  private final List<String> hints;
+
   /**
    * Intended for use by Relying Parties that wish to limit the creation of multiple credentials for
    * the same account on a single authenticator. The client is requested to return an error if the
@@ -136,6 +139,7 @@ public class PublicKeyCredentialCreationOptions {
       @NonNull @JsonProperty("pubKeyCredParams")
           List<PublicKeyCredentialParameters> pubKeyCredParams,
       @JsonProperty("timeout") Long timeout,
+      @JsonProperty("hints") List<String> hints,
       @JsonProperty("excludeCredentials") Set<PublicKeyCredentialDescriptor> excludeCredentials,
       @JsonProperty("authenticatorSelection") AuthenticatorSelectionCriteria authenticatorSelection,
       @JsonProperty("attestation") AttestationConveyancePreference attestation,
@@ -145,6 +149,7 @@ public class PublicKeyCredentialCreationOptions {
     this.challenge = challenge;
     this.pubKeyCredParams = filterAvailableAlgorithms(pubKeyCredParams);
     this.timeout = timeout;
+    this.hints = hints == null ? Collections.emptyList() : Collections.unmodifiableList(hints);
     this.excludeCredentials =
         excludeCredentials == null
             ? null
@@ -315,6 +320,22 @@ public class PublicKeyCredentialCreationOptions {
      */
     public PublicKeyCredentialCreationOptionsBuilder timeout(long timeout) {
       return this.timeout(Optional.of(timeout));
+    }
+
+    public PublicKeyCredentialCreationOptionsBuilder hints(@NonNull String... hints) {
+      this.hints = Arrays.asList(hints);
+      return this;
+    }
+
+    public PublicKeyCredentialCreationOptionsBuilder hints(
+        @NonNull PublicKeyCredentialHint... hints) {
+      return this.hints(
+          Arrays.stream(hints).map(PublicKeyCredentialHint::getValue).toArray(String[]::new));
+    }
+
+    public PublicKeyCredentialCreationOptionsBuilder hints(List<String> hints) {
+      this.hints = hints;
+      return this;
     }
 
     /**

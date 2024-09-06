@@ -26,8 +26,12 @@ package com.yubico.webauthn;
 
 import com.yubico.webauthn.data.AssertionExtensionInputs;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.PublicKeyCredentialHint;
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions;
 import com.yubico.webauthn.data.UserVerificationRequirement;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
@@ -36,7 +40,7 @@ import lombok.Value;
 /** Parameters for {@link RelyingParty#startAssertion(StartAssertionOptions)}. */
 @Value
 @Builder(toBuilder = true)
-public class StartAssertionOptions {
+public final class StartAssertionOptions {
 
   private final String username;
 
@@ -78,6 +82,23 @@ public class StartAssertionOptions {
    * <p>The default is empty.
    */
   private final Long timeout;
+
+  private final List<String> hints;
+
+  private StartAssertionOptions(
+      String username,
+      ByteArray userHandle,
+      @NonNull AssertionExtensionInputs extensions,
+      UserVerificationRequirement userVerification,
+      Long timeout,
+      List<String> hints) {
+    this.username = username;
+    this.userHandle = userHandle;
+    this.extensions = extensions;
+    this.userVerification = userVerification;
+    this.timeout = timeout;
+    this.hints = hints == null ? Collections.emptyList() : Collections.unmodifiableList(hints);
+  }
 
   /**
    * The username of the user to authenticate, if the user has already been identified.
@@ -369,6 +390,21 @@ public class StartAssertionOptions {
      */
     private StartAssertionOptionsBuilder timeout(Long timeout) {
       return this.timeout(Optional.ofNullable(timeout));
+    }
+
+    public StartAssertionOptionsBuilder hints(@NonNull String... hints) {
+      this.hints = Arrays.asList(hints);
+      return this;
+    }
+
+    public StartAssertionOptionsBuilder hints(@NonNull PublicKeyCredentialHint... hints) {
+      return this.hints(
+          Arrays.stream(hints).map(PublicKeyCredentialHint::getValue).toArray(String[]::new));
+    }
+
+    public StartAssertionOptionsBuilder hints(@NonNull List<String> hints) {
+      this.hints = hints;
+      return this;
     }
   }
 }

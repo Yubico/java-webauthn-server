@@ -31,6 +31,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.JacksonCodecs;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
@@ -65,6 +67,8 @@ public class PublicKeyCredentialRequestOptions {
    * <p>This is treated as a hint, and MAY be overridden by the client.
    */
   private final Long timeout;
+
+  private final List<String> hints;
 
   /**
    * Specifies the relying party identifier claimed by the caller.
@@ -112,12 +116,14 @@ public class PublicKeyCredentialRequestOptions {
   private PublicKeyCredentialRequestOptions(
       @NonNull @JsonProperty("challenge") ByteArray challenge,
       @JsonProperty("timeout") Long timeout,
+      @JsonProperty("hints") List<String> hints,
       @JsonProperty("rpId") String rpId,
       @JsonProperty("allowCredentials") List<PublicKeyCredentialDescriptor> allowCredentials,
       @JsonProperty("userVerification") UserVerificationRequirement userVerification,
       @NonNull @JsonProperty("extensions") AssertionExtensionInputs extensions) {
     this.challenge = challenge;
     this.timeout = timeout;
+    this.hints = hints == null ? Collections.emptyList() : Collections.unmodifiableList(hints);
     this.rpId = rpId;
     this.allowCredentials =
         allowCredentials == null ? null : CollectionUtil.immutableList(allowCredentials);
@@ -211,6 +217,22 @@ public class PublicKeyCredentialRequestOptions {
      */
     public PublicKeyCredentialRequestOptionsBuilder timeout(long timeout) {
       return this.timeout(Optional.of(timeout));
+    }
+
+    public PublicKeyCredentialRequestOptionsBuilder hints(@NonNull String... hints) {
+      this.hints = Arrays.asList(hints);
+      return this;
+    }
+
+    public PublicKeyCredentialRequestOptionsBuilder hints(
+        @NonNull PublicKeyCredentialHint... hints) {
+      return this.hints(
+          Arrays.stream(hints).map(PublicKeyCredentialHint::getValue).toArray(String[]::new));
+    }
+
+    public PublicKeyCredentialRequestOptionsBuilder hints(List<String> hints) {
+      this.hints = hints;
+      return this;
     }
 
     /**

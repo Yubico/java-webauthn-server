@@ -1071,19 +1071,33 @@ object Generators {
           arbitrary[java.util.List[PublicKeyCredentialParameters]]
         rp <- arbitrary[RelyingPartyIdentity]
         timeout <- arbitrary[Optional[java.lang.Long]]
+        hints <-
+          arbitrary[Option[Either[List[String], List[PublicKeyCredentialHint]]]]
         user <- arbitrary[UserIdentity]
-      } yield PublicKeyCredentialCreationOptions
-        .builder()
-        .rp(rp)
-        .user(user)
-        .challenge(challenge)
-        .pubKeyCredParams(pubKeyCredParams)
-        .attestation(attestation)
-        .authenticatorSelection(authenticatorSelection)
-        .excludeCredentials(excludeCredentials)
-        .extensions(extensions)
-        .timeout(timeout)
-        .build()
+      } yield {
+        val b = PublicKeyCredentialCreationOptions
+          .builder()
+          .rp(rp)
+          .user(user)
+          .challenge(challenge)
+          .pubKeyCredParams(pubKeyCredParams)
+          .attestation(attestation)
+          .authenticatorSelection(authenticatorSelection)
+          .excludeCredentials(excludeCredentials)
+          .extensions(extensions)
+          .timeout(timeout)
+
+        hints.foreach {
+          case Left(h) => {
+            b.hints(h.asJava)
+          }
+          case Right(h) => {
+            b.hints(h: _*)
+          }
+        }
+
+        b.build()
+      }
     )
   )
 
@@ -1100,6 +1114,14 @@ object Generators {
         .transports(transports)
         .`type`(tpe)
         .build()
+    )
+  )
+
+  implicit val arbitraryPublicKeyCredentialHint
+      : Arbitrary[PublicKeyCredentialHint] = Arbitrary(
+    Gen.oneOf(
+      Gen.oneOf(PublicKeyCredentialHint.values()),
+      Gen.alphaNumStr.map(PublicKeyCredentialHint.of),
     )
   )
 
@@ -1127,6 +1149,7 @@ object Generators {
         extensions <- arbitrary[AssertionExtensionInputs]
         rpId <- arbitrary[Optional[String]]
         timeout <- arbitrary[Optional[java.lang.Long]]
+        hints <- arbitrary[Option[List[String]]]
         userVerification <- arbitrary[UserVerificationRequirement]
       } yield PublicKeyCredentialRequestOptions
         .builder()
@@ -1135,6 +1158,7 @@ object Generators {
         .extensions(extensions)
         .rpId(rpId)
         .timeout(timeout)
+        .hints(hints.map(_.asJava).orNull)
         .userVerification(userVerification)
         .build()
     )

@@ -493,7 +493,8 @@ public class RelyingParty {
                             .appidExclude(appId)
                             .credProps()
                             .build()))
-            .timeout(startRegistrationOptions.getTimeout());
+            .timeout(startRegistrationOptions.getTimeout())
+            .hints(startRegistrationOptions.getHints());
     attestationConveyancePreference.ifPresent(builder::attestation);
     return builder.build();
   }

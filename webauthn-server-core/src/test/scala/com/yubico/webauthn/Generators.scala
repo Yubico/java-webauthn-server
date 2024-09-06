@@ -10,6 +10,7 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
+import com.yubico.webauthn.data.PublicKeyCredentialHint
 import com.yubico.webauthn.data.UserVerificationRequirement
 import org.bouncycastle.asn1.x500.X500Name
 import org.scalacheck.Arbitrary
@@ -97,12 +98,22 @@ object Generators {
       for {
         extensions <- arbitrary[Option[AssertionExtensionInputs]]
         timeout <- Gen.option(Gen.posNum[Long])
+        hints <-
+          arbitrary[Option[Either[List[String], List[PublicKeyCredentialHint]]]]
         usernameOrUserHandle <- arbitrary[Option[Either[String, ByteArray]]]
         userVerification <- arbitrary[Option[UserVerificationRequirement]]
       } yield {
         val b = StartAssertionOptions.builder()
         extensions.foreach(b.extensions)
         timeout.foreach(b.timeout)
+        hints.foreach {
+          case Left(h) => {
+            b.hints(h.asJava)
+          }
+          case Right(h) => {
+            b.hints(h: _*)
+          }
+        }
         usernameOrUserHandle.foreach {
           case Left(username)    => b.username(username)
           case Right(userHandle) => b.userHandle(userHandle)

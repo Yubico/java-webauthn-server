@@ -26,8 +26,12 @@ package com.yubico.webauthn;
 
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
+import com.yubico.webauthn.data.PublicKeyCredentialHint;
 import com.yubico.webauthn.data.RegistrationExtensionInputs;
 import com.yubico.webauthn.data.UserIdentity;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
 import lombok.NonNull;
@@ -36,7 +40,7 @@ import lombok.Value;
 /** Parameters for {@link RelyingParty#startRegistration(StartRegistrationOptions)}. */
 @Value
 @Builder(toBuilder = true)
-public class StartRegistrationOptions {
+public final class StartRegistrationOptions {
 
   /** Identifiers for the user creating a credential. */
   @NonNull private final UserIdentity user;
@@ -63,6 +67,21 @@ public class StartRegistrationOptions {
    * <p>The default is empty.
    */
   private final Long timeout;
+
+  private final List<String> hints;
+
+  private StartRegistrationOptions(
+      @NonNull UserIdentity user,
+      AuthenticatorSelectionCriteria authenticatorSelection,
+      @NonNull RegistrationExtensionInputs extensions,
+      Long timeout,
+      List<String> hints) {
+    this.user = user;
+    this.authenticatorSelection = authenticatorSelection;
+    this.extensions = extensions;
+    this.timeout = timeout;
+    this.hints = hints == null ? Collections.emptyList() : Collections.unmodifiableList(hints);
+  }
 
   /**
    * Constraints on what kind of authenticator the user is allowed to use to create the credential,
@@ -156,6 +175,21 @@ public class StartRegistrationOptions {
      */
     public StartRegistrationOptionsBuilder timeout(long timeout) {
       return this.timeout(Optional.of(timeout));
+    }
+
+    public StartRegistrationOptionsBuilder hints(@NonNull String... hints) {
+      this.hints = Arrays.asList(hints);
+      return this;
+    }
+
+    public StartRegistrationOptionsBuilder hints(@NonNull PublicKeyCredentialHint... hints) {
+      return this.hints(
+          Arrays.stream(hints).map(PublicKeyCredentialHint::getValue).toArray(String[]::new));
+    }
+
+    public StartRegistrationOptionsBuilder hints(@NonNull List<String> hints) {
+      this.hints = hints;
+      return this;
     }
   }
 }
