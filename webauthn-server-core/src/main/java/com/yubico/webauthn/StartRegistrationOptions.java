@@ -40,7 +40,7 @@ import lombok.Value;
 /** Parameters for {@link RelyingParty#startRegistration(StartRegistrationOptions)}. */
 @Value
 @Builder(toBuilder = true)
-public final class StartRegistrationOptions {
+public class StartRegistrationOptions {
 
   /** Identifiers for the user creating a credential. */
   @NonNull private final UserIdentity user;

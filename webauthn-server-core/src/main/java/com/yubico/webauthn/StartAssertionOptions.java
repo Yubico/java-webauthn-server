@@ -40,7 +40,7 @@ import lombok.Value;
 /** Parameters for {@link RelyingParty#startAssertion(StartAssertionOptions)}. */
 @Value
 @Builder(toBuilder = true)
-public final class StartAssertionOptions {
+public class StartAssertionOptions {
 
   private final String username;
 
