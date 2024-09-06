@@ -538,7 +538,8 @@ public class RelyingParty {
                 startAssertionOptions
                     .getExtensions()
                     .merge(startAssertionOptions.getExtensions().toBuilder().appid(appId).build()))
-            .timeout(startAssertionOptions.getTimeout());
+            .timeout(startAssertionOptions.getTimeout())
+            .hints(startAssertionOptions.getHints());
 
     startAssertionOptions.getUserVerification().ifPresent(pkcro::userVerification);
 
