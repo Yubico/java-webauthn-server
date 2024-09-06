@@ -1072,7 +1072,9 @@ object Generators {
         rp <- arbitrary[RelyingPartyIdentity]
         timeout <- arbitrary[Optional[java.lang.Long]]
         hints <-
-          arbitrary[Option[Either[List[String], List[PublicKeyCredentialHint]]]]
+          arbitrary[Option[Either[Either[List[String], Array[String]], List[
+            PublicKeyCredentialHint
+          ]]]]
         user <- arbitrary[UserIdentity]
       } yield {
         val b = PublicKeyCredentialCreationOptions
@@ -1088,8 +1090,9 @@ object Generators {
           .timeout(timeout)
 
         hints.foreach {
-          case Left(h)  => b.hints(h.asJava)
-          case Right(h) => b.hints(h: _*)
+          case Left(Left(h: List[String]))             => b.hints(h.asJava)
+          case Left(Right(h: Array[String]))           => b.hints(h: _*)
+          case Right(h: List[PublicKeyCredentialHint]) => b.hints(h: _*)
         }
 
         b.build()
@@ -1146,7 +1149,9 @@ object Generators {
         rpId <- arbitrary[Optional[String]]
         timeout <- arbitrary[Optional[java.lang.Long]]
         hints <-
-          arbitrary[Option[Either[List[String], List[PublicKeyCredentialHint]]]]
+          arbitrary[Option[Either[Either[List[String], Array[String]], List[
+            PublicKeyCredentialHint
+          ]]]]
         userVerification <- arbitrary[UserVerificationRequirement]
       } yield {
         val b = PublicKeyCredentialRequestOptions
@@ -1159,8 +1164,9 @@ object Generators {
           .userVerification(userVerification)
 
         hints.foreach {
-          case Left(h)  => b.hints(h.asJava)
-          case Right(h) => b.hints(h: _*)
+          case Left(Left(h: List[String]))             => b.hints(h.asJava)
+          case Left(Right(h: Array[String]))           => b.hints(h: _*)
+          case Right(h: List[PublicKeyCredentialHint]) => b.hints(h: _*)
         }
 
         b.build()
