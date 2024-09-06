@@ -1007,15 +1007,11 @@ class RelyingPartyStartOperationSpec
           pkcco.getHints.asScala should equal(List("security-key"))
         }
 
-        it("to empty") {
+        it("or not, defaulting to the empty list.") {
           val pkcco = rp.startRegistration(
-            StartRegistrationOptions
-              .builder()
-              .user(userId)
-              .hints("")
-              .build()
+            StartRegistrationOptions.builder().user(userId).build()
           )
-          pkcco.getHints.asScala should equal(List(""))
+          pkcco.getHints.asScala should equal(List())
         }
       }
 
