@@ -26,6 +26,12 @@ package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.yubico.webauthn.RelyingParty.RelyingPartyBuilder;
+import com.yubico.webauthn.StartAssertionOptions;
+import com.yubico.webauthn.StartAssertionOptions.StartAssertionOptionsBuilder;
+import com.yubico.webauthn.StartRegistrationOptions;
+import com.yubico.webauthn.StartRegistrationOptions.StartRegistrationOptionsBuilder;
+import com.yubico.webauthn.attestation.AttestationTrustSource;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -33,24 +39,25 @@ import lombok.NonNull;
 import lombok.Value;
 
 /**
- * Authenticators may communicate with Clients using a variety of transports. This enumeration
- * defines a hint as to how Clients might communicate with a particular Authenticator in order to
- * obtain an assertion for a specific credential. Note that these hints represent the Relying
- * Party's best belief as to how an Authenticator may be reached. A Relying Party may obtain a list
- * of transports hints from some attestation statement formats or via some out-of-band mechanism; it
- * is outside the scope of this specification to define that mechanism.
+ * Hints to guide the user agent in interacting with the user.
  *
- * <p>Authenticators may implement various transports for communicating with clients. This
- * enumeration defines hints as to how clients might communicate with a particular authenticator in
- * order to obtain an assertion for a specific credential. Note that these hints represent the
- * WebAuthn Relying Party's best belief as to how an authenticator may be reached. A Relying Party
- * may obtain a list of transports hints from some attestation statement formats or via some
- * out-of-band mechanism; it is outside the scope of the Web Authentication specification to define
- * that mechanism.
+ * <p>For example, the {@link PublicKeyCredentialHint#SECURITY_KEY} hint may be used to ask the
+ * client to emphasize the option of using an external security key, or the {@link
+ * PublicKeyCredentialHint#CLIENT_DEVICE} hint may be used to ask the client to emphasize the option
+ * of using a built-in passkey provider.
  *
+ * <p>These hints are not requirements, and do not bind the user-agent, but may guide it in
+ * providing the best experience by using contextual information about the request.
+ *
+ * @see StartRegistrationOptions#getHints()
+ * @see StartAssertionOptions#getHints()
  * @see <a
- *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-authenticatortransport">§5.10.4.
- *     Authenticator Transport Enumeration (enum AuthenticatorTransport)</a>
+ *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialcreationoptions-hints">PublicKeyCredentialCreationOptions.hints</a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialrequestoptions-hints">PublicKeyCredentialRequestOptions.hints</a>
+ * @see <a
+ *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#enumdef-publickeycredentialhints">§5.8.7.
+ *     User-agent Hints Enumeration (enum PublicKeyCredentialHints)</a>
  */
 @Value
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -58,12 +65,80 @@ public class PublicKeyCredentialHint {
 
   @JsonValue @NonNull private final String value;
 
+  /**
+   * Indicates that the application believes that users will satisfy this request with a physical
+   * security key.
+   *
+   * <p>For example, an enterprise application may set this hint if they have issued security keys
+   * to their employees and will only accept those authenticators for registration and
+   * authentication. In that case, the application should probably also set {@link
+   * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource} and
+   * set {@link RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} to
+   * <code>false</code>. See also the <a
+   * href="https://developers.yubico.com/java-webauthn-server/webauthn-server-attestation/"><code>
+   * webauthn-server-attestation</code> module</a>.
+   *
+   * <p>For compatibility with older user agents, when this hint is used in {@link
+   * StartRegistrationOptions}, the <code>
+   * {@link StartRegistrationOptionsBuilder#authenticatorSelection(AuthenticatorSelectionCriteria) authenticatorSelection}.{@link AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder#authenticatorAttachment(AuthenticatorAttachment) authenticatorAttachment}
+   * </code> parameter SHOULD be set to {@link AuthenticatorAttachment#CROSS_PLATFORM}.
+   *
+   * @see StartRegistrationOptionsBuilder#hints(PublicKeyCredentialHint...)
+   * @see StartAssertionOptionsBuilder#hints(PublicKeyCredentialHint...)
+   * @see <a
+   *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialhints-security-key">
+   *     <code>security-key</code> in §5.8.7. User-agent Hints Enumeration (enum
+   *     PublicKeyCredentialHints) </a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#enumdef-publickeycredentialhints">§5.8.7.
+   *     User-agent Hints Enumeration (enum PublicKeyCredentialHints)</a>
+   */
   public static final PublicKeyCredentialHint SECURITY_KEY =
       new PublicKeyCredentialHint("security-key");
 
+  /**
+   * Indicates that the application believes that users will satisfy this request with an
+   * authenticator built into the client device.
+   *
+   * <p>For compatibility with older user agents, when this hint is used in {@link
+   * StartRegistrationOptions}, the <code>
+   * {@link StartRegistrationOptionsBuilder#authenticatorSelection(AuthenticatorSelectionCriteria) authenticatorSelection}.{@link AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder#authenticatorAttachment(AuthenticatorAttachment) authenticatorAttachment}
+   * </code> parameter SHOULD be set to {@link AuthenticatorAttachment#PLATFORM}.
+   *
+   * @see StartRegistrationOptionsBuilder#hints(PublicKeyCredentialHint...)
+   * @see StartAssertionOptionsBuilder#hints(PublicKeyCredentialHint...)
+   * @see <a
+   *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialhints-client-device">
+   *     <code>client-device</code> in §5.8.7. User-agent Hints Enumeration (enum
+   *     PublicKeyCredentialHints) </a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#enumdef-publickeycredentialhints">§5.8.7.
+   *     User-agent Hints Enumeration (enum PublicKeyCredentialHints)</a>
+   */
   public static final PublicKeyCredentialHint CLIENT_DEVICE =
       new PublicKeyCredentialHint("client-device");
 
+  /**
+   * Indicates that the application believes that users will satisfy this request with
+   * general-purpose authenticators such as smartphones. For example, a consumer application may
+   * believe that only a small fraction of their customers possesses dedicated security keys. This
+   * option also implies that the local platform authenticator should not be promoted in the UI.
+   *
+   * <p>For compatibility with older user agents, when this hint is used in {@link
+   * StartRegistrationOptions}, the <code>
+   * {@link StartRegistrationOptionsBuilder#authenticatorSelection(AuthenticatorSelectionCriteria) authenticatorSelection}.{@link AuthenticatorSelectionCriteria.AuthenticatorSelectionCriteriaBuilder#authenticatorAttachment(AuthenticatorAttachment) authenticatorAttachment}
+   * </code> parameter SHOULD be set to {@link AuthenticatorAttachment#CROSS_PLATFORM}.
+   *
+   * @see StartRegistrationOptionsBuilder#hints(PublicKeyCredentialHint...)
+   * @see StartAssertionOptionsBuilder#hints(PublicKeyCredentialHint...)
+   * @see <a
+   *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialhints-hybrid">
+   *     <code>hybrid</code> in §5.8.7. User-agent Hints Enumeration (enum PublicKeyCredentialHints)
+   *     </a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#enumdef-publickeycredentialhints">§5.8.7.
+   *     User-agent Hints Enumeration (enum PublicKeyCredentialHints)</a>
+   */
   public static final PublicKeyCredentialHint HYBRID = new PublicKeyCredentialHint("hybrid");
 
   /**
