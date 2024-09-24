@@ -36,6 +36,7 @@ import com.yubico.webauthn.data.Generators.Extensions.registrationExtensionInput
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
+import com.yubico.webauthn.data.PublicKeyCredentialHint
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
@@ -215,6 +216,64 @@ class RelyingPartyStartOperationSpec
           pkcco.getAttestation should equal(
             acp getOrElse AttestationConveyancePreference.NONE
           )
+        }
+      }
+
+      describe("allows setting the hints") {
+        val rp = relyingParty(userId = userId)
+
+        it("to string values in the spec or not.") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .hints("hej", "security-key", "hoj", "client-device", "hybrid")
+              .build()
+          )
+          pkcco.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+              PublicKeyCredentialHint.HYBRID.getValue,
+            )
+          )
+        }
+
+        it("to PublicKeyCredentialHint values in the spec or not.") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .hints(
+                PublicKeyCredentialHint.of("hej"),
+                PublicKeyCredentialHint.HYBRID,
+                PublicKeyCredentialHint.SECURITY_KEY,
+                PublicKeyCredentialHint.of("hoj"),
+                PublicKeyCredentialHint.CLIENT_DEVICE,
+              )
+              .build()
+          )
+          pkcco.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.HYBRID.getValue,
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+            )
+          )
+        }
+
+        it("or not, defaulting to the empty list.") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .build()
+          )
+          pkcco.getHints.asScala should equal(List())
         }
       }
 
@@ -759,6 +818,59 @@ class RelyingPartyStartOperationSpec
         }
       }
 
+      describe("allows setting the hints") {
+        val rp = relyingParty(userId = userId)
+
+        it("to string values in the spec or not.") {
+          val pkcro = rp.startAssertion(
+            StartAssertionOptions
+              .builder()
+              .hints("hej", "security-key", "hoj", "client-device", "hybrid")
+              .build()
+          )
+          pkcro.getPublicKeyCredentialRequestOptions.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+              PublicKeyCredentialHint.HYBRID.getValue,
+            )
+          )
+        }
+
+        it("to PublicKeyCredentialHint values in the spec or not.") {
+          val pkcro = rp.startAssertion(
+            StartAssertionOptions
+              .builder()
+              .hints(
+                PublicKeyCredentialHint.of("hej"),
+                PublicKeyCredentialHint.HYBRID,
+                PublicKeyCredentialHint.SECURITY_KEY,
+                PublicKeyCredentialHint.of("hoj"),
+                PublicKeyCredentialHint.CLIENT_DEVICE,
+              )
+              .build()
+          )
+          pkcro.getPublicKeyCredentialRequestOptions.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.HYBRID.getValue,
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+            )
+          )
+        }
+
+        it("or not, defaulting to the empty list.") {
+          val pkcro = rp.startAssertion(StartAssertionOptions.builder().build())
+          pkcro.getPublicKeyCredentialRequestOptions.getHints.asScala should equal(
+            List()
+          )
+        }
+      }
+
       it("allows setting the timeout to empty.") {
         val req = relyingParty(userId = userId).startAssertion(
           StartAssertionOptions
@@ -978,6 +1090,61 @@ class RelyingPartyStartOperationSpec
           pkcco.getAttestation should equal(
             acp getOrElse AttestationConveyancePreference.NONE
           )
+        }
+      }
+
+      describe("allows setting the hints") {
+        val rp = relyingParty(userId = userId)
+
+        it("to string values in the spec or not.") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .hints("hej", "security-key", "hoj", "client-device", "hybrid")
+              .build()
+          )
+          pkcco.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+              PublicKeyCredentialHint.HYBRID.getValue,
+            )
+          )
+        }
+
+        it("to PublicKeyCredentialHint values in the spec or not.") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .hints(
+                PublicKeyCredentialHint.of("hej"),
+                PublicKeyCredentialHint.HYBRID,
+                PublicKeyCredentialHint.SECURITY_KEY,
+                PublicKeyCredentialHint.of("hoj"),
+                PublicKeyCredentialHint.CLIENT_DEVICE,
+              )
+              .build()
+          )
+          pkcco.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.HYBRID.getValue,
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+            )
+          )
+        }
+
+        it("or not, defaulting to the empty list.") {
+          val pkcco = rp.startRegistration(
+            StartRegistrationOptions.builder().user(userId).build()
+          )
+          pkcco.getHints.asScala should equal(List())
         }
       }
 
@@ -1537,6 +1704,59 @@ class RelyingPartyStartOperationSpec
               Some(requestAppId)
             )
           }
+        }
+      }
+
+      describe("allows setting the hints") {
+        val rp = relyingParty(userId = userId)
+
+        it("to string values in the spec or not.") {
+          val pkcro = rp.startAssertion(
+            StartAssertionOptions
+              .builder()
+              .hints("hej", "security-key", "hoj", "client-device", "hybrid")
+              .build()
+          )
+          pkcro.getPublicKeyCredentialRequestOptions.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+              PublicKeyCredentialHint.HYBRID.getValue,
+            )
+          )
+        }
+
+        it("to PublicKeyCredentialHint values in the spec or not.") {
+          val pkcro = rp.startAssertion(
+            StartAssertionOptions
+              .builder()
+              .hints(
+                PublicKeyCredentialHint.of("hej"),
+                PublicKeyCredentialHint.HYBRID,
+                PublicKeyCredentialHint.SECURITY_KEY,
+                PublicKeyCredentialHint.of("hoj"),
+                PublicKeyCredentialHint.CLIENT_DEVICE,
+              )
+              .build()
+          )
+          pkcro.getPublicKeyCredentialRequestOptions.getHints.asScala should equal(
+            List(
+              "hej",
+              PublicKeyCredentialHint.HYBRID.getValue,
+              PublicKeyCredentialHint.SECURITY_KEY.getValue,
+              "hoj",
+              PublicKeyCredentialHint.CLIENT_DEVICE.getValue,
+            )
+          )
+        }
+
+        it("or not, defaulting to the empty list.") {
+          val pkcro = rp.startAssertion(StartAssertionOptions.builder().build())
+          pkcro.getPublicKeyCredentialRequestOptions.getHints.asScala should equal(
+            List()
+          )
         }
       }
 

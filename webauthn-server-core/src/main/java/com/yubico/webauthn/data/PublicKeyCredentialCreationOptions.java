@@ -33,9 +33,11 @@ import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.webauthn.FinishRegistrationOptions;
 import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.StartRegistrationOptions;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -95,6 +97,40 @@ public class PublicKeyCredentialCreationOptions {
   private final Long timeout;
 
   /**
+   * Zero or more hints, in descending order of preference, to guide the user agent in interacting
+   * with the user during this registration operation.
+   *
+   * <p>For example, the {@link PublicKeyCredentialHint#SECURITY_KEY} hint may be used to ask the
+   * client to emphasize the option of registering with an external security key, or the {@link
+   * PublicKeyCredentialHint#CLIENT_DEVICE} hint may be used to ask the client to emphasize the
+   * option of registering a built-in passkey provider.
+   *
+   * <p>These hints are not requirements, and do not bind the user-agent, but may guide it in
+   * providing the best experience by using contextual information about the request.
+   *
+   * <p>Hints MAY contradict preferences in {@link #getAuthenticatorSelection()}. When this occurs,
+   * the hints take precedence.
+   *
+   * <p>This library does not take these hints into account in any way, other than passing them
+   * through so they can be used in the argument to <code>navigator.credentials.create()</code> on
+   * the client side.
+   *
+   * <p>The default is empty.
+   *
+   * @see PublicKeyCredentialHint
+   * @see StartRegistrationOptions#getHints()
+   * @see PublicKeyCredentialCreationOptionsBuilder#hints(List)
+   * @see PublicKeyCredentialCreationOptionsBuilder#hints(String...)
+   * @see PublicKeyCredentialCreationOptionsBuilder#hints(PublicKeyCredentialHint...)
+   * @see <a
+   *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialcreationoptions-hints">PublicKeyCredentialCreationOptions.hints</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#enumdef-publickeycredentialhints">§5.8.7.
+   *     User-agent Hints Enumeration (enum PublicKeyCredentialHints)</a>
+   */
+  private final List<String> hints;
+
+  /**
    * Intended for use by Relying Parties that wish to limit the creation of multiple credentials for
    * the same account on a single authenticator. The client is requested to return an error if the
    * new credential would be created on an authenticator that also contains one of the credentials
@@ -136,6 +172,7 @@ public class PublicKeyCredentialCreationOptions {
       @NonNull @JsonProperty("pubKeyCredParams")
           List<PublicKeyCredentialParameters> pubKeyCredParams,
       @JsonProperty("timeout") Long timeout,
+      @JsonProperty("hints") List<String> hints,
       @JsonProperty("excludeCredentials") Set<PublicKeyCredentialDescriptor> excludeCredentials,
       @JsonProperty("authenticatorSelection") AuthenticatorSelectionCriteria authenticatorSelection,
       @JsonProperty("attestation") AttestationConveyancePreference attestation,
@@ -145,6 +182,7 @@ public class PublicKeyCredentialCreationOptions {
     this.challenge = challenge;
     this.pubKeyCredParams = filterAvailableAlgorithms(pubKeyCredParams);
     this.timeout = timeout;
+    this.hints = hints == null ? Collections.emptyList() : Collections.unmodifiableList(hints);
     this.excludeCredentials =
         excludeCredentials == null
             ? null
@@ -315,6 +353,118 @@ public class PublicKeyCredentialCreationOptions {
      */
     public PublicKeyCredentialCreationOptionsBuilder timeout(long timeout) {
       return this.timeout(Optional.of(timeout));
+    }
+
+    /**
+     * Zero or more hints, in descending order of preference, to guide the user agent in interacting
+     * with the user during this registration operation.
+     *
+     * <p>For example, the {@link PublicKeyCredentialHint#SECURITY_KEY} hint may be used to ask the
+     * client to emphasize the option of registering with an external security key, or the {@link
+     * PublicKeyCredentialHint#CLIENT_DEVICE} hint may be used to ask the client to emphasize the
+     * option of registering a built-in passkey provider.
+     *
+     * <p>These hints are not requirements, and do not bind the user-agent, but may guide it in
+     * providing the best experience by using contextual information about the request.
+     *
+     * <p>Hints MAY contradict preferences in {@link #getAuthenticatorSelection()}. When this
+     * occurs, the hints take precedence.
+     *
+     * <p>This library does not take these hints into account in any way, other than passing them
+     * through so they can be used in the argument to <code>navigator.credentials.create()</code> on
+     * the client side.
+     *
+     * <p>The default is empty.
+     *
+     * @see PublicKeyCredentialHint
+     * @see StartRegistrationOptions#getHints()
+     * @see PublicKeyCredentialCreationOptions#getHints()
+     * @see PublicKeyCredentialCreationOptionsBuilder#hints(List)
+     * @see PublicKeyCredentialCreationOptionsBuilder#hints(PublicKeyCredentialHint...)
+     * @see <a
+     *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialcreationoptions-hints">PublicKeyCredentialCreationOptions.hints</a>
+     * @see <a
+     *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#enumdef-publickeycredentialhints">§5.8.7.
+     *     User-agent Hints Enumeration (enum PublicKeyCredentialHints)</a>
+     */
+    public PublicKeyCredentialCreationOptionsBuilder hints(@NonNull String... hints) {
+      this.hints = Arrays.asList(hints);
+      return this;
+    }
+
+    /**
+     * Zero or more hints, in descending order of preference, to guide the user agent in interacting
+     * with the user during this registration operation.
+     *
+     * <p>For example, the {@link PublicKeyCredentialHint#SECURITY_KEY} hint may be used to ask the
+     * client to emphasize the option of registering with an external security key, or the {@link
+     * PublicKeyCredentialHint#CLIENT_DEVICE} hint may be used to ask the client to emphasize the
+     * option of registering a built-in passkey provider.
+     *
+     * <p>These hints are not requirements, and do not bind the user-agent, but may guide it in
+     * providing the best experience by using contextual information about the request.
+     *
+     * <p>Hints MAY contradict preferences in {@link #getAuthenticatorSelection()}. When this
+     * occurs, the hints take precedence.
+     *
+     * <p>This library does not take these hints into account in any way, other than passing them
+     * through so they can be used in the argument to <code>navigator.credentials.create()</code> on
+     * the client side.
+     *
+     * <p>The default is empty.
+     *
+     * @see PublicKeyCredentialHint
+     * @see StartRegistrationOptions#getHints()
+     * @see PublicKeyCredentialCreationOptions#getHints()
+     * @see PublicKeyCredentialCreationOptionsBuilder#hints(List)
+     * @see PublicKeyCredentialCreationOptionsBuilder#hints(String...)
+     * @see <a
+     *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialcreationoptions-hints">PublicKeyCredentialCreationOptions.hints</a>
+     * @see <a
+     *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#enumdef-publickeycredentialhints">§5.8.7.
+     *     User-agent Hints Enumeration (enum PublicKeyCredentialHints)</a>
+     */
+    public PublicKeyCredentialCreationOptionsBuilder hints(
+        @NonNull PublicKeyCredentialHint... hints) {
+      return this.hints(
+          Arrays.stream(hints).map(PublicKeyCredentialHint::getValue).toArray(String[]::new));
+    }
+
+    /**
+     * Zero or more hints, in descending order of preference, to guide the user agent in interacting
+     * with the user during this registration operation.
+     *
+     * <p>For example, the {@link PublicKeyCredentialHint#SECURITY_KEY} hint may be used to ask the
+     * client to emphasize the option of registering with an external security key, or the {@link
+     * PublicKeyCredentialHint#CLIENT_DEVICE} hint may be used to ask the client to emphasize the
+     * option of registering a built-in passkey provider.
+     *
+     * <p>These hints are not requirements, and do not bind the user-agent, but may guide it in
+     * providing the best experience by using contextual information about the request.
+     *
+     * <p>Hints MAY contradict preferences in {@link #getAuthenticatorSelection()}. When this
+     * occurs, the hints take precedence.
+     *
+     * <p>This library does not take these hints into account in any way, other than passing them
+     * through so they can be used in the argument to <code>navigator.credentials.create()</code> on
+     * the client side.
+     *
+     * <p>The default is empty.
+     *
+     * @see PublicKeyCredentialHint
+     * @see StartRegistrationOptions#getHints()
+     * @see PublicKeyCredentialCreationOptions#getHints()
+     * @see PublicKeyCredentialCreationOptionsBuilder#hints(String...)
+     * @see PublicKeyCredentialCreationOptionsBuilder#hints(PublicKeyCredentialHint...)
+     * @see <a
+     *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialcreationoptions-hints">PublicKeyCredentialCreationOptions.hints</a>
+     * @see <a
+     *     href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#enumdef-publickeycredentialhints">§5.8.7.
+     *     User-agent Hints Enumeration (enum PublicKeyCredentialHints)</a>
+     */
+    public PublicKeyCredentialCreationOptionsBuilder hints(@NonNull List<String> hints) {
+      this.hints = hints;
+      return this;
     }
 
     /**
