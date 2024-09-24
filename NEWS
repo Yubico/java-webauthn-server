@@ -16,6 +16,11 @@ New features:
 * Added public factory function
   `LargeBlobRegistrationOutput.supported(boolean)`.
 * Added public factory functions to `LargeBlobAuthenticationOutput`.
+* Added `hints` property to `StartRegistrationOptions`, `StartAssertionOptions`,
+  `PublicKeyCredentialCreationOptions` and `PublicKeyCredentialRequestOptions`,
+  and class `PublicKeyCredentialHint` to support them, to support the `hints`
+  parameter introduced in WebAuthn L3:
+  https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialcreationoptions-hints
 * (Experimental) Added option `isSecurePaymentConfirmation(boolean)` to
   `FinishAssertionOptions`. When set, `RelyingParty.finishAssertion()` will
   adapt the validation logic for a Secure Payment Confirmation (SPC) response
