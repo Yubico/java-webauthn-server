@@ -1097,34 +1097,7 @@ public final class FidoMetadataDownloader {
           InvalidAlgorithmParameterException,
           FidoMetadataDownloaderException {
     final MetadataBLOBHeader header = parseResult.blob.getHeader();
-
-    final List<X509Certificate> certChain;
-    if (header.getX5u().isPresent()) {
-      final URL x5u = header.getX5u().get();
-      if (blobUrl != null
-          && (!(x5u.getHost().equals(blobUrl.getHost())
-              && x5u.getProtocol().equals(blobUrl.getProtocol())
-              && x5u.getPort() == blobUrl.getPort()))) {
-        throw new IllegalArgumentException(
-            String.format(
-                "x5u in BLOB header must have same origin as the URL the BLOB was downloaded from. Expected origin of: %s ; found: %s",
-                blobUrl, x5u));
-      }
-      List<X509Certificate> certs = new ArrayList<>();
-      for (String pem :
-          new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
-              .trim()
-              .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+")) {
-        X509Certificate x509Certificate = CertificateParser.parsePem(pem);
-        certs.add(x509Certificate);
-      }
-      certChain = certs;
-    } else if (header.getX5c().isPresent()) {
-      certChain = header.getX5c().get();
-    } else {
-      certChain = Collections.singletonList(trustRootCertificate);
-    }
-
+    final List<X509Certificate> certChain = fetchHeaderCertChain(trustRootCertificate, header);
     final X509Certificate leafCert = certChain.get(0);
 
     final Signature signature;
@@ -1208,5 +1181,36 @@ public final class FidoMetadataDownloader {
     private ByteArray jwtHeader;
     private ByteArray jwtPayload;
     private ByteArray jwtSignature;
+  }
+
+  /** Parse the header cert chain and download any certificates as necessary. */
+  List<X509Certificate> fetchHeaderCertChain(
+      X509Certificate trustRootCertificate, MetadataBLOBHeader header)
+      throws IOException, CertificateException {
+    if (header.getX5u().isPresent()) {
+      final URL x5u = header.getX5u().get();
+      if (blobUrl != null
+          && (!(x5u.getHost().equals(blobUrl.getHost())
+              && x5u.getProtocol().equals(blobUrl.getProtocol())
+              && x5u.getPort() == blobUrl.getPort()))) {
+        throw new IllegalArgumentException(
+            String.format(
+                "x5u in BLOB header must have same origin as the URL the BLOB was downloaded from. Expected origin of: %s ; found: %s",
+                blobUrl, x5u));
+      }
+      List<X509Certificate> certs = new ArrayList<>();
+      for (String pem :
+          new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
+              .trim()
+              .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+")) {
+        X509Certificate x509Certificate = CertificateParser.parsePem(pem);
+        certs.add(x509Certificate);
+      }
+      return certs;
+    } else if (header.getX5c().isPresent()) {
+      return header.getX5c().get();
+    } else {
+      return Collections.singletonList(trustRootCertificate);
+    }
   }
 }
