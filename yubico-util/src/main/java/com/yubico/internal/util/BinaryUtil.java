@@ -261,8 +261,8 @@ public class BinaryUtil {
     DerTagClass tagClass;
     boolean constructed;
     byte tagValue;
-    byte[] content;
-    int nextOffset;
+    int valueStart;
+    int valueEnd;
   }
 
   @Value
@@ -342,14 +342,15 @@ public class BinaryUtil {
           DerTagClass.parse(tag),
           (tag & 0x20) != 0,
           (byte) (tag & 0x1f),
-          Arrays.copyOfRange(der, contentLen.nextOffset, contentEnd),
+          contentLen.nextOffset,
           contentEnd);
     }
   }
 
   /**
-   * Parse a DER header with the given tag value, constructed bit and tag class, and return a copy
-   * of the value octets. If any of the three criteria do not match, return empty instead.
+   * Parse a DER header with the given tag value, constructed bit and tag class, and return the
+   * start and end offsets of the value octets. If any of the three criteria do not match, return
+   * empty instead.
    *
    * @param der DER source to read from.
    * @param offset The offset in <code>der</code> from which to start reading.
@@ -359,11 +360,12 @@ public class BinaryUtil {
    *     bit) of the tag octet.
    * @param expectTagClass The expected tag class. This is the 2 most significant bits of the tag
    *     octet.
-   * @return A copy of the value octets, if the parsed tag matches <code>expectTag</code>, <code>
+   * @return The start and end offsets of the value octets, if the parsed tag matches <code>
+   *     expectTag</code>, <code>
    *     constructed</code> and <code>expectTagClass</code>, otherwise empty. {@link
    *     ParseDerResult#nextOffset} is always returned.
    */
-  public static ParseDerResult<Optional<byte[]>> parseDerTaggedOrSkip(
+  public static ParseDerResult<Optional<Integer>> parseDerTaggedOrSkip(
       @NonNull byte[] der,
       int offset,
       byte expectTag,
@@ -373,16 +375,16 @@ public class BinaryUtil {
     if (result.tagValue == expectTag
         && result.constructed == constructed
         && result.tagClass == expectTagClass) {
-      return new ParseDerResult<>(Optional.of(result.content), result.nextOffset);
+      return new ParseDerResult<>(Optional.of(result.valueStart), result.valueEnd);
     } else {
-      return new ParseDerResult<>(Optional.empty(), result.nextOffset);
+      return new ParseDerResult<>(Optional.empty(), result.valueEnd);
     }
   }
 
   /**
-   * Parse a DER header with the given tag value, constructed bit and tag class, and return a copy
-   * of the value octets. If any of the three criteria do not match, throw an {@link
-   * IllegalArgumentException}.
+   * Parse a DER header with the given tag value, constructed bit and tag class, and return the
+   * start and end offsets of the value octets. If any of the three criteria do not match, throw an
+   * {@link IllegalArgumentException}.
    *
    * @param der DER source to read from.
    * @param offset The offset in <code>der</code> from which to start reading.
@@ -392,11 +394,12 @@ public class BinaryUtil {
    *     bit) of the tag octet.
    * @param expectTagClass The expected tag class. This is the 2 most significant bits of the tag
    *     octet.
-   * @return A copy of the value octets, if the parsed tag matches <code>expectTag</code>, <code>
+   * @return The start and end offsets of the value octets, if the parsed tag matches <code>
+   *     expectTag</code>, <code>
    *     constructed</code> and <code>expectTagClass</code>, otherwise empty. {@link
    *     ParseDerResult#nextOffset} is always returned.
    */
-  private static ParseDerResult<byte[]> parseDerTagged(
+  private static ParseDerResult<Integer> parseDerTagged(
       @NonNull byte[] der,
       int offset,
       byte expectTag,
@@ -406,7 +409,7 @@ public class BinaryUtil {
     if (result.tagValue == expectTag) {
       if (result.constructed == constructed) {
         if (result.tagClass == expectTagClass) {
-          return new ParseDerResult<>(result.content, result.nextOffset);
+          return new ParseDerResult<>(result.valueStart, result.valueEnd);
         } else {
           throw new IllegalArgumentException(
               String.format(
@@ -476,16 +479,19 @@ public class BinaryUtil {
    */
   public static <T> ParseDerResult<List<T>> parseDerSequence(
       @NonNull byte[] der, int offset, @NonNull ParseDerSequenceElementFunction<T> parseElement) {
-    final ParseDerResult<byte[]> seq =
+    final ParseDerResult<Integer> seq =
         parseDerTagged(der, offset, (byte) 0x10, true, DerTagClass.UNIVERSAL);
     final ParseDerResult<List<T>> res =
-        parseDerSequenceContents(seq.result, 0, seq.result.length, parseElement);
+        parseDerSequenceContents(der, seq.result, seq.nextOffset, parseElement);
     return new ParseDerResult<>(res.result, seq.nextOffset);
   }
 
   /** Parse an Octet String. */
   public static ParseDerResult<byte[]> parseDerOctetString(@NonNull byte[] der, int offset) {
-    return parseDerTagged(der, offset, (byte) 0x04, false, DerTagClass.UNIVERSAL);
+    ParseDerResult<Integer> res =
+        parseDerTagged(der, offset, (byte) 0x04, false, DerTagClass.UNIVERSAL);
+    return new ParseDerResult<>(
+        Arrays.copyOfRange(der, res.result, res.nextOffset), res.nextOffset);
   }
 
   public static byte[] encodeDerObjectId(@NonNull byte[] oid) {

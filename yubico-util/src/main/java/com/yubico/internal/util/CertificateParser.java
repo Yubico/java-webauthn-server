@@ -208,30 +208,31 @@ public class CertificateParser {
                         (innerSequenceDer, distributionPointChoiceOffset) -> {
                           // DistributionPoint ::= SEQUENCE {
                           //     distributionPoint       [0]     DistributionPointName OPTIONAL,
-                          final BinaryUtil.ParseDerResult<Optional<byte[]>> dpElement =
+                          final BinaryUtil.ParseDerResult<Optional<Integer>> dpElementOffsets =
                               BinaryUtil.parseDerTaggedOrSkip(
                                   innerSequenceDer,
                                   distributionPointChoiceOffset,
                                   (byte) 0,
                                   true,
                                   BinaryUtil.DerTagClass.CONTEXT_SPECIFIC);
-                          if (dpElement.result.isPresent()) {
+                          if (dpElementOffsets.result.isPresent()) {
 
                             // DistributionPointName ::= CHOICE {
                             //     fullName                [0]     GeneralNames,
-                            final BinaryUtil.ParseDerResult<Optional<byte[]>> dpNameElement =
-                                BinaryUtil.parseDerTaggedOrSkip(
-                                    dpElement.result.get(),
-                                    0,
-                                    (byte) 0,
-                                    true,
-                                    BinaryUtil.DerTagClass.CONTEXT_SPECIFIC);
+                            final BinaryUtil.ParseDerResult<Optional<Integer>>
+                                dpNameElementOffsets =
+                                    BinaryUtil.parseDerTaggedOrSkip(
+                                        innerSequenceDer,
+                                        dpElementOffsets.result.get(),
+                                        (byte) 0,
+                                        true,
+                                        BinaryUtil.DerTagClass.CONTEXT_SPECIFIC);
 
-                            if (dpNameElement.result.isPresent()) {
+                            if (dpNameElementOffsets.result.isPresent()) {
                               return BinaryUtil.parseDerSequenceContents(
-                                  dpNameElement.result.get(),
-                                  0,
-                                  dpNameElement.result.get().length,
+                                  innerSequenceDer,
+                                  dpNameElementOffsets.result.get(),
+                                  dpNameElementOffsets.nextOffset,
                                   (generalNamesDer, generalNamesElementOffset) -> {
                                     // fullName                [0]     GeneralNames,
                                     // GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
@@ -243,21 +244,26 @@ public class CertificateParser {
                                     // https://datatracker.ietf.org/doc/html/rfc5280#appendix-A.2
                                     // so the SEQUENCE tag in GeneralNames is implicit.
                                     // The IA5String tag is also implicit from the CHOICE tag.
-                                    final BinaryUtil.ParseDerResult<Optional<byte[]>> generalName =
-                                        BinaryUtil.parseDerTaggedOrSkip(
-                                            generalNamesDer,
-                                            generalNamesElementOffset,
-                                            (byte) 6,
-                                            false,
-                                            BinaryUtil.DerTagClass.CONTEXT_SPECIFIC);
-                                    if (generalName.result.isPresent()) {
+                                    final BinaryUtil.ParseDerResult<Optional<Integer>>
+                                        generalNameOffsets =
+                                            BinaryUtil.parseDerTaggedOrSkip(
+                                                generalNamesDer,
+                                                generalNamesElementOffset,
+                                                (byte) 6,
+                                                false,
+                                                BinaryUtil.DerTagClass.CONTEXT_SPECIFIC);
+                                    if (generalNameOffsets.result.isPresent()) {
                                       String uriString =
                                           new String(
-                                              generalName.result.get(), StandardCharsets.US_ASCII);
+                                              Arrays.copyOfRange(
+                                                  generalNamesDer,
+                                                  generalNameOffsets.result.get(),
+                                                  generalNameOffsets.nextOffset),
+                                              StandardCharsets.US_ASCII);
                                       try {
                                         return new BinaryUtil.ParseDerResult<>(
                                             Optional.of(new URL(uriString)),
-                                            generalName.nextOffset);
+                                            generalNameOffsets.nextOffset);
                                       } catch (MalformedURLException e) {
                                         throw new IllegalArgumentException(
                                             String.format(
@@ -267,7 +273,7 @@ public class CertificateParser {
                                       }
                                     } else {
                                       return new BinaryUtil.ParseDerResult<>(
-                                          Optional.empty(), generalName.nextOffset);
+                                          Optional.empty(), generalNameOffsets.nextOffset);
                                     }
                                   });
                             }
@@ -275,7 +281,7 @@ public class CertificateParser {
 
                           // Ignore all other forms of distribution points
                           return new BinaryUtil.ParseDerResult<>(
-                              Collections.emptyList(), dpElement.nextOffset);
+                              Collections.emptyList(), dpElementOffsets.nextOffset);
                         }));
 
         return distributionPoints.result.stream()
