@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.data.exception.HexException;
@@ -54,6 +55,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CRL;
+import java.security.cert.CRLException;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
@@ -1131,13 +1133,18 @@ public final class FidoMetadataDownloader {
     if (certStore != null) {
       pathParams.addCertStore(certStore);
     }
+
+    // Parse CRLDistributionPoints ourselves so users don't have to set the
+    // `com.sun.security.enableCRLDP=true` system property
+    fetchCrlDistributionPoints(certChain, certFactory).ifPresent(pathParams::addCertStore);
+
     pathParams.setDate(Date.from(clock.instant()));
     cpv.validate(blobCertPath, pathParams);
 
     return parseResult.blob;
   }
 
-  private static ParseResult parseBlob(ByteArray jwt) throws IOException, Base64UrlException {
+  static ParseResult parseBlob(ByteArray jwt) throws IOException, Base64UrlException {
     Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
     final ByteArray jwtHeader = ByteArray.fromBase64Url(s.next());
     final ByteArray jwtPayload = ByteArray.fromBase64Url(s.next());
@@ -1176,7 +1183,7 @@ public final class FidoMetadataDownloader {
   }
 
   @Value
-  private static class ParseResult {
+  static class ParseResult {
     private MetadataBLOB blob;
     private ByteArray jwtHeader;
     private ByteArray jwtPayload;
@@ -1211,6 +1218,70 @@ public final class FidoMetadataDownloader {
       return header.getX5c().get();
     } else {
       return Collections.singletonList(trustRootCertificate);
+    }
+  }
+
+  /**
+   * Parse the CRLDistributionPoints extension of each certificate, fetch each distribution point
+   * and assemble them into a {@link CertStore} ready to be injected into {@link
+   * PKIXParameters#addCertStore(CertStore)} to provide CRLs for the verification procedure.
+   *
+   * <p>We do this ourselves so that users don't have to set the `com.sun.security.enableCRLDP=true`
+   * system property. This is required by the default SUN provider in order to enable
+   * CRLDistributionPoints resolution.
+   *
+   * <p>Any CRLDistributionPoints entries in unknown format are ignored and log a warning.
+   */
+  private Optional<CertStore> fetchCrlDistributionPoints(
+      List<X509Certificate> certChain, CertificateFactory certFactory)
+      throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+    final List<URL> crlDistributionPointUrls =
+        certChain.stream()
+            .flatMap(
+                cert -> {
+                  log.debug(
+                      "Attempting to parse CRLDistributionPoints extension of cert: {}",
+                      cert.getSubjectX500Principal());
+                  try {
+                    return CertificateParser.parseCrlDistributionPointsExtension(cert)
+                        .getDistributionPoints()
+                        .stream();
+                  } catch (Exception e) {
+                    log.warn(
+                        "Failed to parse CRLDistributionPoints extension of cert: {}",
+                        cert.getSubjectX500Principal(),
+                        e);
+                    return Stream.empty();
+                  }
+                })
+            .collect(Collectors.toList());
+
+    if (crlDistributionPointUrls.isEmpty()) {
+      return Optional.empty();
+
+    } else {
+      final List<CRL> crldpCrls =
+          crlDistributionPointUrls.stream()
+              .map(
+                  crldpUrl -> {
+                    log.debug("Attempting to download CRL distribution point: {}", crldpUrl);
+                    try {
+                      return Optional.of(
+                          certFactory.generateCRL(
+                              new ByteArrayInputStream(download(crldpUrl).getBytes())));
+                    } catch (CRLException e) {
+                      log.warn("Failed to import CRL from distribution point: {}", crldpUrl, e);
+                      return Optional.<CRL>empty();
+                    } catch (Exception e) {
+                      log.warn("Failed to download CRL distribution point: {}", crldpUrl, e);
+                      return Optional.<CRL>empty();
+                    }
+                  })
+              .flatMap(OptionalUtil::stream)
+              .collect(Collectors.toList());
+
+      return Optional.of(
+          CertStore.getInstance("Collection", new CollectionCertStoreParameters(crldpCrls)));
     }
   }
 }

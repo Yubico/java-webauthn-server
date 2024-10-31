@@ -48,7 +48,12 @@ dependencies {
   testImplementation("org.scalatestplus:junit-4-13_2.13")
   testImplementation("org.scalatestplus:scalacheck-1-16_2.13")
 
-  testImplementation("org.slf4j:slf4j-api")
+  testImplementation("org.slf4j:slf4j-api") {
+    version {
+      strictly("[1.7.25,1.8-a)") // Pre-1.8 version required by slf4j-test
+    }
+  }
+  testRuntimeOnly("uk.org.lidalia:slf4j-test")
 }
 
 val integrationTest = task<Test>("integrationTest") {
@@ -58,9 +63,6 @@ val integrationTest = task<Test>("integrationTest") {
   testClassesDirs = sourceSets["integrationTest"].output.classesDirs
   classpath = sourceSets["integrationTest"].runtimeClasspath
   shouldRunAfter(tasks.test)
-
-  // Required for processing CRL distribution points extension
-  systemProperty("com.sun.security.enableCRLDP", "true")
 }
 tasks["check"].dependsOn(integrationTest)
 
