@@ -1,6 +1,7 @@
 package com.yubico.fido.metadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -19,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -116,6 +118,7 @@ public class AuthenticatorGetInfo {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
+  @JsonDeserialize(using = ListPublicKeyCredentialParametersIgnoringUnknownValuesDeserializer.class)
   List<PublicKeyCredentialParameters> algorithms;
 
   /**
@@ -375,6 +378,46 @@ public class AuthenticatorGetInfo {
         throws IOException {
       gen.writeNumber(
           value.stream().reduce(0, (acc, next) -> acc | next.getValue(), (a, b) -> a | b));
+    }
+  }
+
+  @Value
+  @JsonDeserialize(using = PublicKeyCredentialParametersIgnoringUnknownValues.Deserializer.class)
+  private static class PublicKeyCredentialParametersIgnoringUnknownValues {
+    PublicKeyCredentialParameters value;
+
+    private static class Deserializer
+        extends JsonDeserializer<PublicKeyCredentialParametersIgnoringUnknownValues> {
+      @Override
+      public PublicKeyCredentialParametersIgnoringUnknownValues deserialize(
+          JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        try {
+          return new PublicKeyCredentialParametersIgnoringUnknownValues(
+              p.readValueAs(PublicKeyCredentialParameters.class));
+        } catch (IOException e) {
+          return null;
+        }
+      }
+    }
+  }
+
+  private static class ListPublicKeyCredentialParametersIgnoringUnknownValuesDeserializer
+      extends JsonDeserializer<List<PublicKeyCredentialParameters>> {
+    @Override
+    public List<PublicKeyCredentialParameters> deserialize(
+        JsonParser p, DeserializationContext ctxt) throws IOException {
+      PublicKeyCredentialParametersIgnoringUnknownValues[] pkcpiuvs =
+          p.readValueAs(PublicKeyCredentialParametersIgnoringUnknownValues[].class);
+      return Arrays.stream(pkcpiuvs)
+          .flatMap(
+              pkcpiuv -> {
+                if (pkcpiuv != null && pkcpiuv.value != null) {
+                  return Stream.of(pkcpiuv.value);
+                } else {
+                  return Stream.empty();
+                }
+              })
+          .collect(Collectors.toList());
     }
   }
 }
