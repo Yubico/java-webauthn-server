@@ -222,17 +222,6 @@ RegistrationResult result = rp.finishRegistration(/* ... */);
 Set<MetadataBLOBPayloadEntry> metadata = mds.findEntries(result);
 ----------
 
- 5. If you use the SUN provider for the `PKIX` certificate path validation algorithm, which many deployments do by default:
-    set the `com.sun.security.enableCRLDP` system property to `true`.
-    This is required for the SUN `PKIX` provider to support the CRL Distribution Points extension,
-    which is needed in order to verify the BLOB signature.
-+
-For example, this can be done on the JVM command line using a `-Dcom.sun.security.enableCRLDP=true` option.
-See the https://docs.oracle.com/javase/9/security/java-pki-programmers-guide.htm#GUID-EB250086-0AC1-4D60-AE2A-FC7461374746__SECTION-139-623E860E[Java PKI Programmers Guide]
-for details.
-+
-This step may not be necessary if you use a different provider for the `PKIX` certificate path validation algorithm.
-
 
 == Selecting trusted authenticators
 
