@@ -1227,9 +1227,9 @@ public final class FidoMetadataDownloader {
    * and assemble them into a {@link CertStore} ready to be injected into {@link
    * PKIXParameters#addCertStore(CertStore)} to provide CRLs for the verification procedure.
    *
-   * <p>We do this ourselves so that users don't have to set the `com.sun.security.enableCRLDP=true`
-   * system property. This is required by the default SUN provider in order to enable
-   * CRLDistributionPoints resolution.
+   * <p>We do this ourselves so that users don't have to set the <code>
+   * com.sun.security.enableCRLDP=true</code> system property. This is required by the default SUN
+   * provider in order to enable CRLDistributionPoints resolution.
    *
    * <p>Any CRLDistributionPoints entries in unknown format are ignored and log a warning.
    */
