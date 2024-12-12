@@ -58,7 +58,6 @@ New features:
     version increase.
  ** NOTE: Experimental features may receive breaking changes without a major
     version increase.
-* (Experimental) Added `credProps` extension to assertion extension outputs.
 
 
 == Version 2.5.4 ==
