@@ -545,9 +545,9 @@ public final class FidoMetadataDownloader {
     /**
      * Use the provided CRLs.
      *
-     * <p>CRLs will also be downloaded from distribution points if the <code>
-     * com.sun.security.enableCRLDP</code> system property is set to <code>true</code> (assuming the
-     * use of the {@link CertPathValidator} implementation from the SUN provider).
+     * <p>CRLs will also be downloaded from distribution points for any certificates with a
+     * CRLDistributionPoints extension, if the extension can be successfully interpreted. A warning
+     * message will be logged CRLDistributionPoints parsing fails.
      *
      * @throws InvalidAlgorithmParameterException if {@link CertStore#getInstance(String,
      *     CertStoreParameters)} does.
@@ -563,9 +563,9 @@ public final class FidoMetadataDownloader {
     /**
      * Use CRLs in the provided {@link CertStore}.
      *
-     * <p>CRLs will also be downloaded from distribution points if the <code>
-     * com.sun.security.enableCRLDP</code> system property is set to <code>true</code> (assuming the
-     * use of the {@link CertPathValidator} implementation from the SUN provider).
+     * <p>CRLs will also be downloaded from distribution points for any certificates with a
+     * CRLDistributionPoints extension, if the extension can be successfully interpreted. A warning
+     * message will be logged CRLDistributionPoints parsing fails.
      *
      * @see #useCrls(Collection)
      */
@@ -693,7 +693,7 @@ public final class FidoMetadataDownloader {
    * @throws InvalidAlgorithmParameterException if certificate path validation fails.
    * @throws InvalidKeyException if signature verification fails.
    * @throws NoSuchAlgorithmException if signature verification fails, or if the SHA-256 algorithm
-   *     is not available.
+   *     or the <code>"Collection"</code> type {@link CertStore} is not available.
    * @throws SignatureException if signature verification fails.
    * @throws UnexpectedLegalHeader if the downloaded BLOB (if any) contains a <code>"legalHeader"
    *     </code> value not configured in {@link
@@ -796,7 +796,7 @@ public final class FidoMetadataDownloader {
    * @throws InvalidAlgorithmParameterException if certificate path validation fails.
    * @throws InvalidKeyException if signature verification fails.
    * @throws NoSuchAlgorithmException if signature verification fails, or if the SHA-256 algorithm
-   *     is not available.
+   *     or the <code>"Collection"</code> type {@link CertStore} is not available.
    * @throws SignatureException if signature verification fails.
    * @throws UnexpectedLegalHeader if the downloaded BLOB (if any) contains a <code>"legalHeader"
    *     </code> value not configured in {@link
@@ -968,7 +968,8 @@ public final class FidoMetadataDownloader {
    * @throws IOException on failure to parse the BLOB contents.
    * @throws InvalidAlgorithmParameterException if certificate path validation fails.
    * @throws InvalidKeyException if signature verification fails.
-   * @throws NoSuchAlgorithmException if signature verification fails.
+   * @throws NoSuchAlgorithmException if signature verification fails, or if the SHA-256 algorithm
+   *     or the <code>"Collection"</code> type {@link CertStore} is not available.
    * @throws SignatureException if signature verification fails.
    * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
    *     signature.
