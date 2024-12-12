@@ -266,7 +266,6 @@ class RelyingPartyRegistrationSpec
                   "org.example.foo": "bar",
                   "credProps": {
                     "rk": false,
-                    "authenticatorDisplayName": "My passkey",
                     "unknownProperty": ["unknown-value"]
                   }
                 }
@@ -4286,51 +4285,6 @@ class RelyingPartyRegistrationSpec
           )
 
           result.isDiscoverable.toScala should equal(None)
-        }
-      }
-
-      describe("expose the credProps.authenticatorDisplayName extension output as RegistrationResult.getAuthenticatorDisplayName()") {
-        val testDataBase = RegistrationTestData.Packed.BasicAttestation
-        val testData = testDataBase.copy(requestedExtensions =
-          testDataBase.request.getExtensions.toBuilder.credProps().build()
-        )
-
-        it("""when set to "hej".""") {
-          val result = rp.finishRegistration(
-            FinishRegistrationOptions
-              .builder()
-              .request(testData.request)
-              .response(
-                testData.response.toBuilder
-                  .clientExtensionResults(
-                    ClientRegistrationExtensionOutputs
-                      .builder()
-                      .credProps(
-                        CredentialPropertiesOutput
-                          .builder()
-                          .authenticatorDisplayName("hej")
-                          .build()
-                      )
-                      .build()
-                  )
-                  .build()
-              )
-              .build()
-          )
-
-          result.getAuthenticatorDisplayName.toScala should equal(Some("hej"))
-        }
-
-        it("when not available.") {
-          val result = rp.finishRegistration(
-            FinishRegistrationOptions
-              .builder()
-              .request(testData.request)
-              .response(testData.response)
-              .build()
-          )
-
-          result.getAuthenticatorDisplayName.toScala should equal(None)
         }
       }
 
