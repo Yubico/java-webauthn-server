@@ -1,5 +1,7 @@
 == Version 2.6.0 (unreleased) ==
 
+`webauthn-server-core`:
+
 New features:
 
 * Added method `getParsedPublicKey(): java.security.PublicKey` to
@@ -60,6 +62,14 @@ New features:
  ** NOTE: Experimental features may receive breaking changes without a major
     version increase.
 * (Experimental) Added `credProps` extension to assertion extension outputs.
+
+`webauthn-server-attestation`:
+
+New features:
+
+* `FidoMetadataDownloader` now parses the CRLDistributionPoints extension on the
+  application level, so the `com.sun.security.enableCRLDP=true` system property
+  setting is no longer necessary.
 
 
 == Version 2.5.4 ==
