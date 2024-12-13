@@ -930,26 +930,21 @@ object TestAuthenticator {
       case 3 => { // RSA
         val cose = CBORObject.DecodeFromBytes(cosePubkey.getBytes)
         (
-          new ByteArray(BinaryUtil.encodeUint16(symmetric getOrElse 0x0010))
-            .concat(
-              new ByteArray(
-                BinaryUtil.encodeUint16(scheme getOrElse TpmRsaScheme.RSASSA)
-              )
-            )
-            .concat(
-              new ByteArray(BinaryUtil.encodeUint16(RsaKeySizeBits))
-            ) // key_bits
-            .concat(
-              new ByteArray(
-                BinaryUtil.encodeUint32(
-                  new BigInteger(1, cose.get(-2).GetByteString()).longValue()
-                )
-              )
-            ) // exponent
-          ,
-          new ByteArray(
-            BinaryUtil.encodeUint16(cose.get(-1).GetByteString().length)
-          ).concat(new ByteArray(cose.get(-1).GetByteString())), // modulus
+          BinaryUtil.concat(
+            BinaryUtil.encodeUint16(symmetric getOrElse 0x0010),
+            BinaryUtil.encodeUint16(scheme getOrElse TpmRsaScheme.RSASSA),
+            // key_bits
+            BinaryUtil.encodeUint16(RsaKeySizeBits),
+            // exponent
+            BinaryUtil.encodeUint32(
+              new BigInteger(1, cose.get(-2).GetByteString()).longValue()
+            ),
+          ),
+          BinaryUtil.concat(
+            BinaryUtil.encodeUint16(cose.get(-1).GetByteString().length),
+            // modulus
+            cose.get(-1).GetByteString(),
+          ),
         )
       }
       case 2 => { // EC
@@ -957,78 +952,70 @@ object TestAuthenticator {
           .importCosePublicKey(cosePubkey)
           .asInstanceOf[ECPublicKey]
         (
-          new ByteArray(BinaryUtil.encodeUint16(symmetric getOrElse 0x0010))
-            .concat(
-              new ByteArray(BinaryUtil.encodeUint16(scheme getOrElse 0x0010))
-            )
-            .concat(
-              new ByteArray(BinaryUtil.encodeUint16(coseKeyAlg match {
-                case COSEAlgorithmIdentifier.ES256 => 0x0003
-                case COSEAlgorithmIdentifier.ES384 => 0x0004
-                case COSEAlgorithmIdentifier.ES512 => 0x0005
-                case COSEAlgorithmIdentifier.RS1 |
-                    COSEAlgorithmIdentifier.RS256 |
-                    COSEAlgorithmIdentifier.RS384 |
-                    COSEAlgorithmIdentifier.RS512 |
-                    COSEAlgorithmIdentifier.EdDSA =>
-                  ???
-              }))
-            )
-            .concat(
-              new ByteArray(BinaryUtil.encodeUint16(0x0010))
-            ) // kdf_scheme: ??? (unused?)
-          ,
-          new ByteArray(
-            BinaryUtil.encodeUint16(pubkey.getW.getAffineX.toByteArray.length)
-          )
-            .concat(new ByteArray(pubkey.getW.getAffineX.toByteArray))
-            .concat(
-              new ByteArray(
-                BinaryUtil.encodeUint16(
-                  pubkey.getW.getAffineY.toByteArray.length
-                )
-              )
-            )
-            .concat(new ByteArray(pubkey.getW.getAffineY.toByteArray)),
+          BinaryUtil.concat(
+            BinaryUtil.encodeUint16(symmetric getOrElse 0x0010),
+            BinaryUtil.encodeUint16(scheme getOrElse 0x0010),
+            BinaryUtil.encodeUint16(coseKeyAlg match {
+              case COSEAlgorithmIdentifier.ES256 => 0x0003
+              case COSEAlgorithmIdentifier.ES384 => 0x0004
+              case COSEAlgorithmIdentifier.ES512 => 0x0005
+              case COSEAlgorithmIdentifier.RS1 | COSEAlgorithmIdentifier.RS256 |
+                  COSEAlgorithmIdentifier.RS384 |
+                  COSEAlgorithmIdentifier.RS512 |
+                  COSEAlgorithmIdentifier.EdDSA =>
+                ???
+            }),
+            // kdf_scheme: ??? (unused?)
+            BinaryUtil.encodeUint16(0x0010),
+          ),
+          BinaryUtil.concat(
+            BinaryUtil.encodeUint16(pubkey.getW.getAffineX.toByteArray.length),
+            pubkey.getW.getAffineX.toByteArray,
+            BinaryUtil.encodeUint16(
+              pubkey.getW.getAffineY.toByteArray.length
+            ),
+            pubkey.getW.getAffineY.toByteArray,
+          ),
         )
       }
     }
-    val pubArea = new ByteArray(BinaryUtil.encodeUint16(signAlg))
-      .concat(new ByteArray(BinaryUtil.encodeUint16(hashId)))
-      .concat(
-        new ByteArray(
-          BinaryUtil.encodeUint32(attributes getOrElse Attributes.SIGN_ENCRYPT)
-        )
+    val pubArea = new ByteArray(
+      BinaryUtil.concat(
+        BinaryUtil.encodeUint16(signAlg),
+        BinaryUtil.encodeUint16(hashId),
+        BinaryUtil.encodeUint32(attributes getOrElse Attributes.SIGN_ENCRYPT),
+        // authPolicy is ignored by TpmAttestationStatementVerifier
+        BinaryUtil.encodeUint16(0),
+        parameters,
+        unique,
       )
-      .concat(
-        new ByteArray(BinaryUtil.encodeUint16(0))
-      ) // authPolicy is ignored by TpmAttestationStatementVerifier
-      .concat(parameters)
-      .concat(unique)
+    )
 
-    val qualifiedSigner = ByteArray.fromHex("")
-    val clockInfo = ByteArray.fromHex("0000000000000000111111112222222233")
-    val firmwareVersion = ByteArray.fromHex("0000000000000000")
+    val qualifiedSigner = BinaryUtil.fromHex("")
+    val clockInfo = BinaryUtil.fromHex("0000000000000000111111112222222233")
+    val firmwareVersion = BinaryUtil.fromHex("0000000000000000")
     val attestedName =
       modifyAttestedName(
         new ByteArray(BinaryUtil.encodeUint16(hashId)).concat(hashFunc(pubArea))
       )
-    val attestedQualifiedName = ByteArray.fromHex("")
+    val attestedQualifiedName = BinaryUtil.fromHex("")
 
-    val certInfo = magic
-      .concat(`type`)
-      .concat(new ByteArray(BinaryUtil.encodeUint16(qualifiedSigner.size)))
-      .concat(qualifiedSigner)
-      .concat(new ByteArray(BinaryUtil.encodeUint16(extraData.size)))
-      .concat(extraData)
-      .concat(clockInfo)
-      .concat(firmwareVersion)
-      .concat(new ByteArray(BinaryUtil.encodeUint16(attestedName.size)))
-      .concat(attestedName)
-      .concat(
-        new ByteArray(BinaryUtil.encodeUint16(attestedQualifiedName.size))
+    val certInfo = new ByteArray(
+      BinaryUtil.concat(
+        magic.getBytes,
+        `type`.getBytes,
+        BinaryUtil.encodeUint16(qualifiedSigner.length),
+        qualifiedSigner,
+        BinaryUtil.encodeUint16(extraData.size),
+        extraData.getBytes,
+        clockInfo,
+        firmwareVersion,
+        BinaryUtil.encodeUint16(attestedName.size),
+        attestedName.getBytes,
+        BinaryUtil.encodeUint16(attestedQualifiedName.length),
+        attestedQualifiedName,
       )
-      .concat(attestedQualifiedName)
+    )
 
     val sig = sign(certInfo, cert.key, cert.alg)
 

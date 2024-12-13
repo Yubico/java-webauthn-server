@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
 import com.yubico.webauthn.data.exception.HexException;
@@ -54,6 +55,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CRL;
+import java.security.cert.CRLException;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
@@ -543,9 +545,9 @@ public final class FidoMetadataDownloader {
     /**
      * Use the provided CRLs.
      *
-     * <p>CRLs will also be downloaded from distribution points if the <code>
-     * com.sun.security.enableCRLDP</code> system property is set to <code>true</code> (assuming the
-     * use of the {@link CertPathValidator} implementation from the SUN provider).
+     * <p>CRLs will also be downloaded from distribution points for any certificates with a
+     * CRLDistributionPoints extension, if the extension can be successfully interpreted. A warning
+     * message will be logged CRLDistributionPoints parsing fails.
      *
      * @throws InvalidAlgorithmParameterException if {@link CertStore#getInstance(String,
      *     CertStoreParameters)} does.
@@ -561,9 +563,9 @@ public final class FidoMetadataDownloader {
     /**
      * Use CRLs in the provided {@link CertStore}.
      *
-     * <p>CRLs will also be downloaded from distribution points if the <code>
-     * com.sun.security.enableCRLDP</code> system property is set to <code>true</code> (assuming the
-     * use of the {@link CertPathValidator} implementation from the SUN provider).
+     * <p>CRLs will also be downloaded from distribution points for any certificates with a
+     * CRLDistributionPoints extension, if the extension can be successfully interpreted. A warning
+     * message will be logged CRLDistributionPoints parsing fails.
      *
      * @see #useCrls(Collection)
      */
@@ -691,7 +693,7 @@ public final class FidoMetadataDownloader {
    * @throws InvalidAlgorithmParameterException if certificate path validation fails.
    * @throws InvalidKeyException if signature verification fails.
    * @throws NoSuchAlgorithmException if signature verification fails, or if the SHA-256 algorithm
-   *     is not available.
+   *     or the <code>"Collection"</code> type {@link CertStore} is not available.
    * @throws SignatureException if signature verification fails.
    * @throws UnexpectedLegalHeader if the downloaded BLOB (if any) contains a <code>"legalHeader"
    *     </code> value not configured in {@link
@@ -794,7 +796,7 @@ public final class FidoMetadataDownloader {
    * @throws InvalidAlgorithmParameterException if certificate path validation fails.
    * @throws InvalidKeyException if signature verification fails.
    * @throws NoSuchAlgorithmException if signature verification fails, or if the SHA-256 algorithm
-   *     is not available.
+   *     or the <code>"Collection"</code> type {@link CertStore} is not available.
    * @throws SignatureException if signature verification fails.
    * @throws UnexpectedLegalHeader if the downloaded BLOB (if any) contains a <code>"legalHeader"
    *     </code> value not configured in {@link
@@ -966,7 +968,8 @@ public final class FidoMetadataDownloader {
    * @throws IOException on failure to parse the BLOB contents.
    * @throws InvalidAlgorithmParameterException if certificate path validation fails.
    * @throws InvalidKeyException if signature verification fails.
-   * @throws NoSuchAlgorithmException if signature verification fails.
+   * @throws NoSuchAlgorithmException if signature verification fails, or if the SHA-256 algorithm
+   *     or the <code>"Collection"</code> type {@link CertStore} is not available.
    * @throws SignatureException if signature verification fails.
    * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
    *     signature.
@@ -1097,34 +1100,7 @@ public final class FidoMetadataDownloader {
           InvalidAlgorithmParameterException,
           FidoMetadataDownloaderException {
     final MetadataBLOBHeader header = parseResult.blob.getHeader();
-
-    final List<X509Certificate> certChain;
-    if (header.getX5u().isPresent()) {
-      final URL x5u = header.getX5u().get();
-      if (blobUrl != null
-          && (!(x5u.getHost().equals(blobUrl.getHost())
-              && x5u.getProtocol().equals(blobUrl.getProtocol())
-              && x5u.getPort() == blobUrl.getPort()))) {
-        throw new IllegalArgumentException(
-            String.format(
-                "x5u in BLOB header must have same origin as the URL the BLOB was downloaded from. Expected origin of: %s ; found: %s",
-                blobUrl, x5u));
-      }
-      List<X509Certificate> certs = new ArrayList<>();
-      for (String pem :
-          new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
-              .trim()
-              .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+")) {
-        X509Certificate x509Certificate = CertificateParser.parsePem(pem);
-        certs.add(x509Certificate);
-      }
-      certChain = certs;
-    } else if (header.getX5c().isPresent()) {
-      certChain = header.getX5c().get();
-    } else {
-      certChain = Collections.singletonList(trustRootCertificate);
-    }
-
+    final List<X509Certificate> certChain = fetchHeaderCertChain(trustRootCertificate, header);
     final X509Certificate leafCert = certChain.get(0);
 
     final Signature signature;
@@ -1158,13 +1134,18 @@ public final class FidoMetadataDownloader {
     if (certStore != null) {
       pathParams.addCertStore(certStore);
     }
+
+    // Parse CRLDistributionPoints ourselves so users don't have to set the
+    // `com.sun.security.enableCRLDP=true` system property
+    fetchCrlDistributionPoints(certChain, certFactory).ifPresent(pathParams::addCertStore);
+
     pathParams.setDate(Date.from(clock.instant()));
     cpv.validate(blobCertPath, pathParams);
 
     return parseResult.blob;
   }
 
-  private static ParseResult parseBlob(ByteArray jwt) throws IOException, Base64UrlException {
+  static ParseResult parseBlob(ByteArray jwt) throws IOException, Base64UrlException {
     Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
     final ByteArray jwtHeader = ByteArray.fromBase64Url(s.next());
     final ByteArray jwtPayload = ByteArray.fromBase64Url(s.next());
@@ -1203,10 +1184,105 @@ public final class FidoMetadataDownloader {
   }
 
   @Value
-  private static class ParseResult {
+  static class ParseResult {
     private MetadataBLOB blob;
     private ByteArray jwtHeader;
     private ByteArray jwtPayload;
     private ByteArray jwtSignature;
+  }
+
+  /** Parse the header cert chain and download any certificates as necessary. */
+  List<X509Certificate> fetchHeaderCertChain(
+      X509Certificate trustRootCertificate, MetadataBLOBHeader header)
+      throws IOException, CertificateException {
+    if (header.getX5u().isPresent()) {
+      final URL x5u = header.getX5u().get();
+      if (blobUrl != null
+          && (!(x5u.getHost().equals(blobUrl.getHost())
+              && x5u.getProtocol().equals(blobUrl.getProtocol())
+              && x5u.getPort() == blobUrl.getPort()))) {
+        throw new IllegalArgumentException(
+            String.format(
+                "x5u in BLOB header must have same origin as the URL the BLOB was downloaded from. Expected origin of: %s ; found: %s",
+                blobUrl, x5u));
+      }
+      List<X509Certificate> certs = new ArrayList<>();
+      for (String pem :
+          new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
+              .trim()
+              .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+")) {
+        X509Certificate x509Certificate = CertificateParser.parsePem(pem);
+        certs.add(x509Certificate);
+      }
+      return certs;
+    } else if (header.getX5c().isPresent()) {
+      return header.getX5c().get();
+    } else {
+      return Collections.singletonList(trustRootCertificate);
+    }
+  }
+
+  /**
+   * Parse the CRLDistributionPoints extension of each certificate, fetch each distribution point
+   * and assemble them into a {@link CertStore} ready to be injected into {@link
+   * PKIXParameters#addCertStore(CertStore)} to provide CRLs for the verification procedure.
+   *
+   * <p>We do this ourselves so that users don't have to set the <code>
+   * com.sun.security.enableCRLDP=true</code> system property. This is required by the default SUN
+   * provider in order to enable CRLDistributionPoints resolution.
+   *
+   * <p>Any CRLDistributionPoints entries in unknown format are ignored and log a warning.
+   */
+  private Optional<CertStore> fetchCrlDistributionPoints(
+      List<X509Certificate> certChain, CertificateFactory certFactory)
+      throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+    final List<URL> crlDistributionPointUrls =
+        certChain.stream()
+            .flatMap(
+                cert -> {
+                  log.debug(
+                      "Attempting to parse CRLDistributionPoints extension of cert: {}",
+                      cert.getSubjectX500Principal());
+                  try {
+                    return CertificateParser.parseCrlDistributionPointsExtension(cert)
+                        .getDistributionPoints()
+                        .stream();
+                  } catch (Exception e) {
+                    log.warn(
+                        "Failed to parse CRLDistributionPoints extension of cert: {}",
+                        cert.getSubjectX500Principal(),
+                        e);
+                    return Stream.empty();
+                  }
+                })
+            .collect(Collectors.toList());
+
+    if (crlDistributionPointUrls.isEmpty()) {
+      return Optional.empty();
+
+    } else {
+      final List<CRL> crldpCrls =
+          crlDistributionPointUrls.stream()
+              .map(
+                  crldpUrl -> {
+                    log.debug("Attempting to download CRL distribution point: {}", crldpUrl);
+                    try {
+                      return Optional.of(
+                          certFactory.generateCRL(
+                              new ByteArrayInputStream(download(crldpUrl).getBytes())));
+                    } catch (CRLException e) {
+                      log.warn("Failed to import CRL from distribution point: {}", crldpUrl, e);
+                      return Optional.<CRL>empty();
+                    } catch (Exception e) {
+                      log.warn("Failed to download CRL distribution point: {}", crldpUrl, e);
+                      return Optional.<CRL>empty();
+                    }
+                  })
+              .flatMap(OptionalUtil::stream)
+              .collect(Collectors.toList());
+
+      return Optional.of(
+          CertStore.getInstance("Collection", new CollectionCertStoreParameters(crldpCrls)));
+    }
   }
 }

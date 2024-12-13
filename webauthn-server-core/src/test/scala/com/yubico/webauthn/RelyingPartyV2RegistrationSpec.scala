@@ -1736,18 +1736,15 @@ class RelyingPartyV2RegistrationSpec
                         key,
                         COSEAlgorithmIdentifier.RS256,
                       )
-                      new ByteArray(
+                      BinaryUtil.concat(
                         java.util.Arrays.copyOfRange(
                           authDataBytes,
                           0,
                           32 + 1 + 4 + 16 + 2,
-                        )
+                        ),
+                        authData.getAttestedCredentialData.get.getCredentialId.getBytes,
+                        reencodedKey.getBytes,
                       )
-                        .concat(
-                          authData.getAttestedCredentialData.get.getCredentialId
-                        )
-                        .concat(reencodedKey)
-                        .getBytes
                     }
 
                     def modifyAttobjPubkeyAlg(attObjBytes: ByteArray)

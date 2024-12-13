@@ -26,20 +26,28 @@ package com.yubico.internal.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import lombok.Value;
 
 public class CertificateParser {
   public static final String ID_FIDO_GEN_CE_AAGUID = "1.3.6.1.4.1.45724.1.1.4";
+  public static final String OID_CRL_DISTRIBUTION_POINTS = "2.5.29.31";
   private static final Base64.Decoder BASE64_DECODER = Base64.getDecoder();
 
   private static final List<String> FIXSIG =
@@ -163,5 +171,154 @@ public class CertificateParser {
           }
         });
     return result;
+  }
+
+  @Value
+  public static class ParseCrlDistributionPointsExtensionResult {
+    /**
+     * The successfully parsed distribution point URLs. If the CRLDistributionPoints extension is
+     * not present, this will be an empty list.
+     */
+    Collection<URL> distributionPoints;
+
+    /**
+     * True if and only if the CRLDistributionPoints extension is present and contains anything that
+     * is not a <code>distributionPoint [0] DistributionPointName</code> containing a <code>
+     * fullName [0] GeneralNames</code> containing exactly one <code>
+     * uniformResourceIdentifier [6]  IA5String</code>
+     */
+    boolean anyDistributionPointUnsupported;
+  }
+
+  public static ParseCrlDistributionPointsExtensionResult parseCrlDistributionPointsExtension(
+      X509Certificate cert) {
+    final byte[] crldpExtension = cert.getExtensionValue(OID_CRL_DISTRIBUTION_POINTS);
+    if (crldpExtension != null) {
+      BinaryUtil.ParseDerResult<byte[]> octetString =
+          BinaryUtil.parseDerOctetString(crldpExtension, 0);
+      try {
+        BinaryUtil.ParseDerResult<List<List<List<Optional<URL>>>>> distributionPoints =
+            BinaryUtil.parseDerSequence(
+                octetString.result,
+                0,
+                (outerSequenceDer, distributionPointOffset) ->
+                    BinaryUtil.parseDerSequence(
+                        outerSequenceDer,
+                        distributionPointOffset,
+                        (innerSequenceDer, distributionPointChoiceOffset) -> {
+                          // DistributionPoint ::= SEQUENCE {
+                          //     distributionPoint       [0]     DistributionPointName OPTIONAL,
+                          final BinaryUtil.ParseDerResult<Optional<Integer>> dpElementOffsets =
+                              BinaryUtil.parseDerTaggedOrSkip(
+                                  innerSequenceDer,
+                                  distributionPointChoiceOffset,
+                                  (byte) 0,
+                                  true,
+                                  BinaryUtil.DerTagClass.CONTEXT_SPECIFIC);
+                          if (dpElementOffsets.result.isPresent()) {
+
+                            // DistributionPointName ::= CHOICE {
+                            //     fullName                [0]     GeneralNames,
+                            final BinaryUtil.ParseDerResult<Optional<Integer>>
+                                dpNameElementOffsets =
+                                    BinaryUtil.parseDerTaggedOrSkip(
+                                        innerSequenceDer,
+                                        dpElementOffsets.result.get(),
+                                        (byte) 0,
+                                        true,
+                                        BinaryUtil.DerTagClass.CONTEXT_SPECIFIC);
+
+                            if (dpNameElementOffsets.result.isPresent()) {
+                              return BinaryUtil.parseDerSequenceContents(
+                                  innerSequenceDer,
+                                  dpNameElementOffsets.result.get(),
+                                  dpNameElementOffsets.nextOffset,
+                                  (generalNamesDer, generalNamesElementOffset) -> {
+                                    // fullName                [0]     GeneralNames,
+                                    // GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
+                                    // GeneralName ::= CHOICE {
+                                    //     uniformResourceIdentifier [6]  IA5String,
+                                    //
+                                    // GeneralNames is defined in RFC 5280 appendix 2 which uses
+                                    // IMPLICIT tagging
+                                    // https://datatracker.ietf.org/doc/html/rfc5280#appendix-A.2
+                                    // so the SEQUENCE tag in GeneralNames is implicit.
+                                    // The IA5String tag is also implicit from the CHOICE tag.
+                                    final BinaryUtil.ParseDerResult<Optional<Integer>>
+                                        generalNameOffsets =
+                                            BinaryUtil.parseDerTaggedOrSkip(
+                                                generalNamesDer,
+                                                generalNamesElementOffset,
+                                                (byte) 6,
+                                                false,
+                                                BinaryUtil.DerTagClass.CONTEXT_SPECIFIC);
+                                    if (generalNameOffsets.result.isPresent()) {
+                                      String uriString =
+                                          new String(
+                                              Arrays.copyOfRange(
+                                                  generalNamesDer,
+                                                  generalNameOffsets.result.get(),
+                                                  generalNameOffsets.nextOffset),
+                                              StandardCharsets.US_ASCII);
+                                      try {
+                                        return new BinaryUtil.ParseDerResult<>(
+                                            Optional.of(new URL(uriString)),
+                                            generalNameOffsets.nextOffset);
+                                      } catch (MalformedURLException e) {
+                                        throw new IllegalArgumentException(
+                                            String.format(
+                                                "Invalid URL in CRLDistributionPoints: %s",
+                                                uriString),
+                                            e);
+                                      }
+                                    } else {
+                                      return new BinaryUtil.ParseDerResult<>(
+                                          Optional.empty(), generalNameOffsets.nextOffset);
+                                    }
+                                  });
+                            }
+                          }
+
+                          // Ignore all other forms of distribution points
+                          return new BinaryUtil.ParseDerResult<>(
+                              Collections.emptyList(), dpElementOffsets.nextOffset);
+                        }));
+
+        return distributionPoints.result.stream()
+            .flatMap(Collection::stream)
+            .flatMap(Collection::stream)
+            .reduce(
+                new ParseCrlDistributionPointsExtensionResult(new ArrayList<>(), false),
+                (result, next) -> {
+                  if (next.isPresent()) {
+                    List<URL> dp = new ArrayList<>(result.distributionPoints);
+                    dp.add(next.get());
+                    return new ParseCrlDistributionPointsExtensionResult(
+                        dp, result.anyDistributionPointUnsupported);
+                  } else {
+                    return new ParseCrlDistributionPointsExtensionResult(
+                        result.distributionPoints, true);
+                  }
+                },
+                (resultA, resultB) -> {
+                  List<URL> dp = new ArrayList<>(resultA.distributionPoints);
+                  dp.addAll(resultB.distributionPoints);
+                  return new ParseCrlDistributionPointsExtensionResult(
+                      dp,
+                      resultA.anyDistributionPointUnsupported
+                          || resultB.anyDistributionPointUnsupported);
+                });
+
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(
+            String.format(
+                "X.509 extension %s (id-ce-cRLDistributionPoints) is incorrectly encoded.",
+                OID_CRL_DISTRIBUTION_POINTS),
+            e);
+      }
+
+    } else {
+      return new ParseCrlDistributionPointsExtensionResult(Collections.emptySet(), false);
+    }
   }
 }
