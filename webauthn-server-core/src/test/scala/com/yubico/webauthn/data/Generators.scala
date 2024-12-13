@@ -868,11 +868,9 @@ object Generators {
       def credentialPropertiesOutput: Gen[CredentialPropertiesOutput] =
         for {
           rk <- arbitrary[Option[Boolean]]
-          authenticatorDisplayName <- arbitrary[Option[String]]
         } yield {
           val b = CredentialPropertiesOutput.builder()
           rk.foreach(b.rk(_))
-          authenticatorDisplayName.foreach(b.authenticatorDisplayName)
           b.build()
         }
     }
