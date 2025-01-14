@@ -2051,13 +2051,6 @@ class RelyingPartyRegistrationSpec
                     IllegalArgumentException
                   ]
 
-                  val goodResult = Try(
-                    verifier.verifyX5cRequirements(badCert, testDataBase.aaguid)
-                  )
-
-                  goodResult shouldBe a[Failure[_]]
-                  goodResult.failed.get shouldBe an[IllegalArgumentException]
-
                   verifier.verifyX5cRequirements(
                     testDataBase.packedAttestationCert,
                     testDataBase.aaguid,
