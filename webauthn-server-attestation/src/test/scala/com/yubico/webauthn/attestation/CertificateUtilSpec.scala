@@ -17,6 +17,7 @@ import scala.jdk.OptionConverters.RichOptional
 class CertificateUtilSpec extends AnyFunSpec with Matchers {
   describe("parseFidoSerNumExtension") {
     val idFidoGenCeSernum = "1.3.6.1.4.1.45724.1.1.2"
+
     it("correctly parses the id-fido-gen-ce-sernum extension.") {
       val (cert, _): (X509Certificate, _) = TestAuthenticator
         .generateAttestationCertificate(
@@ -35,6 +36,16 @@ class CertificateUtilSpec extends AnyFunSpec with Matchers {
           .toScala
           .map(new ByteArray(_))
       result should equal(Some(ByteArray.fromHex("00010203")))
+    }
+
+    it("returns empty when cert has no id-fido-gen-ce-sernum extension.") {
+      val (cert, _): (X509Certificate, _) =
+        TestAuthenticator.generateAttestationCertificate(extensions = Nil)
+      val result =
+        CertificateUtil
+          .parseFidoSerNumExtension(cert)
+          .toScala
+      result should be(None)
     }
 
     it("correctly parses the serial number from a real YubiKey enterprise attestation certificate.") {
