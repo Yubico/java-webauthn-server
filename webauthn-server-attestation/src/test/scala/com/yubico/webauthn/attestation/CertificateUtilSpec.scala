@@ -6,13 +6,13 @@ import org.bouncycastle.asn1.DEROctetString
 import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 
 import java.security.cert.X509Certificate
 
 @RunWith(classOf[JUnitRunner])
-class CertificateUtilSpec extends AnyFunSpec {
+class CertificateUtilSpec extends AnyFunSpec with Matchers {
   describe("parseFidoSerNumExtension") {
     val idFidoGenCeSernum = "1.3.6.1.4.1.45724.1.1.2"
     it("should correctly parse the serial number from a valid certificate with the id-fido-gen-ce-sernum extension.") {
@@ -36,7 +36,7 @@ class CertificateUtilSpec extends AnyFunSpec {
           .parseFidoSerNumExtension(goodCert)
           .get
       )
-      result.shouldEqual(ByteArray.fromHex("00010203"));
+      result should equal(ByteArray.fromHex("00010203"))
     }
 
   }
