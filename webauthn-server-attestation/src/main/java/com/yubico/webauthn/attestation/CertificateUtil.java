@@ -3,7 +3,9 @@ package com.yubico.webauthn.attestation;
 import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
+import lombok.experimental.UtilityClass;
 
+@UtilityClass
 public class CertificateUtil {
   public static final String ID_FIDO_GEN_CE_SERNUM = "1.3.6.1.4.1.45724.1.1.2";
 
