@@ -9,6 +9,7 @@ An optional module which extends link:../[`webauthn-server-core`]
 with a trust root source for verifying
 https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation[attestation statements],
 by interfacing with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
+The module also provides helper functions for inspecting properties of attestation certificates.
 
 
 *Table of contents*
@@ -17,7 +18,7 @@ toc::[]
 
 == Features
 
-This module does four things:
+The FIDO MDS integration does four things:
 
 - Download, verify and cache metadata BLOBs from the FIDO Metadata Service.
 - Re-download the metadata BLOB when out of date or invalid.
@@ -414,3 +415,28 @@ link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-
 class uses `CertPathValidator.getInstance("PKIX")` to retrieve a `CertPathValidator` instance.
 If you need to override any aspect of certificate path validation,
 such as CRL retrieval or OCSP, you may provide a custom `CertPathValidator` provider for the `"PKIX"` algorithm.
+
+
+== Using enterprise attestation
+
+link:https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-attestationconveyancepreference-enterprise[Enterprise attestation]
+is the idea of having attestation statements contain a unique identifier such as a device serial number.
+For example, this identifier could be used by an employer provisioning security keys for their employees.
+By recording which employee has which security key serial numbers,
+the employer can automatically trust the employee upon successful WebAuthn registration
+without having to first authenticate the employee by other means.
+
+Because enterprise attestation by design introduces powerful user tracking,
+it is only allowed in certain contexts and is otherwise blocked by the client.
+See the
+link:https://fidoalliance.org/specs/fido-v2.2-rd-20230321/fido-client-to-authenticator-protocol-v2.2-rd-20230321.html#sctn-feature-descriptions-enterp-attstn[CTAP2 section on Enterprise Attestation]
+for guidance on how to enable enterprise attestation -
+this typically involves a special agreement with an authenticator or client vendor.
+
+At time of writing, there is only one standardized way to convey an enterprise attestation identifer:
+
+- An X.509 certificate extension with OID `1.3.6.1.4.1.45724.1.1.2 (id-fido-gen-ce-sernum)`
+  MAY indicate a unique octet string such as a serial number
+  see
+  https://w3c.github.io/webauthn/#sctn-enterprise-packed-attestation-cert-requirements[Web Authentication Level 3 §8.2.2. Certificate Requirements for Enterprise Packed Attestation Statements].
+  The `CertificateUtil` class provides `parseFidoSernumExtension` helper function for parsing this extension if present.

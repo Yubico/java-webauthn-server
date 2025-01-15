@@ -25,7 +25,10 @@
 package com.yubico.webauthn.attestation;
 
 import com.yubico.internal.util.BinaryUtil;
+import com.yubico.webauthn.RegistrationResult;
+import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.data.ByteArray;
+import java.nio.ByteBuffer;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
 import lombok.experimental.UtilityClass;
@@ -45,6 +48,37 @@ public class CertificateUtil {
     }
   }
 
+  /**
+   * Attempt to parse the FIDO enterprise attestation serial number extension from the given
+   * certificate.
+   *
+   * <p>NOTE: This function does NOT verify that the returned serial number is authentic and
+   * trustworthy. See:
+   *
+   * <ul>
+   *   <li>{@link RelyingParty.RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource)}
+   *   <li>{@link RegistrationResult#isAttestationTrusted()}
+   *   <li>{@link RelyingParty.RelyingPartyBuilder#allowUntrustedAttestation(boolean)}
+   * </ul>
+   *
+   * <p>Note that the serial number is an opaque byte array with no defined structure in general.
+   * For example, the byte array may or may not represent a big-endian integer depending on the
+   * authenticator vendor.
+   *
+   * <p>The extension has OID <code>1.3.6.1.4.1.45724.1.1.2 (id-fido-gen-ce-sernum)</code>.
+   *
+   * @param cert the attestation certificate to parse the serial number from.
+   * @return The serial number, if present and validly encoded. Empty if the extension is not
+   *     present in the certificate.
+   * @throws IllegalArgumentException if the extension is present but not validly encoded.
+   * @see RelyingParty.RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource)
+   * @see RegistrationResult#isAttestationTrusted()
+   * @see RelyingParty.RelyingPartyBuilder#allowUntrustedAttestation(boolean)
+   * @see <a
+   *     href="https://w3c.github.io/webauthn/#sctn-enterprise-packed-attestation-cert-requirements">WebAuthn
+   *     Level 3 §8.2.2. Certificate Requirements for Enterprise Packed Attestation Statements</a>
+   * @see ByteBuffer#getLong()
+   */
   public static Optional<ByteArray> parseFidoSernumExtension(X509Certificate cert) {
     return Optional.ofNullable(cert.getExtensionValue(ID_FIDO_GEN_CE_SERNUM))
         .map(CertificateUtil::parseSerNum)
