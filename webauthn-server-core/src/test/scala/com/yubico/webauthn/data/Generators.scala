@@ -52,6 +52,7 @@ import com.yubico.webauthn.extension.uvm.Generators.userVerificationMethod
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import org.scalacheck.Shrink
 
 import java.net.URL
 import java.security.interfaces.ECPublicKey
@@ -349,6 +350,35 @@ object Generators {
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(
     arbitrary[Array[Byte]].map(new ByteArray(_))
   )
+  implicit val shrinkByteArray: Shrink[ByteArray] = Shrink({ b =>
+    // Attempt to remove as much as possible at a time: first the back half, then the back 1/4, then the back 1/8, etc.
+    val prefixes = Stream.unfold(0) { len =>
+      val nextLen = (len + b.size()) / 2
+      if (nextLen == len || nextLen == b.size()) {
+        None
+      } else {
+        Some((new ByteArray(b.getBytes.slice(0, nextLen)), nextLen))
+      }
+    }
+
+    // Same but removing from the front instead.
+    val suffixes = Stream.unfold(0) { len =>
+      val nextLen = (len + b.size()) / 2
+      if (nextLen == len || nextLen == b.size()) {
+        None
+      } else {
+        Some(
+          (
+            new ByteArray(b.getBytes.slice(b.size() - nextLen, b.size())),
+            nextLen,
+          )
+        )
+      }
+    }
+
+    prefixes concat suffixes
+  })
+
   def byteArray(maxSize: Int): Gen[ByteArray] =
     Gen.listOfN(maxSize, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
