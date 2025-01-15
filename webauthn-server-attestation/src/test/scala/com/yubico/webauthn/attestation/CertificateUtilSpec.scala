@@ -18,7 +18,7 @@ import scala.jdk.OptionConverters.RichOptional
 class CertificateUtilSpec extends AnyFunSpec with Matchers {
   describe("parseFidoSerNumExtension") {
     val idFidoGenCeSernum = "1.3.6.1.4.1.45724.1.1.2"
-    it("should correctly parse the serial number from a valid certificate with the id-fido-gen-ce-sernum extension.") {
+    it("correctly parses the id-fido-gen-ce-sernum extension.") {
       val (cert, _): (X509Certificate, _) = TestAuthenticator
         .generateAttestationCertificate(
           name = new X500Name(
