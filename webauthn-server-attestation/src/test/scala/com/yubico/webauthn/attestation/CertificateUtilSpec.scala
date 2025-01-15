@@ -5,7 +5,6 @@ import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.ByteArray
 import org.bouncycastle.asn1.DEROctetString
-import org.bouncycastle.asn1.x500.X500Name
 import org.junit.runner.RunWith
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -21,16 +20,13 @@ class CertificateUtilSpec extends AnyFunSpec with Matchers {
     it("correctly parses the id-fido-gen-ce-sernum extension.") {
       val (cert, _): (X509Certificate, _) = TestAuthenticator
         .generateAttestationCertificate(
-          name = new X500Name(
-            "O=Yubico, C=SE, OU=Authenticator Attestation"
-          ),
           extensions = List(
             (
               idFidoGenCeSernum,
               false,
               new DEROctetString(Array[Byte](0, 1, 2, 3)),
             )
-          ),
+          )
         )
 
       val result =
