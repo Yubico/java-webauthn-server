@@ -71,7 +71,6 @@ class CertificateUtilSpec
             CertificateUtil
               .parseFidoSerNumExtension(cert)
               .toScala
-              .map(new ByteArray(_))
           result should equal(Some(sernum))
       }
     }
@@ -110,7 +109,6 @@ class CertificateUtilSpec
         CertificateUtil
           .parseFidoSerNumExtension(cert)
           .toScala
-          .map(new ByteArray(_))
 
       result should equal(Some(ByteArray.fromHex("01AFCEFB")))
 

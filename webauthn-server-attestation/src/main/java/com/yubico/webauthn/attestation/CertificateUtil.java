@@ -25,6 +25,7 @@
 package com.yubico.webauthn.attestation;
 
 import com.yubico.internal.util.BinaryUtil;
+import com.yubico.webauthn.data.ByteArray;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
 import lombok.experimental.UtilityClass;
@@ -44,8 +45,9 @@ public class CertificateUtil {
     }
   }
 
-  public static Optional<byte[]> parseFidoSerNumExtension(X509Certificate cert) {
+  public static Optional<ByteArray> parseFidoSerNumExtension(X509Certificate cert) {
     return Optional.ofNullable(cert.getExtensionValue(ID_FIDO_GEN_CE_SERNUM))
-        .map(CertificateUtil::parseSerNum);
+        .map(CertificateUtil::parseSerNum)
+        .map(ByteArray::new);
   }
 }
