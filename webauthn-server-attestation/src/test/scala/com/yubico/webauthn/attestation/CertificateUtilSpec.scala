@@ -19,7 +19,7 @@ class CertificateUtilSpec extends AnyFunSpec with Matchers {
   describe("parseFidoSerNumExtension") {
     val idFidoGenCeSernum = "1.3.6.1.4.1.45724.1.1.2"
     it("should correctly parse the serial number from a valid certificate with the id-fido-gen-ce-sernum extension.") {
-      val goodCert: X509Certificate = TestAuthenticator
+      val (cert, _): (X509Certificate, _) = TestAuthenticator
         .generateAttestationCertificate(
           name = new X500Name(
             "O=Yubico, C=SE, OU=Authenticator Attestation"
@@ -32,14 +32,13 @@ class CertificateUtilSpec extends AnyFunSpec with Matchers {
             )
           ),
         )
-        ._1
 
-      val result = new ByteArray(
+      val result =
         CertificateUtil
-          .parseFidoSerNumExtension(goodCert)
-          .get
-      )
-      result should equal(ByteArray.fromHex("00010203"))
+          .parseFidoSerNumExtension(cert)
+          .toScala
+          .map(new ByteArray(_))
+      result should equal(Some(ByteArray.fromHex("00010203")))
     }
 
     it("correctly parses the serial number from a real YubiKey enterprise attestation certificate.") {
