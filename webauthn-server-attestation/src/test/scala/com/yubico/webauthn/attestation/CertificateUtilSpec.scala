@@ -69,7 +69,7 @@ class CertificateUtilSpec
 
           val result =
             CertificateUtil
-              .parseFidoSerNumExtension(cert)
+              .parseFidoSernumExtension(cert)
               .toScala
           result should equal(Some(sernum))
       }
@@ -80,7 +80,7 @@ class CertificateUtilSpec
         TestAuthenticator.generateAttestationCertificate(extensions = Nil)
       val result =
         CertificateUtil
-          .parseFidoSerNumExtension(cert)
+          .parseFidoSernumExtension(cert)
           .toScala
       result should be(None)
     }
@@ -107,7 +107,7 @@ class CertificateUtilSpec
 
       val result =
         CertificateUtil
-          .parseFidoSerNumExtension(cert)
+          .parseFidoSernumExtension(cert)
           .toScala
 
       result should equal(Some(ByteArray.fromHex("01AFCEFB")))

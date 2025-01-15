@@ -45,7 +45,7 @@ public class CertificateUtil {
     }
   }
 
-  public static Optional<ByteArray> parseFidoSerNumExtension(X509Certificate cert) {
+  public static Optional<ByteArray> parseFidoSernumExtension(X509Certificate cert) {
     return Optional.ofNullable(cert.getExtensionValue(ID_FIDO_GEN_CE_SERNUM))
         .map(CertificateUtil::parseSerNum)
         .map(ByteArray::new);
