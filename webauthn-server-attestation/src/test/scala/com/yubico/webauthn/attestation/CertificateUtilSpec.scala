@@ -28,38 +28,52 @@ import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.CertificateParser
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.Generators.arbitraryByteArray
+import com.yubico.webauthn.data.Generators.shrinkByteArray
 import org.bouncycastle.asn1.DEROctetString
 import org.junit.runner.RunWith
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.security.cert.X509Certificate
 import scala.jdk.OptionConverters.RichOptional
 
 @RunWith(classOf[JUnitRunner])
-class CertificateUtilSpec extends AnyFunSpec with Matchers {
+class CertificateUtilSpec
+    extends AnyFunSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
   describe("parseFidoSerNumExtension") {
     val idFidoGenCeSernum = "1.3.6.1.4.1.45724.1.1.2"
 
     it("correctly parses the id-fido-gen-ce-sernum extension.") {
-      val (cert, _): (X509Certificate, _) = TestAuthenticator
-        .generateAttestationCertificate(
-          extensions = List(
-            (
-              idFidoGenCeSernum,
-              false,
-              new DEROctetString(Array[Byte](0, 1, 2, 3)),
+      forAll(
+        // 500-byte long serial numbers are not realistic, but would be valid DER data.
+        sizeRange(500)
+      ) {
+        // Using Array[Byte] here causes an (almost) infinite loop in the shrinker in case of failure.
+        // See: https://github.com/typelevel/scalacheck/issues/968#issuecomment-2594018791
+        sernum: ByteArray =>
+          val (cert, _): (X509Certificate, _) = TestAuthenticator
+            .generateAttestationCertificate(
+              extensions = List(
+                (
+                  idFidoGenCeSernum,
+                  false,
+                  new DEROctetString(sernum.getBytes),
+                )
+              )
             )
-          )
-        )
 
-      val result =
-        CertificateUtil
-          .parseFidoSerNumExtension(cert)
-          .toScala
-          .map(new ByteArray(_))
-      result should equal(Some(ByteArray.fromHex("00010203")))
+          val result =
+            CertificateUtil
+              .parseFidoSerNumExtension(cert)
+              .toScala
+              .map(new ByteArray(_))
+          result should equal(Some(sernum))
+      }
     }
 
     it("returns empty when cert has no id-fido-gen-ce-sernum extension.") {
