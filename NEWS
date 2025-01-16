@@ -68,6 +68,8 @@ New features:
 * `FidoMetadataDownloader` now parses the CRLDistributionPoints extension on the
   application level, so the `com.sun.security.enableCRLDP=true` system property
   setting is no longer necessary.
+* Added helper function `CertificateUtil.parseFidoSernumExtension` for parsing
+  serial number from enterprise attestation certificates.
 
 
 == Version 2.5.4 ==
