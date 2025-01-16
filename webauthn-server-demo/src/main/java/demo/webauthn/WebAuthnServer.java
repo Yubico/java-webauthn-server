@@ -39,13 +39,12 @@ import com.yubico.fido.metadata.UnexpectedLegalHeader;
 import com.yubico.internal.util.CertificateParser;
 import com.yubico.internal.util.JacksonCodecs;
 import com.yubico.util.Either;
-import com.yubico.webauthn.AssertionResultV2;
+import com.yubico.webauthn.AssertionResult;
 import com.yubico.webauthn.FinishAssertionOptions;
 import com.yubico.webauthn.FinishRegistrationOptions;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.RegistrationResult;
 import com.yubico.webauthn.RelyingParty;
-import com.yubico.webauthn.RelyingPartyV2;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.attestation.YubicoJsonMetadataService;
@@ -145,7 +144,7 @@ public class WebAuthnServer {
   private final Clock clock = Clock.systemDefaultZone();
   private final ObjectMapper jsonMapper = JacksonCodecs.json();
 
-  private final RelyingPartyV2<CredentialRegistration> rp;
+  private final RelyingParty rp;
 
   public WebAuthnServer()
       throws CertificateException,
@@ -191,8 +190,7 @@ public class WebAuthnServer {
     rp =
         RelyingParty.builder()
             .identity(rpIdentity)
-            .credentialRepositoryV2(this.userStorage)
-            .usernameRepository(this.userStorage)
+            .credentialRepository(this.userStorage)
             .origins(origins)
             .attestationConveyancePreference(Optional.of(AttestationConveyancePreference.DIRECT))
             .attestationTrustSource(metadataService)
@@ -490,7 +488,7 @@ public class WebAuthnServer {
       return Either.left(Arrays.asList("Assertion failed!", "No such assertion in progress."));
     } else {
       try {
-        AssertionResultV2<CredentialRegistration> result =
+        AssertionResult result =
             rp.finishAssertion(
                 FinishAssertionOptions.builder()
                     .request(request.getRequest())
@@ -503,7 +501,7 @@ public class WebAuthnServer {
           } catch (Exception e) {
             logger.error(
                 "Failed to update signature count for user \"{}\", credential \"{}\"",
-                result.getCredential().getUsername(),
+                result.getUsername(),
                 response.getCredential().getId(),
                 e);
           }
@@ -512,8 +510,8 @@ public class WebAuthnServer {
               new SuccessfulAuthenticationResult(
                   request,
                   response,
-                  userStorage.getRegistrationsByUsername(result.getCredential().getUsername()),
-                  result.getCredential().getUsername(),
+                  userStorage.getRegistrationsByUsername(result.getUsername()),
+                  result.getUsername(),
                   sessions.createSession(result.getCredential().getUserHandle())));
         } else {
           return Either.left(Collections.singletonList("Assertion failed: Invalid assertion."));

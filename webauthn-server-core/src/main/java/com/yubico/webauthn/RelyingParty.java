@@ -516,7 +516,7 @@ public class RelyingParty {
    * #finishRegistration(FinishRegistrationOptions)} instead of this method.
    */
   FinishRegistrationSteps _finishRegistration(FinishRegistrationOptions options) {
-    return FinishRegistrationSteps.fromV1(this, options);
+    return new FinishRegistrationSteps(this, options);
   }
 
   public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
@@ -574,8 +574,8 @@ public class RelyingParty {
    * a separate method to facilitate testing; users should call {@link
    * #finishAssertion(FinishAssertionOptions)} instead of this method.
    */
-  FinishAssertionSteps<RegisteredCredential> _finishAssertion(FinishAssertionOptions options) {
-    return FinishAssertionSteps.fromV1(this, options);
+  FinishAssertionSteps _finishAssertion(FinishAssertionOptions options) {
+    return new FinishAssertionSteps(this, options);
   }
 
   public static RelyingPartyBuilder.MandatoryStages builder() {
@@ -608,30 +608,9 @@ public class RelyingParty {
          * credentialRepository} is a required parameter.
          *
          * @see RelyingPartyBuilder#credentialRepository(CredentialRepository)
-         * @see #credentialRepositoryV2(CredentialRepositoryV2)
          */
         public RelyingPartyBuilder credentialRepository(CredentialRepository credentialRepository) {
           return builder.credentialRepository(credentialRepository);
-        }
-
-        /**
-         * {@link RelyingPartyBuilder#credentialRepository(CredentialRepository)
-         * credentialRepository} is a required parameter. This setter differs from {@link
-         * #credentialRepository(CredentialRepository)} in that it takes an instance of {@link
-         * CredentialRepositoryV2} and converts the builder's return type to {@link RelyingPartyV2}.
-         * {@link CredentialRepositoryV2} does not require the application to support usernames,
-         * unless {@link RelyingPartyV2.RelyingPartyV2Builder#usernameRepository(UsernameRepository)
-         * usernameRepository} is also set in a subsequent builder step.
-         *
-         * @see #credentialRepository(CredentialRepository)
-         * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be
-         *     deleted before reaching a mature release.
-         */
-        @Deprecated
-        public <C extends CredentialRecord>
-            RelyingPartyV2.RelyingPartyV2Builder<C> credentialRepositoryV2(
-                CredentialRepositoryV2<C> credentialRepository) {
-          return RelyingPartyV2.builder(builder.identity, credentialRepository);
         }
       }
     }
