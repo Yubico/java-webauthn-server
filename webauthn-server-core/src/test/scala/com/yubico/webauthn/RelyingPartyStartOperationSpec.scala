@@ -115,7 +115,7 @@ class RelyingPartyStartOperationSpec
         .identity(rpId)
         .credentialRepository(credRepo(credentials, userId))
         .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
-        .origins(Set.empty.asJava)
+        .origins(Set.empty[String].asJava)
       appId.foreach { appid => builder = builder.appId(appid) }
       attestationConveyancePreference.foreach { acp =>
         builder = builder.attestationConveyancePreference(acp)

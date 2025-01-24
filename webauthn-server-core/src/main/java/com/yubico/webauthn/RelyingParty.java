@@ -588,6 +588,16 @@ public class RelyingParty {
         Optional.empty();
     private @NonNull Optional<AttestationTrustSource> attestationTrustSource = Optional.empty();
 
+    public RelyingPartyBuilder origins(@NonNull Set<String> origins) {
+      this.origins = origins;
+      return this;
+    }
+
+    public RelyingPartyBuilder origins(Optional<Set<String>> origins) {
+      this.origins = origins.orElse(null);
+      return this;
+    }
+
     public static class MandatoryStages {
       private final RelyingPartyBuilder builder = new RelyingPartyBuilder();
 
