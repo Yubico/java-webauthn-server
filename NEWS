@@ -1,3 +1,46 @@
+== Version 2.6.0 ==
+
+`webauthn-server-core`:
+
+New features:
+
+* Added method `getParsedPublicKey(): java.security.PublicKey` to
+  `RegistrationResult` and `RegisteredCredential`.
+ ** Thanks to Jakob Heher (A-SIT) for the contribution, see
+    https://github.com/Yubico/java-webauthn-server/pull/299
+* Added enum parsing functions:
+ ** `AuthenticatorAttachment.fromValue(String): Optional<AuthenticatorAttachment>`
+ ** `PublicKeyCredentialType.fromId(String): Optional<PublicKeyCredentialType>`
+ ** `ResidentKeyRequirement.fromValue(String): Optional<ResidentKeyRequirement>`
+ ** `TokenBindingStatus.fromValue(String): Optional<TokenBindingStatus>`
+ ** `UserVerificationRequirement.fromValue(String): Optional<UserVerificationRequirement>`
+* Added public builder to `CredentialPropertiesOutput`.
+* Added public factory function
+  `LargeBlobRegistrationOutput.supported(boolean)`.
+* Added public factory functions to `LargeBlobAuthenticationOutput`.
+* Added `hints` property to `StartRegistrationOptions`, `StartAssertionOptions`,
+  `PublicKeyCredentialCreationOptions` and `PublicKeyCredentialRequestOptions`,
+  and class `PublicKeyCredentialHint` to support them, to support the `hints`
+  parameter introduced in WebAuthn L3:
+  https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#dom-publickeycredentialcreationoptions-hints
+* (Experimental) Added option `isSecurePaymentConfirmation(boolean)` to
+  `FinishAssertionOptions`. When set, `RelyingParty.finishAssertion()` will
+  adapt the validation logic for a Secure Payment Confirmation (SPC) response
+  instead of an ordinary WebAuthn response. See the JavaDoc for details.
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+
+`webauthn-server-attestation`:
+
+New features:
+
+* `FidoMetadataDownloader` now parses the CRLDistributionPoints extension on the
+  application level, so the `com.sun.security.enableCRLDP=true` system property
+  setting is no longer necessary.
+* Added helper function `CertificateUtil.parseFidoSernumExtension` for parsing
+  serial number from enterprise attestation certificates.
+
+
 == Version 2.5.4 ==
 
 `webauthn-server-attestation`:

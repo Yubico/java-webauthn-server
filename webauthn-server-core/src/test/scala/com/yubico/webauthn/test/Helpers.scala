@@ -13,6 +13,9 @@ import scala.jdk.OptionConverters.RichOption
 
 object Helpers {
 
+  def toJava(o: Option[scala.Boolean]): Optional[java.lang.Boolean] =
+    o.toJava.map((b: scala.Boolean) => b)
+
   object CredentialRepository {
     val empty = new CredentialRepository {
       override def getCredentialIdsForUsername(

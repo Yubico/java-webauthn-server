@@ -52,6 +52,7 @@ import com.yubico.webauthn.extension.uvm.Generators.userVerificationMethod
 import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
+import org.scalacheck.Shrink
 
 import java.net.URL
 import java.security.interfaces.ECPublicKey
@@ -349,6 +350,35 @@ object Generators {
   implicit val arbitraryByteArray: Arbitrary[ByteArray] = Arbitrary(
     arbitrary[Array[Byte]].map(new ByteArray(_))
   )
+  implicit val shrinkByteArray: Shrink[ByteArray] = Shrink({ b =>
+    // Attempt to remove as much as possible at a time: first the back half, then the back 1/4, then the back 1/8, etc.
+    val prefixes = Stream.unfold(0) { len =>
+      val nextLen = (len + b.size()) / 2
+      if (nextLen == len || nextLen == b.size()) {
+        None
+      } else {
+        Some((new ByteArray(b.getBytes.slice(0, nextLen)), nextLen))
+      }
+    }
+
+    // Same but removing from the front instead.
+    val suffixes = Stream.unfold(0) { len =>
+      val nextLen = (len + b.size()) / 2
+      if (nextLen == len || nextLen == b.size()) {
+        None
+      } else {
+        Some(
+          (
+            new ByteArray(b.getBytes.slice(b.size() - nextLen, b.size())),
+            nextLen,
+          )
+        )
+      }
+    }
+
+    prefixes concat suffixes
+  })
+
   def byteArray(maxSize: Int): Gen[ByteArray] =
     Gen.listOfN(maxSize, arbitrary[Byte]).map(ba => new ByteArray(ba.toArray))
 
@@ -867,8 +897,12 @@ object Generators {
     object CredProps {
       def credentialPropertiesOutput: Gen[CredentialPropertiesOutput] =
         for {
-          rk <- arbitrary[Boolean]
-        } yield new CredentialPropertiesOutput(rk)
+          rk <- arbitrary[Option[Boolean]]
+        } yield {
+          val b = CredentialPropertiesOutput.builder()
+          rk.foreach(b.rk(_))
+          b.build()
+        }
     }
 
     object LargeBlob {
@@ -883,7 +917,7 @@ object Generators {
       def largeBlobRegistrationOutput: Gen[LargeBlobRegistrationOutput] =
         for {
           supported <- arbitrary[Boolean]
-        } yield new LargeBlobRegistrationOutput(supported)
+        } yield LargeBlobRegistrationOutput.supported(supported)
 
       def largeBlobAuthenticationInput: Gen[LargeBlobAuthenticationInput] =
         halfsized(
@@ -898,8 +932,8 @@ object Generators {
           blob <- arbitrary[ByteArray]
           written <- arbitrary[Boolean]
           result <- Gen.oneOf(
-            new LargeBlobAuthenticationOutput(blob, null),
-            new LargeBlobAuthenticationOutput(null, written),
+            LargeBlobAuthenticationOutput.read(blob),
+            LargeBlobAuthenticationOutput.write(written),
           )
         } yield result)
     }
@@ -1065,19 +1099,32 @@ object Generators {
           arbitrary[java.util.List[PublicKeyCredentialParameters]]
         rp <- arbitrary[RelyingPartyIdentity]
         timeout <- arbitrary[Optional[java.lang.Long]]
+        hints <-
+          arbitrary[Option[Either[Either[List[String], Array[String]], List[
+            PublicKeyCredentialHint
+          ]]]]
         user <- arbitrary[UserIdentity]
-      } yield PublicKeyCredentialCreationOptions
-        .builder()
-        .rp(rp)
-        .user(user)
-        .challenge(challenge)
-        .pubKeyCredParams(pubKeyCredParams)
-        .attestation(attestation)
-        .authenticatorSelection(authenticatorSelection)
-        .excludeCredentials(excludeCredentials)
-        .extensions(extensions)
-        .timeout(timeout)
-        .build()
+      } yield {
+        val b = PublicKeyCredentialCreationOptions
+          .builder()
+          .rp(rp)
+          .user(user)
+          .challenge(challenge)
+          .pubKeyCredParams(pubKeyCredParams)
+          .attestation(attestation)
+          .authenticatorSelection(authenticatorSelection)
+          .excludeCredentials(excludeCredentials)
+          .extensions(extensions)
+          .timeout(timeout)
+
+        hints.foreach {
+          case Left(Left(h: List[String]))             => b.hints(h.asJava)
+          case Left(Right(h: Array[String]))           => b.hints(h: _*)
+          case Right(h: List[PublicKeyCredentialHint]) => b.hints(h: _*)
+        }
+
+        b.build()
+      }
     )
   )
 
@@ -1094,6 +1141,14 @@ object Generators {
         .transports(transports)
         .`type`(tpe)
         .build()
+    )
+  )
+
+  implicit val arbitraryPublicKeyCredentialHint
+      : Arbitrary[PublicKeyCredentialHint] = Arbitrary(
+    Gen.oneOf(
+      Gen.oneOf(PublicKeyCredentialHint.values()),
+      arbitrary[String].map(PublicKeyCredentialHint.of),
     )
   )
 
@@ -1121,16 +1176,29 @@ object Generators {
         extensions <- arbitrary[AssertionExtensionInputs]
         rpId <- arbitrary[Optional[String]]
         timeout <- arbitrary[Optional[java.lang.Long]]
+        hints <-
+          arbitrary[Option[Either[Either[List[String], Array[String]], List[
+            PublicKeyCredentialHint
+          ]]]]
         userVerification <- arbitrary[UserVerificationRequirement]
-      } yield PublicKeyCredentialRequestOptions
-        .builder()
-        .challenge(challenge)
-        .allowCredentials(allowCredentials)
-        .extensions(extensions)
-        .rpId(rpId)
-        .timeout(timeout)
-        .userVerification(userVerification)
-        .build()
+      } yield {
+        val b = PublicKeyCredentialRequestOptions
+          .builder()
+          .challenge(challenge)
+          .allowCredentials(allowCredentials)
+          .extensions(extensions)
+          .rpId(rpId)
+          .timeout(timeout)
+          .userVerification(userVerification)
+
+        hints.foreach {
+          case Left(Left(h: List[String]))             => b.hints(h.asJava)
+          case Left(Right(h: Array[String]))           => b.hints(h: _*)
+          case Right(h: List[PublicKeyCredentialHint]) => b.hints(h: _*)
+        }
+
+        b.build()
+      }
     )
   )
 

@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.UtilityClass;
@@ -64,13 +65,14 @@ public class Extensions {
      *     Credential Properties Extension (credProps)</a>
      */
     @Value
+    @Builder
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class CredentialPropertiesOutput {
       @JsonProperty("rk")
       private final Boolean rk;
 
       @JsonCreator
-      CredentialPropertiesOutput(@JsonProperty("rk") Boolean rk) {
+      private CredentialPropertiesOutput(@JsonProperty("rk") Boolean rk) {
         this.rk = rk;
       }
 
@@ -216,6 +218,9 @@ public class Extensions {
      * Extension inputs for the Large blob storage extension (<code>largeBlob</code>) in
      * authentication ceremonies.
      *
+     * <p>Use the {@link #read()} and {@link #write(ByteArray)} factory functions to construct this
+     * type.
+     *
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
@@ -311,6 +316,8 @@ public class Extensions {
      * Extension outputs for the Large blob storage extension (<code>largeBlob</code>) in
      * registration ceremonies.
      *
+     * <p>Use the {@link #supported(boolean)} factory function to construct this type.
+     *
      * @see <a
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
      *     Large blob storage extension (largeBlob)</a>
@@ -328,8 +335,20 @@ public class Extensions {
       @JsonProperty private final boolean supported;
 
       @JsonCreator
-      LargeBlobRegistrationOutput(@JsonProperty("supported") boolean supported) {
+      private LargeBlobRegistrationOutput(@JsonProperty("supported") boolean supported) {
         this.supported = supported;
+      }
+
+      /**
+       * Create a Large blob storage extension output with the <code>supported</code> output set to
+       * the given value.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-authenticationextensionslargebloboutputs">
+       *     dictionary AuthenticationExtensionsLargeBlobOutputs</a>
+       */
+      public static LargeBlobRegistrationOutput supported(boolean supported) {
+        return new LargeBlobRegistrationOutput(supported);
       }
     }
 
@@ -347,10 +366,41 @@ public class Extensions {
       @JsonProperty private final Boolean written;
 
       @JsonCreator
-      LargeBlobAuthenticationOutput(
+      private LargeBlobAuthenticationOutput(
           @JsonProperty("blob") ByteArray blob, @JsonProperty("written") Boolean written) {
         this.blob = blob;
         this.written = written;
+      }
+
+      /**
+       * Create a Large blob storage extension output with the <code>blob</code> output set to the
+       * given value.
+       *
+       * <p>This corresponds to the extension input {@link LargeBlobAuthenticationInput#read()
+       * LargeBlobAuthenticationInput.read()}.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-authenticationextensionslargebloboutputs">
+       *     dictionary AuthenticationExtensionsLargeBlobOutputs</a>
+       */
+      public static LargeBlobAuthenticationOutput read(final ByteArray blob) {
+        return new LargeBlobAuthenticationOutput(blob, null);
+      }
+
+      /**
+       * Create a Large blob storage extension output with the <code>written</code> output set to
+       * the given value.
+       *
+       * <p>This corresponds to the extension input {@link
+       * LargeBlobAuthenticationInput#write(ByteArray)
+       * LargeBlobAuthenticationInput.write(ByteArray)}.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-authenticationextensionslargebloboutputs">
+       *     dictionary AuthenticationExtensionsLargeBlobOutputs</a>
+       */
+      public static LargeBlobAuthenticationOutput write(final boolean write) {
+        return new LargeBlobAuthenticationOutput(null, write);
       }
 
       /**

@@ -40,10 +40,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
-/**
- * Standalone Java application launcher that runs the demo server with the API but no static
- * resources (i.e., no web GUI)
- */
+/** Standalone Java application launcher that runs the demo application. */
 public class EmbeddedServer {
 
   public static void main(String[] args) throws Exception {

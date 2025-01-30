@@ -1,4 +1,6 @@
 = v1.x to v2.0 migration guide
+:idprefix:
+:idseparator: -
 
 The `2.0` release of the `webauthn-server-core` module
 removes some deprecated features
@@ -11,7 +13,7 @@ link:https://github.com/Yubico/java-webauthn-server/issues/new[let us know!]
 
 This is the migration guide for the core library.
 The `webauthn-server-attestation` module has
-link:../webauthn-server-attestation/doc/Migrating_from_v1.adoc[its own migration guide].
+link:https://developers.yubico.com/java-webauthn-server/webauthn-server-attestation/doc/Migrating_from_v1.html[its own migration guide].
 
 Here is a high-level outline of what needs to be updated:
 

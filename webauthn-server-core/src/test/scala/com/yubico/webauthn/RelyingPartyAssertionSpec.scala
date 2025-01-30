@@ -27,7 +27,9 @@ package com.yubico.webauthn
 import com.fasterxml.jackson.core.`type`.TypeReference
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.upokecenter.cbor.CBORObject
+import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.AssertionExtensionInputs
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse
@@ -38,6 +40,7 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
@@ -45,7 +48,6 @@ import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
-import com.yubico.webauthn.data.ReexportHelpers
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.data.UserVerificationRequirement
@@ -179,6 +181,7 @@ class RelyingPartyAssertionSpec
       credentialId: ByteArray = Defaults.credentialId,
       credentialKey: KeyPair = Defaults.credentialKey,
       credentialRepository: Option[CredentialRepository] = None,
+      isSecurePaymentConfirmation: Option[Boolean] = None,
       origins: Option[Set[String]] = None,
       requestedExtensions: AssertionExtensionInputs =
         Defaults.requestedExtensions,
@@ -277,9 +280,19 @@ class RelyingPartyAssertionSpec
 
     origins.map(_.asJava).foreach(builder.origins _)
 
+    val fao = FinishAssertionOptions
+      .builder()
+      .request(request)
+      .response(response)
+      .callerTokenBindingId(callerTokenBindingId.toJava)
+
+    isSecurePaymentConfirmation foreach { isSpc =>
+      fao.isSecurePaymentConfirmation(isSpc)
+    }
+
     builder
       .build()
-      ._finishAssertion(request, response, callerTokenBindingId.toJava)
+      ._finishAssertion(fao.build())
   }
 
   testWithEachProvider { it =>
@@ -935,14 +948,18 @@ class RelyingPartyAssertionSpec
             step.validations shouldBe a[Success[_]]
           }
 
-          def assertFails(typeString: String): Unit = {
+          def assertFails(
+              typeString: String,
+              isSecurePaymentConfirmation: Option[Boolean] = None,
+          ): Unit = {
             val steps = finishAssertion(
               clientDataJson = JacksonCodecs.json.writeValueAsString(
                 JacksonCodecs.json
                   .readTree(Defaults.clientDataJson)
                   .asInstanceOf[ObjectNode]
                   .set("type", jsonFactory.textNode(typeString))
-              )
+              ),
+              isSecurePaymentConfirmation = isSecurePaymentConfirmation,
             )
             val step: FinishAssertionSteps#Step11 =
               steps.begin.next.next.next.next.next
@@ -966,6 +983,72 @@ class RelyingPartyAssertionSpec
 
           it("""The string "webauthn.create" fails.""") {
             assertFails("webauthn.create")
+          }
+
+          it("""The string "payment.get" fails.""") {
+            assertFails("payment.get")
+          }
+
+          describe("If the isSecurePaymentConfirmation option is set,") {
+            it("the default test case fails.") {
+              val steps =
+                finishAssertion(isSecurePaymentConfirmation = Some(true))
+              val step: FinishAssertionSteps#Step11 =
+                steps.begin.next.next.next.next.next
+
+              step.validations shouldBe a[Failure[_]]
+              step.validations.failed.get shouldBe an[IllegalArgumentException]
+            }
+
+            it("""the default test case succeeds if type is overwritten with the value "payment.get".""") {
+              val json = JacksonCodecs.json()
+              val steps = finishAssertion(
+                isSecurePaymentConfirmation = Some(true),
+                clientDataJson = json.writeValueAsString(
+                  json
+                    .readTree(Defaults.clientDataJson)
+                    .asInstanceOf[ObjectNode]
+                    .set[ObjectNode]("type", new TextNode("payment.get"))
+                ),
+              )
+              val step: FinishAssertionSteps#Step11 =
+                steps.begin.next.next.next.next.next
+
+              step.validations shouldBe a[Success[_]]
+            }
+
+            it("""any value other than "payment.get" fails.""") {
+              forAll { (typeString: String) =>
+                whenever(typeString != "payment.get") {
+                  assertFails(
+                    typeString,
+                    isSecurePaymentConfirmation = Some(true),
+                  )
+                }
+              }
+              forAll(Gen.alphaNumStr) { (typeString: String) =>
+                whenever(typeString != "payment.get") {
+                  assertFails(
+                    typeString,
+                    isSecurePaymentConfirmation = Some(true),
+                  )
+                }
+              }
+            }
+
+            it("""the string "webauthn.create" fails.""") {
+              assertFails(
+                "webauthn.create",
+                isSecurePaymentConfirmation = Some(true),
+              )
+            }
+
+            it("""the string "webauthn.get" fails.""") {
+              assertFails(
+                "webauthn.get",
+                isSecurePaymentConfirmation = Some(true),
+              )
+            }
           }
         }
 
@@ -1428,12 +1511,15 @@ class RelyingPartyAssertionSpec
         }
 
         {
-          def checks[Next <: FinishAssertionSteps.Step[
-            _
-          ], Step <: FinishAssertionSteps.Step[Next]](
+          def checks[
+              Next <: FinishAssertionSteps.Step[_],
+              Step <: FinishAssertionSteps.Step[Next],
+          ](
               stepsToStep: FinishAssertionSteps => Step
           ) = {
-            def check[Ret](stepsToStep: FinishAssertionSteps => Step)(
+            def check[Ret](
+                stepsToStep: FinishAssertionSteps => Step
+            )(
                 chk: Step => Ret
             )(uvr: UserVerificationRequirement, authData: ByteArray): Ret = {
               val steps = finishAssertion(
@@ -1585,7 +1671,9 @@ class RelyingPartyAssertionSpec
                       .builder()
                       .credentialId(Defaults.credentialId)
                       .userHandle(Defaults.userHandle)
-                      .publicKeyCose(getPublicKeyBytes(Defaults.credentialKey))
+                      .publicKeyCose(
+                        getPublicKeyBytes(Defaults.credentialKey)
+                      )
                       .backupEligible(false)
                       .backupState(false)
                       .build(),
@@ -2310,13 +2398,14 @@ class RelyingPartyAssertionSpec
 
       it("a U2F-formatted public key.") {
         val testData = RealExamples.YubiKeyNeo.asRegistrationTestData
-        val x = ByteArray.fromHex(
+        val x = BinaryUtil.fromHex(
           "39C94FBBDDC694A925E6F8657C66916CFE84CD0222EDFCF281B21F5CDC347923"
         )
-        val y = ByteArray.fromHex(
+        val y = BinaryUtil.fromHex(
           "D6B0D2021CFE1724A6FE81E3568C4FFAE339298216A30AFC18C0B975F2E2A891"
         )
-        val u2fPubkey = ByteArray.fromHex("04").concat(x).concat(y)
+        val u2fPubkey =
+          new ByteArray(BinaryUtil.concat(BinaryUtil.fromHex("04"), x, y))
 
         val cred1 = RegisteredCredential
           .builder()
@@ -2409,8 +2498,7 @@ class RelyingPartyAssertionSpec
                     ClientAssertionExtensionOutputs
                       .builder()
                       .largeBlob(
-                        ReexportHelpers
-                          .newLargeBlobAuthenticationOutput(None, Some(true))
+                        LargeBlobAuthenticationOutput.write(true)
                       )
                       .build()
                   )
@@ -2451,10 +2539,8 @@ class RelyingPartyAssertionSpec
                     ClientAssertionExtensionOutputs
                       .builder()
                       .largeBlob(
-                        ReexportHelpers.newLargeBlobAuthenticationOutput(
-                          Some(ByteArray.fromHex("00010203")),
-                          None,
-                        )
+                        LargeBlobAuthenticationOutput
+                          .read(ByteArray.fromHex("00010203"))
                       )
                       .build()
                   )

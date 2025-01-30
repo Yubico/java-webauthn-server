@@ -25,6 +25,7 @@
 package com.yubico.internal.util
 
 import org.junit.runner.RunWith
+import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -149,4 +150,59 @@ class BinaryUtilSpec
     }
   }
 
+  describe("DER parsing and encoding:") {
+    it("encodeDerLength and parseDerLength are each other's inverse.") {
+      forAll(
+        Gen.chooseNum(0, Int.MaxValue),
+        Arbitrary.arbitrary[Array[Byte]],
+      ) { (len: Int, prefix: Array[Byte]) =>
+        val encoded = BinaryUtil.encodeDerLength(len)
+        val decoded = BinaryUtil.parseDerLength(encoded, 0)
+        val decodedWithPrefix = BinaryUtil.parseDerLength(
+          BinaryUtil.concat(prefix, encoded),
+          prefix.length,
+        )
+
+        decoded.result should equal(len)
+        decoded.nextOffset should equal(encoded.length)
+        decodedWithPrefix.result should equal(len)
+        decodedWithPrefix.nextOffset should equal(
+          prefix.length + encoded.length
+        )
+
+        val recoded = BinaryUtil.encodeDerLength(decoded.result)
+        recoded should equal(encoded)
+      }
+    }
+
+    it("parseDerLength tolerates unnecessarily long encodings.") {
+      BinaryUtil
+        .parseDerLength(Array(0x81, 0).map(_.toByte), 0)
+        .result should equal(0)
+      BinaryUtil
+        .parseDerLength(Array(0x82, 0, 0).map(_.toByte), 0)
+        .result should equal(0)
+      BinaryUtil
+        .parseDerLength(Array(0x83, 0, 0, 0).map(_.toByte), 0)
+        .result should equal(0)
+      BinaryUtil
+        .parseDerLength(Array(0x84, 0, 0, 0, 0).map(_.toByte), 0)
+        .result should equal(0)
+      BinaryUtil
+        .parseDerLength(Array(0x81, 7).map(_.toByte), 0)
+        .result should equal(7)
+      BinaryUtil
+        .parseDerLength(Array(0x82, 0, 7).map(_.toByte), 0)
+        .result should equal(7)
+      BinaryUtil
+        .parseDerLength(Array(0x83, 0, 0, 7).map(_.toByte), 0)
+        .result should equal(7)
+      BinaryUtil
+        .parseDerLength(Array(0x84, 0, 0, 4, 2).map(_.toByte), 0)
+        .result should equal(1026)
+      BinaryUtil
+        .parseDerLength(Array(0x84, 0, 1, 33, 7).map(_.toByte), 0)
+        .result should equal(73991)
+    }
+  }
 }

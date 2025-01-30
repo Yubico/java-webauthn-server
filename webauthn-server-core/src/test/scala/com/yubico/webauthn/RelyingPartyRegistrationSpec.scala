@@ -52,14 +52,14 @@ import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
+import com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
+import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
 import com.yubico.webauthn.data.PublicKeyCredentialParameters
-import com.yubico.webauthn.data.ReexportHelpers
-import com.yubico.webauthn.data.ReexportHelpers.newCredentialPropertiesOutput
 import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
@@ -175,17 +175,22 @@ class RelyingPartyRegistrationSpec
 
     origins.map(_.asJava).foreach(builder.origins _)
 
-    builder
-      .build()
-      ._finishRegistration(
+    val fro = FinishRegistrationOptions
+      .builder()
+      .request(
         pubkeyCredParams
           .map(pkcp =>
             testData.request.toBuilder.pubKeyCredParams(pkcp.asJava).build()
           )
-          .getOrElse(testData.request),
-        testData.response,
-        callerTokenBindingId.toJava,
+          .getOrElse(testData.request)
       )
+      .response(testData.response)
+      .callerTokenBindingId(callerTokenBindingId.toJava)
+      .build()
+
+    builder
+      .build()
+      ._finishRegistration(fro)
   }
 
   val emptyTrustSource = new AttestationTrustSource {
@@ -261,7 +266,6 @@ class RelyingPartyRegistrationSpec
                   "org.example.foo": "bar",
                   "credProps": {
                     "rk": false,
-                    "authenticatorDisplayName": "My passkey",
                     "unknownProperty": ["unknown-value"]
                   }
                 }
@@ -1740,18 +1744,15 @@ class RelyingPartyRegistrationSpec
                         key,
                         COSEAlgorithmIdentifier.RS256,
                       )
-                      new ByteArray(
+                      BinaryUtil.concat(
                         java.util.Arrays.copyOfRange(
                           authDataBytes,
                           0,
                           32 + 1 + 4 + 16 + 2,
-                        )
+                        ),
+                        authData.getAttestedCredentialData.get.getCredentialId.getBytes,
+                        reencodedKey.getBytes,
                       )
-                        .concat(
-                          authData.getAttestedCredentialData.get.getCredentialId
-                        )
-                        .concat(reencodedKey)
-                        .getBytes
                     }
 
                     def modifyAttobjPubkeyAlg(attObjBytes: ByteArray)
@@ -2049,13 +2050,6 @@ class RelyingPartyRegistrationSpec
                   resultCritical.failed.get shouldBe an[
                     IllegalArgumentException
                   ]
-
-                  val goodResult = Try(
-                    verifier.verifyX5cRequirements(badCert, testDataBase.aaguid)
-                  )
-
-                  goodResult shouldBe a[Failure[_]]
-                  goodResult.failed.get shouldBe an[IllegalArgumentException]
 
                   verifier.verifyX5cRequirements(
                     testDataBase.packedAttestationCert,
@@ -4236,7 +4230,7 @@ class RelyingPartyRegistrationSpec
                     ClientRegistrationExtensionOutputs
                       .builder()
                       .credProps(
-                        newCredentialPropertiesOutput(true)
+                        CredentialPropertiesOutput.builder().rk(true).build()
                       )
                       .build()
                   )
@@ -4259,7 +4253,7 @@ class RelyingPartyRegistrationSpec
                     ClientRegistrationExtensionOutputs
                       .builder()
                       .credProps(
-                        newCredentialPropertiesOutput(false)
+                        CredentialPropertiesOutput.builder().rk(false).build()
                       )
                       .build()
                   )
@@ -4306,7 +4300,7 @@ class RelyingPartyRegistrationSpec
                     ClientRegistrationExtensionOutputs
                       .builder()
                       .largeBlob(
-                        ReexportHelpers.newLargeBlobRegistrationOutput(true)
+                        LargeBlobRegistrationOutput.supported(true)
                       )
                       .build()
                   )

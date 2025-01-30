@@ -51,13 +51,24 @@ public enum PublicKeyCredentialType {
 
   @JsonValue @Getter @NonNull private final String id;
 
-  private static Optional<PublicKeyCredentialType> fromString(@NonNull String id) {
+  /**
+   * Attempt to parse a string as a {@link PublicKeyCredentialType}.
+   *
+   * @param id a {@link String} equal to the {@link #getId() id} of a constant in {@link
+   *     PublicKeyCredentialType}
+   * @return The {@link AuthenticatorAttachment} instance whose {@link #getId() id} equals <code>id
+   *     </code>, if any.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enumdef-publickeycredentialtype">§5.10.2.
+   *     Credential Type Enumeration (enum PublicKeyCredentialType)</a>
+   */
+  public static Optional<PublicKeyCredentialType> fromId(@NonNull String id) {
     return Stream.of(values()).filter(v -> v.id.equals(id)).findAny();
   }
 
   @JsonCreator
   private static PublicKeyCredentialType fromJsonString(@NonNull String id) {
-    return fromString(id)
+    return fromId(id)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(

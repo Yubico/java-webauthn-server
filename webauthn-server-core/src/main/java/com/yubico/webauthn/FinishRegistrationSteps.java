@@ -63,12 +63,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-@Builder
 @Slf4j
+@AllArgsConstructor
 final class FinishRegistrationSteps {
 
   private static final String CLIENT_DATA_TYPE = "webauthn.create";
@@ -86,10 +86,23 @@ final class FinishRegistrationSteps {
   private final Optional<AttestationTrustSource> attestationTrustSource;
   private final CredentialRepository credentialRepository;
   private final Clock clock;
+  private final boolean allowOriginPort;
+  private final boolean allowOriginSubdomain;
 
-  @Builder.Default private final boolean allowOriginPort = false;
-  @Builder.Default private final boolean allowOriginSubdomain = false;
-  @Builder.Default private final boolean allowUnrequestedExtensions = false;
+  FinishRegistrationSteps(RelyingParty rp, FinishRegistrationOptions options) {
+    this(
+        options.getRequest(),
+        options.getResponse(),
+        options.getCallerTokenBindingId(),
+        rp.getOrigins(),
+        rp.getIdentity().getId(),
+        rp.isAllowUntrustedAttestation(),
+        rp.getAttestationTrustSource(),
+        rp.getCredentialRepository(),
+        rp.getClock(),
+        rp.isAllowOriginPort(),
+        rp.isAllowOriginSubdomain());
+  }
 
   public Step6 begin() {
     return new Step6();
@@ -186,7 +199,8 @@ final class FinishRegistrationSteps {
       final String responseOrigin = clientData.getOrigin();
       assertTrue(
           OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
-          "Incorrect origin: " + responseOrigin);
+          "Incorrect origin, please see the RelyingParty.origins setting: %s",
+          responseOrigin);
     }
 
     @Override

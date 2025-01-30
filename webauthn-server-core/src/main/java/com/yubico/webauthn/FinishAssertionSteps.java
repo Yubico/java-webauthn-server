@@ -42,15 +42,16 @@ import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Optional;
 import java.util.Set;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 
-@Builder
 @Slf4j
+@AllArgsConstructor
 final class FinishAssertionSteps {
 
   private static final String CLIENT_DATA_TYPE = "webauthn.get";
+  private static final String SPC_CLIENT_DATA_TYPE = "payment.get";
 
   private final AssertionRequest request;
   private final PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs>
@@ -59,11 +60,28 @@ final class FinishAssertionSteps {
   private final Set<String> origins;
   private final String rpId;
   private final CredentialRepository credentialRepository;
+  private final boolean allowOriginPort;
+  private final boolean allowOriginSubdomain;
+  private final boolean validateSignatureCounter;
+  private final boolean isSecurePaymentConfirmation;
 
-  @Builder.Default private final boolean allowOriginPort = false;
-  @Builder.Default private final boolean allowOriginSubdomain = false;
-  @Builder.Default private final boolean allowUnrequestedExtensions = false;
-  @Builder.Default private final boolean validateSignatureCounter = true;
+  FinishAssertionSteps(RelyingParty rp, FinishAssertionOptions options) {
+    this(
+        options.getRequest(),
+        options.getResponse(),
+        options.getCallerTokenBindingId(),
+        rp.getOrigins(),
+        rp.getIdentity().getId(),
+        rp.getCredentialRepository(),
+        rp.isAllowOriginPort(),
+        rp.isAllowOriginSubdomain(),
+        rp.isValidateSignatureCounter(),
+        options.isSecurePaymentConfirmation());
+  }
+
+  private Optional<String> getUsernameForUserHandle(final ByteArray userHandle) {
+    return credentialRepository.getUsernameForUserHandle(userHandle);
+  }
 
   public Step5 begin() {
     return new Step5();
@@ -279,10 +297,12 @@ final class FinishAssertionSteps {
 
     @Override
     public void validate() {
+      final String expectedType =
+          isSecurePaymentConfirmation ? SPC_CLIENT_DATA_TYPE : CLIENT_DATA_TYPE;
       assertTrue(
-          CLIENT_DATA_TYPE.equals(clientData.getType()),
+          expectedType.equals(clientData.getType()),
           "The \"type\" in the client data must be exactly \"%s\", was: %s",
-          CLIENT_DATA_TYPE,
+          expectedType,
           clientData.getType());
     }
 
@@ -323,7 +343,8 @@ final class FinishAssertionSteps {
       final String responseOrigin = response.getResponse().getClientData().getOrigin();
       assertTrue(
           OriginMatcher.isAllowed(responseOrigin, origins, allowOriginPort, allowOriginSubdomain),
-          "Incorrect origin: " + responseOrigin);
+          "Incorrect origin, please see the RelyingParty.origins setting: %s",
+          responseOrigin);
     }
 
     @Override

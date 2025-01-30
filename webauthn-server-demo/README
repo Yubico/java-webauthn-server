@@ -1,4 +1,6 @@
 = webauthn-server-demo
+:idprefix:
+:idseparator: -
 
 A simple self-contained demo server supporting multiple authenticators per user.
 It illustrates how to use the required integration points, the most important of
@@ -7,9 +9,9 @@ one can perform auxiliary actions such as adding an additional authenticator or
 deregistering a credential.
 
 The central part is the
-link:src/main/java/demo/webauthn/WebAuthnServer.java[`WebAuthnServer`]
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnServer.java[`WebAuthnServer`]
 class, and the
-link:src/main/java/demo/webauthn/WebAuthnRestResource.java[`WebAuthnRestResource`]
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnRestResource.java[`WebAuthnRestResource`]
 class which provides the REST API on top of it.
 
 
@@ -32,21 +34,21 @@ link:../webauthn-server-core/[`webauthn-server-core`]
 library:
 
 - The front end interacts with the server via a *REST API*, implemented in
-  link:src/main/java/demo/webauthn/WebAuthnRestResource.java[`WebAuthnRestResource`].
+  link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnRestResource.java[`WebAuthnRestResource`].
 +
 This layer manages translation between JSON request/response payloads and domain
 objects, and most methods simply call into analogous methods in the server
 layer.
 
 - The REST API then delegates to the *server layer*, implemented in
-  link:src/main/java/demo/webauthn/WebAuthnServer.java[`WebAuthnServer`].
+  link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/WebAuthnServer.java[`WebAuthnServer`].
 +
 This layer manages the general architecture of the system, and is where most
 business logic and integration code would go. The demo server implements the
 "persistent" storage of users and credential registrations - the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.4/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.6.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 integration point - as the
-link:src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
 class, which simply keeps them stored in memory for a limited time. The
 transient storage of pending challenges is also kept in memory, but for a
 shorter duration.
@@ -58,7 +60,7 @@ would be specific to a particular Relying Party (RP) would go in this layer.
 - The server layer in turn calls the *library layer*, which is where the
   link:../webauthn-server-core/[`webauthn-server-core`]
   library gets involved. The entry point into the library is the
-  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.4/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
+  link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.6.0/com/yubico/webauthn/RelyingParty.html[`RelyingParty`]
   class.
 +
 This layer implements the Web Authentication
@@ -69,16 +71,27 @@ and exposes integration points for storage of challenges and credentials. Some
 notable integration points are:
 +
 ** The library user must provide an implementation of the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.4/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.6.0/com/yubico/webauthn/CredentialRepository.html[`CredentialRepository`]
 interface to use for looking up stored public keys, user handles and signature
 counters.
+The example app does this via the
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/InMemoryRegistrationStorage.java[`InMemoryRegistrationStorage`]
+class.
 ** The library user can optionally provide an instance of the
-link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.5.4/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-core/2.6.0/com/yubico/webauthn/attestation/AttestationTrustSource.html[`AttestationTrustSource`]
 interface to enable identification and validation of authenticator models. This
 instance is then used to look up trusted attestation root certificates. The
 link:../webauthn-server-attestation/[`webauthn-server-attestation`]
-sibling library provides implementations of this interface that are pre-seeded
-with Yubico device metadata.
+sibling library provides an implementation of this interface that integrates
+with the https://fidoalliance.org/metadata/[FIDO Metadata Service].
++
+For this the example app uses the
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/com/yubico/webauthn/attestation/YubicoJsonMetadataService.java[`YubicoJsonMetadataService`]
+class, which reads attestation data from a bundled JSON file. If enabled by
+configuration, this is also combined with the
+link:https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.5.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+implementation from the
+link:../webauthn-server-attestation/[`webauthn-server-attestation`] module.
 
 
 == Usage
@@ -103,7 +116,7 @@ To build it, run
 === Standalone Java executable
 
 The standalone Java executable has the main class
-link:src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
+link:https://github.com/Yubico/java-webauthn-server/blob/main/webauthn-server-demo/src/main/java/demo/webauthn/EmbeddedServer.java[`demo.webauthn.EmbeddedServer`].
 This server also serves the REST API at `/api/v1/`, and static resources for the
 GUI under `/`.
 
@@ -141,12 +154,12 @@ correct environment.
 
   - `YUBICO_WEBAUTHN_PORT`: Port number to run the server on. Example:
     `YUBICO_WEBAUTHN_PORT=8081`
-
-    This is ignored when running as a `.war` artifact, since the port is
-    controlled by the parent web server.
++
+This is ignored when running as a `.war` artifact, since the port is
+controlled by the parent web server.
 
   - `YUBICO_WEBAUTHN_ALLOWED_ORIGINS`: Comma-separated list of origins the
-    server will accept requests for. Example:
+    server will accept requests from. Example:
     `YUBICO_WEBAUTHN_ALLOWED_ORIGINS=http://demo.yubico.com:8080`
 
   - `YUBICO_WEBAUTHN_RP_ID`: The https://www.w3.org/TR/webauthn/#rp-id[RP ID]
@@ -154,11 +167,10 @@ correct environment.
 
   - `YUBICO_WEBAUTHN_RP_NAME`: The human-readable
     https://www.w3.org/TR/webauthn/#dom-publickeycredentialentity-name[RP name]
-    the server will report. Example: `YUBICO_WEBAUTHN_RP_ID='Yubico Web
-    Authentication demo'`
+    the server will report. Example: `YUBICO_WEBAUTHN_RP_NAME='Yubico Web Authentication demo'`
 
   - `YUBICO_WEBAUTHN_USE_FIDO_MDS`: If set to `true` (case-insensitive), use
-    https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.5.4/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
+    https://developers.yubico.com/java-webauthn-server/JavaDoc/webauthn-server-attestation/2.6.0/com/yubico/fido/metadata/FidoMetadataService.html[`FidoMetadataService`]
     from the link:../webauthn-server-attestation[`webauthn-server-attestation`]
     module as a source of attestation data in addition to the static JSON file
     bundled with the demo. This will write cache files to the

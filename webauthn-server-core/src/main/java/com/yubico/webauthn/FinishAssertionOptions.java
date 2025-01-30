@@ -27,8 +27,10 @@ package com.yubico.webauthn;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
+import com.yubico.webauthn.data.CollectedClientData;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import java.util.Optional;
+import java.util.Set;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -58,6 +60,41 @@ public class FinishAssertionOptions {
    * @see <a href="https://tools.ietf.org/html/rfc8471">The Token Binding Protocol Version 1.0</a>
    */
   private final ByteArray callerTokenBindingId;
+
+  /**
+   * EXPERIMENTAL FEATURE:
+   *
+   * <p>If set to <code>false</code> (the default), the <code>"type"</code> property in the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-client-data">collected
+   * client data</a> of the assertion will be verified to equal <code>"webauthn.get"</code>.
+   *
+   * <p>If set to <code>true</code>, it will instead be verified to equal <code>"payment.get"</code>
+   * .
+   *
+   * <p>NOTE: If you're using <a
+   * href="https://www.w3.org/TR/2023/CR-secure-payment-confirmation-20230615/">Secure Payment
+   * Confirmation</a> (SPC), you likely also need to relax the origin validation logic. Right now
+   * this library only supports matching against a finite {@link Set} of acceptable origins. If
+   * necessary, your application may validate the origin externally (see {@link
+   * PublicKeyCredential#getResponse()}, {@link AuthenticatorAssertionResponse#getClientData()} and
+   * {@link CollectedClientData#getOrigin()}) and construct a new {@link RelyingParty} instance for
+   * each SPC response, setting the {@link RelyingParty.RelyingPartyBuilder#origins(Set) origins}
+   * setting on that instance to contain the pre-validated origin value.
+   *
+   * <p>Better support for relaxing origin validation may be added as the feature matures.
+   *
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
+   * @see <a href="https://www.w3.org/TR/2023/CR-secure-payment-confirmation-20230615/">Secure
+   *     Payment Confirmation</a>
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictionary-client-data">5.8.1.
+   *     Client Data Used in WebAuthn Signatures (dictionary CollectedClientData)</a>
+   * @see RelyingParty.RelyingPartyBuilder#origins(Set)
+   * @see CollectedClientData
+   * @see CollectedClientData#getOrigin()
+   */
+  @Deprecated @Builder.Default private final boolean isSecurePaymentConfirmation = false;
 
   /**
    * The <a href="https://tools.ietf.org/html/rfc8471#section-3.2">token binding ID</a> of the

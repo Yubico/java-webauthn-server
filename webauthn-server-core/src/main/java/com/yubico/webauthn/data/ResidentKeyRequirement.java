@@ -105,13 +105,24 @@ public enum ResidentKeyRequirement {
 
   @JsonValue @Getter @NonNull private final String value;
 
-  private static Optional<ResidentKeyRequirement> fromString(@NonNull String value) {
+  /**
+   * Attempt to parse a string as a {@link ResidentKeyRequirement}.
+   *
+   * @param value a {@link String} equal to the {@link #getValue() value} of a constant in {@link
+   *     ResidentKeyRequirement}
+   * @return The {@link ResidentKeyRequirement} instance whose {@link #getValue() value} equals
+   *     <code>value</code>, if any.
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#enum-residentKeyRequirement">§5.4.6.
+   *     Resident Key Requirement Enumeration (enum ResidentKeyRequirement)</a>
+   */
+  public static Optional<ResidentKeyRequirement> fromValue(@NonNull String value) {
     return Stream.of(values()).filter(v -> v.value.equals(value)).findAny();
   }
 
   @JsonCreator
   private static ResidentKeyRequirement fromJsonString(@NonNull String value) {
-    return fromString(value)
+    return fromValue(value)
         .orElseThrow(
             () ->
                 new IllegalArgumentException(

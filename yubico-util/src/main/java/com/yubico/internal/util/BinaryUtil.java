@@ -28,12 +28,49 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import lombok.NonNull;
+import lombok.ToString;
+import lombok.Value;
 
 public class BinaryUtil {
 
   public static byte[] copy(byte[] bytes) {
     return Arrays.copyOf(bytes, bytes.length);
+  }
+
+  /**
+   * Copy <code>src</code> into <code>dest</code> beginning at the offset <code>destFrom</code>,
+   * then return the modified <code>dest</code>.
+   */
+  public static byte[] copyInto(byte[] src, byte[] dest, int destFrom) {
+    if (dest.length - destFrom < src.length) {
+      throw new IllegalArgumentException("Source array will not fit in destination array");
+    }
+    if (destFrom < 0) {
+      throw new IllegalArgumentException("Invalid destination range");
+    }
+
+    for (int i = 0; i < src.length; ++i) {
+      dest[destFrom + i] = src[i];
+    }
+
+    return dest;
+  }
+
+  /** Return a new array containing the concatenation of the argument <code>arrays</code>. */
+  public static byte[] concat(byte[]... arrays) {
+    final int len = Arrays.stream(arrays).map(a -> a.length).reduce(0, Integer::sum);
+    byte[] result = new byte[len];
+    int i = 0;
+    for (byte[] src : arrays) {
+      copyInto(src, result, i);
+      i += src.length;
+    }
+    return result;
   }
 
   /**
@@ -165,5 +202,312 @@ public class BinaryUtil {
         }
       }
     }
+  }
+
+  public static byte[] encodeDerLength(final int length) {
+    if (length < 0) {
+      throw new IllegalArgumentException("Length is negative: " + length);
+    } else if (length <= 0x7f) {
+      return new byte[] {(byte) (length & 0xff)};
+    } else if (length <= 0xff) {
+      return new byte[] {(byte) (0x80 | 0x01), (byte) (length & 0xff)};
+    } else if (length <= 0xffff) {
+      return new byte[] {
+        (byte) (0x80 | 0x02), (byte) ((length >> 8) & 0xff), (byte) (length & 0xff)
+      };
+    } else if (length <= 0xffffff) {
+      return new byte[] {
+        (byte) (0x80 | 0x03),
+        (byte) ((length >> 16) & 0xff),
+        (byte) ((length >> 8) & 0xff),
+        (byte) (length & 0xff)
+      };
+    } else {
+      return new byte[] {
+        (byte) (0x80 | 0x04),
+        (byte) ((length >> 24) & 0xff),
+        (byte) ((length >> 16) & 0xff),
+        (byte) ((length >> 8) & 0xff),
+        (byte) (length & 0xff)
+      };
+    }
+  }
+
+  @ToString
+  public enum DerTagClass {
+    UNIVERSAL,
+    APPLICATION,
+    CONTEXT_SPECIFIC,
+    PRIVATE;
+
+    public static DerTagClass parse(byte tag) {
+      switch ((tag >> 6) & 0x03) {
+        case 0x0:
+          return DerTagClass.UNIVERSAL;
+        case 0x1:
+          return DerTagClass.APPLICATION;
+        case 0x2:
+          return DerTagClass.CONTEXT_SPECIFIC;
+        case 0x3:
+          return DerTagClass.PRIVATE;
+        default:
+          throw new RuntimeException("This should be impossible");
+      }
+    }
+  }
+
+  @Value
+  private static class ParseDerAnyResult {
+    DerTagClass tagClass;
+    boolean constructed;
+    byte tagValue;
+    int valueStart;
+    int valueEnd;
+  }
+
+  @Value
+  public static class ParseDerResult<T> {
+    /** The parsed value, excluding the tag-and-length header. */
+    public T result;
+
+    /**
+     * The offset of the first octet past the end of the parsed value. In other words, the offset to
+     * continue reading from.
+     */
+    public int nextOffset;
+  }
+
+  public static ParseDerResult<Integer> parseDerLength(@NonNull byte[] der, int offset) {
+    final int len = der.length - offset;
+    if (len == 0) {
+      throw new IllegalArgumentException("Empty input");
+    } else if ((der[offset] & 0x80) == 0) {
+      return new ParseDerResult<>(der[offset] & 0xff, offset + 1);
+    } else {
+      final int longLen = der[offset] & 0x7f;
+      if (len >= longLen) {
+        switch (longLen) {
+          case 0:
+            throw new IllegalArgumentException(
+                String.format(
+                    "Empty length encoding at offset %d: 0x%s", offset, BinaryUtil.toHex(der)));
+          case 1:
+            return new ParseDerResult<>(der[offset + 1] & 0xff, offset + 2);
+          case 2:
+            return new ParseDerResult<>(
+                ((der[offset + 1] & 0xff) << 8) | (der[offset + 2] & 0xff), offset + 3);
+          case 3:
+            return new ParseDerResult<>(
+                ((der[offset + 1] & 0xff) << 16)
+                    | ((der[offset + 2] & 0xff) << 8)
+                    | (der[offset + 3] & 0xff),
+                offset + 4);
+          case 4:
+            if ((der[offset + 1] & 0x80) == 0) {
+              return new ParseDerResult<>(
+                  ((der[offset + 1] & 0xff) << 24)
+                      | ((der[offset + 2] & 0xff) << 16)
+                      | ((der[offset + 3] & 0xff) << 8)
+                      | (der[offset + 4] & 0xff),
+                  offset + 5);
+            } else {
+              throw new UnsupportedOperationException(
+                  String.format(
+                      "Length out of range of int: 0x%02x%02x%02x%02x",
+                      der[offset + 1], der[offset + 2], der[offset + 3], der[offset + 4]));
+            }
+          default:
+            throw new UnsupportedOperationException(
+                String.format("Length is too long for int: %d octets", longLen));
+        }
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Length encoding needs %d octets but only %s remain at index %d: 0x%s",
+                longLen, len - (offset + 1), offset + 1, BinaryUtil.toHex(der)));
+      }
+    }
+  }
+
+  private static ParseDerAnyResult parseDerAny(@NonNull byte[] der, int offset) {
+    final int len = der.length - offset;
+    if (len == 0) {
+      throw new IllegalArgumentException(
+          String.format("Empty input at offset %d: 0x%s", offset, BinaryUtil.toHex(der)));
+    } else {
+      final byte tag = der[offset];
+      final ParseDerResult<Integer> contentLen = parseDerLength(der, offset + 1);
+      final int contentEnd = contentLen.nextOffset + contentLen.result;
+      return new ParseDerAnyResult(
+          DerTagClass.parse(tag),
+          (tag & 0x20) != 0,
+          (byte) (tag & 0x1f),
+          contentLen.nextOffset,
+          contentEnd);
+    }
+  }
+
+  /**
+   * Parse a DER header with the given tag value, constructed bit and tag class, and return the
+   * start and end offsets of the value octets. If any of the three criteria do not match, return
+   * empty instead.
+   *
+   * @param der DER source to read from.
+   * @param offset The offset in <code>der</code> from which to start reading.
+   * @param expectTag The expected tag value, excluding the constructed bit and tag class. This is
+   *     the 5 least significant bits of the tag octet.
+   * @param constructed The expected "constructed" bit. This is bit 6 (the third-most significant
+   *     bit) of the tag octet.
+   * @param expectTagClass The expected tag class. This is the 2 most significant bits of the tag
+   *     octet.
+   * @return The start and end offsets of the value octets, if the parsed tag matches <code>
+   *     expectTag</code>, <code>
+   *     constructed</code> and <code>expectTagClass</code>, otherwise empty. {@link
+   *     ParseDerResult#nextOffset} is always returned.
+   */
+  public static ParseDerResult<Optional<Integer>> parseDerTaggedOrSkip(
+      @NonNull byte[] der,
+      int offset,
+      byte expectTag,
+      boolean constructed,
+      DerTagClass expectTagClass) {
+    final ParseDerAnyResult result = parseDerAny(der, offset);
+    if (result.tagValue == expectTag
+        && result.constructed == constructed
+        && result.tagClass == expectTagClass) {
+      return new ParseDerResult<>(Optional.of(result.valueStart), result.valueEnd);
+    } else {
+      return new ParseDerResult<>(Optional.empty(), result.valueEnd);
+    }
+  }
+
+  /**
+   * Parse a DER header with the given tag value, constructed bit and tag class, and return the
+   * start and end offsets of the value octets. If any of the three criteria do not match, throw an
+   * {@link IllegalArgumentException}.
+   *
+   * @param der DER source to read from.
+   * @param offset The offset in <code>der</code> from which to start reading.
+   * @param expectTag The expected tag value, excluding the constructed bit and tag class. This is
+   *     the 5 least significant bits of the tag octet.
+   * @param constructed The expected "constructed" bit. This is bit 6 (the third-most significant
+   *     bit) of the tag octet.
+   * @param expectTagClass The expected tag class. This is the 2 most significant bits of the tag
+   *     octet.
+   * @return The start and end offsets of the value octets, if the parsed tag matches <code>
+   *     expectTag</code>, <code>
+   *     constructed</code> and <code>expectTagClass</code>, otherwise empty. {@link
+   *     ParseDerResult#nextOffset} is always returned.
+   */
+  private static ParseDerResult<Integer> parseDerTagged(
+      @NonNull byte[] der,
+      int offset,
+      byte expectTag,
+      boolean constructed,
+      DerTagClass expectTagClass) {
+    final ParseDerAnyResult result = parseDerAny(der, offset);
+    if (result.tagValue == expectTag) {
+      if (result.constructed == constructed) {
+        if (result.tagClass == expectTagClass) {
+          return new ParseDerResult<>(result.valueStart, result.valueEnd);
+        } else {
+          throw new IllegalArgumentException(
+              String.format(
+                  "Incorrect tag class: expected %s, found %s at offset %d: 0x%s",
+                  expectTagClass, result.tagClass, offset, BinaryUtil.toHex(der)));
+        }
+      } else {
+        throw new IllegalArgumentException(
+            String.format(
+                "Incorrect constructed bit: expected %s, found %s at offset %d: 0x%s",
+                constructed, result.constructed, offset, BinaryUtil.toHex(der)));
+      }
+    } else {
+      throw new IllegalArgumentException(
+          String.format(
+              "Incorrect tag: expected 0x%02x, found 0x%02x at offset %d: 0x%s",
+              expectTag, result.tagValue, offset, BinaryUtil.toHex(der)));
+    }
+  }
+
+  /** Function to parse an element of a DER SEQUENCE. */
+  @FunctionalInterface
+  public interface ParseDerSequenceElementFunction<T> {
+    /**
+     * Parse an element of a DER SEQUENCE.
+     *
+     * @param sequenceDer The content octets of the parent SEQUENCE. This includes ALL elements in
+     *     the sequence.
+     * @param elementOffset The offset into <code>sequenceDer</code> from where to parse the
+     *     element.
+     * @return A {@link ParseDerResult} whose {@link ParseDerResult#result} is the parsed element
+     *     and {@link ParseDerResult#nextOffset} is the offset of the first octet past the end of
+     *     the parsed element.
+     */
+    ParseDerResult<T> parse(@NonNull byte[] sequenceDer, int elementOffset);
+  }
+
+  /**
+   * Parse the elements of a SEQUENCE using the given element parsing function.
+   *
+   * @param der DER source array to read from
+   * @param offset Offset from which to begin reading the first element
+   * @param endOffset Offset of the first octet past the end of the sequence
+   * @param parseElement Function to use to parse each element in the sequence.
+   */
+  public static <T> ParseDerResult<List<T>> parseDerSequenceContents(
+      @NonNull byte[] der,
+      int offset,
+      int endOffset,
+      @NonNull ParseDerSequenceElementFunction<T> parseElement) {
+    List<T> result = new ArrayList<>();
+    int seqOffset = offset;
+    while (seqOffset < endOffset) {
+      ParseDerResult<T> elementResult = parseElement.parse(der, seqOffset);
+      result.add(elementResult.result);
+      seqOffset = elementResult.nextOffset;
+    }
+    return new ParseDerResult<>(result, endOffset);
+  }
+
+  /**
+   * Parse a SEQUENCE using the given element parsing function.
+   *
+   * @param der DER source array to read from
+   * @param offset Offset from which to begin reading the SEQUENCE
+   * @param parseElement Function to use to parse each element in the sequence.
+   */
+  public static <T> ParseDerResult<List<T>> parseDerSequence(
+      @NonNull byte[] der, int offset, @NonNull ParseDerSequenceElementFunction<T> parseElement) {
+    final ParseDerResult<Integer> seq =
+        parseDerTagged(der, offset, (byte) 0x10, true, DerTagClass.UNIVERSAL);
+    final ParseDerResult<List<T>> res =
+        parseDerSequenceContents(der, seq.result, seq.nextOffset, parseElement);
+    return new ParseDerResult<>(res.result, seq.nextOffset);
+  }
+
+  /** Parse an Octet String. */
+  public static ParseDerResult<byte[]> parseDerOctetString(@NonNull byte[] der, int offset) {
+    ParseDerResult<Integer> res =
+        parseDerTagged(der, offset, (byte) 0x04, false, DerTagClass.UNIVERSAL);
+    return new ParseDerResult<>(
+        Arrays.copyOfRange(der, res.result, res.nextOffset), res.nextOffset);
+  }
+
+  public static byte[] encodeDerObjectId(@NonNull byte[] oid) {
+    byte[] result = new byte[2 + oid.length];
+    result[0] = 0x06;
+    result[1] = (byte) oid.length;
+    return BinaryUtil.copyInto(oid, result, 2);
+  }
+
+  public static byte[] encodeDerBitStringWithZeroUnused(@NonNull byte[] content) {
+    return BinaryUtil.concat(
+        new byte[] {0x03}, encodeDerLength(1 + content.length), new byte[] {0}, content);
+  }
+
+  public static byte[] encodeDerSequence(final byte[]... items) {
+    byte[] content = BinaryUtil.concat(items);
+    return BinaryUtil.concat(new byte[] {0x30}, encodeDerLength(content.length), content);
   }
 }
