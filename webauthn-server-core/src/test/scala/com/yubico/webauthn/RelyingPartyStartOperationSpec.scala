@@ -987,7 +987,7 @@ class RelyingPartyStartOperationSpec
           )
         )
         .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
-        .origins(Set.empty.asJava)
+        .origins(Set.empty[String].asJava)
       if (usernameRepository) {
         builder.usernameRepository(Helpers.UsernameRepository.withUsers(userId))
       }
