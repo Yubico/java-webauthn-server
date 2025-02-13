@@ -6,15 +6,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
+import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.extension.uvm.KeyProtectionType;
 import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
 import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -105,6 +111,296 @@ public class Extensions {
       public Optional<Boolean> getRk() {
         return Optional.ofNullable(rk);
       }
+    }
+  }
+
+  /**
+   * Definitions for the Credential Protection (<code>credProtect</code>) extension.
+   *
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+   *     §12.1. Credential Protection (credProtect)</a>
+   */
+  public static class CredentialProtection {
+    static final String EXTENSION_ID = "credProtect";
+
+    /**
+     * Policy values for the Credential Protection (<code>credProtect</code>) extension.
+     *
+     * <p>Available values:
+     *
+     * <ul>
+     *   <li>{@link #UV_OPTIONAL}
+     *   <li>{@link #UV_OPTIONAL_WITH_CREDENTIAL_ID_LIST}
+     *   <li>{@link #UV_REQUIRED}
+     * </ul>
+     *
+     * @see <a
+     *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+     *     §12.1. Credential Protection (credProtect)</a>
+     * @see CredentialProtectionInput#prefer(CredentialProtectionPolicy)
+     * @see CredentialProtectionInput#require(CredentialProtectionPolicy)
+     */
+    @AllArgsConstructor
+    public enum CredentialProtectionPolicy {
+      /**
+       * In this configuration, performing some form of user verification is always OPTIONAL. This
+       * is the default behaviour if the extension is not specified; note however that some browsers
+       * may set a different default extension input if the extension is not explicitly specified.
+       *
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+       *     Verification</a>
+       */
+      UV_OPTIONAL(0x01, "userVerificationOptional"),
+
+      /**
+       * In this configuration, performing some form of user verification is OPTIONAL when the
+       * credential is used as the second authentication factor, and REQUIRED when the credential is
+       * used as the first authentication factor.
+       *
+       * <p>In technical terms, user verification is REQUIRED when {@link
+       * PublicKeyCredentialRequestOptions#getAllowCredentials() allowCredentials} is empty and
+       * OPTIONAL when it is non-empty. {@link
+       * PublicKeyCredentialRequestOptions#getAllowCredentials() allowCredentials} is non-empty when
+       * {@link StartAssertionOptions.StartAssertionOptionsBuilder#username(String) username} or
+       * {@link StartAssertionOptions.StartAssertionOptionsBuilder#userHandle(ByteArray) userHandle}
+       * was set in the call to {@link RelyingParty#startAssertion(StartAssertionOptions)}, and is
+       * empty when neither was set.
+       *
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+       *     Verification</a>
+       */
+      UV_OPTIONAL_WITH_CREDENTIAL_ID_LIST(0x02, "userVerificationOptionalWithCredentialIDList"),
+
+      /**
+       * In this configuration, performing some form of user verification is always REQUIRED.
+       *
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+       *     Verification</a>
+       */
+      UV_REQUIRED(0x03, "userVerificationRequired");
+
+      final int cborValue;
+
+      @JsonValue private final String jsValue;
+
+      private static Optional<CredentialProtectionPolicy> fromCbor(int cborValue) {
+        return Arrays.stream(CredentialProtectionPolicy.values())
+            .filter(policy -> policy.cborValue == cborValue)
+            .findAny();
+      }
+
+      private static Optional<CredentialProtectionPolicy> fromJs(String jsonValue) {
+        return Arrays.stream(CredentialProtectionPolicy.values())
+            .filter(policy -> policy.jsValue.equals(jsonValue))
+            .findAny();
+      }
+
+      @JsonCreator
+      private static CredentialProtectionPolicy fromJsonString(@NonNull String value) {
+        return fromJs(value)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        String.format(
+                            "Unknown %s value: %s",
+                            CredentialProtectionPolicy.class.getSimpleName(), value)));
+      }
+    }
+
+    /**
+     * Extension inputs for the Credential Protection (<code>credProtect</code>) extension.
+     *
+     * <p>Instances may be created using the {@link #prefer(CredentialProtectionPolicy)} and {@link
+     * #require(CredentialProtectionPolicy)} factory functions.
+     *
+     * @see <a
+     *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+     *     §12.1. Credential Protection (credProtect)</a>
+     */
+    @Value
+    public static class CredentialProtectionInput {
+      /**
+       * The requested credential protection policy. This policy may or may not be satisfied; see
+       * {@link #isEnforceCredentialProtectionPolicy()}.
+       *
+       * @see CredentialProtectionPolicy
+       * @see #isEnforceCredentialProtectionPolicy()
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       */
+      private final CredentialProtectionPolicy credentialProtectionPolicy;
+
+      /**
+       * If <code>true</code>, {@link RelyingParty#finishRegistration(FinishRegistrationOptions)}
+       * will validate that the policy set in {@link #getCredentialProtectionPolicy()} was satisfied
+       * and the browser is requested to fail the registration if the policy cannot be satisfied.
+       *
+       * <p>{@link CredentialProtectionInput#prefer(CredentialProtectionPolicy)} sets this to <code>
+       * false</code>. {@link CredentialProtectionInput#require(CredentialProtectionPolicy)} sets
+       * this to <code>true</code>.
+       *
+       * @see CredentialProtectionPolicy
+       * @see #getCredentialProtectionPolicy()
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       */
+      private final boolean enforceCredentialProtectionPolicy;
+
+      @JsonCreator
+      private CredentialProtectionInput(
+          @JsonProperty("credentialProtectionPolicy")
+              CredentialProtectionPolicy credentialProtectionPolicy,
+          @JsonProperty("enforceCredentialProtectionPolicy")
+              Boolean enforceCredentialProtectionPolicy) {
+        this.credentialProtectionPolicy = credentialProtectionPolicy;
+        this.enforceCredentialProtectionPolicy =
+            enforceCredentialProtectionPolicy != null && enforceCredentialProtectionPolicy;
+      }
+
+      /**
+       * Create a Credential Protection (<code>credProtect</code>) extension input that requests the
+       * given policy when possible.
+       *
+       * <p>If the policy cannot be satisfied, the browser is requested to continue the registration
+       * anyway. To determine what policy was applied, use {@link
+       * AuthenticatorRegistrationExtensionOutputs#getCredProtect()} to inspect the extension
+       * output. {@link RelyingParty#finishRegistration(FinishRegistrationOptions)} will not
+       * validate what policy was applied.
+       *
+       * <p>Use {@link #require(CredentialProtectionPolicy)} instead to forbid the registration from
+       * proceeding if the extension is not supported or the policy cannot be satisfied.
+       *
+       * @param policy the policy to request.
+       * @return a <code>credProtect</code> extension input that requests the given policy when
+       *     possible. The browser is requested to continue the registration even if this policy
+       *     cannot be satisfied.
+       * @see #require(CredentialProtectionPolicy)
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       */
+      public static CredentialProtectionInput prefer(
+          @NonNull final CredentialProtectionPolicy policy) {
+        return new CredentialProtectionInput(policy, false);
+      }
+
+      /**
+       * Create a Credential Protection (<code>credProtect</code>) extension input that requires the
+       * given policy.
+       *
+       * <p>If the policy cannot be satisfied, the browser is requested to abort the registration
+       * instead of proceeding. {@link RelyingParty#finishRegistration(FinishRegistrationOptions)}
+       * will validate that the policy returned in the authenticator extension output equals this
+       * input policy, and throw an exception otherwise. You can also use {@link
+       * AuthenticatorRegistrationExtensionOutputs#getCredProtect()} to inspect the extension output
+       * yourself.
+       *
+       * <p>Note that if the browser or authenticator does not support the extension, the
+       * registration will fail. Use {@link #prefer(CredentialProtectionPolicy)} instead to allow
+       * the registration to proceed if the extension is not supported or the policy cannot be
+       * satisfied.
+       *
+       * @param policy the policy to require.
+       * @return a <code>credProtect</code> extension input that requires the given policy. The
+       *     browser is requested to abort the registration if this policy cannot be satisfied.
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       */
+      public static CredentialProtectionInput require(
+          @NonNull final CredentialProtectionPolicy policy) {
+        return new CredentialProtectionInput(policy, true);
+      }
+    }
+
+    /**
+     * Validate that the given response satisfies the <code>credProtect</code> extension policy set
+     * in the request.
+     *
+     * <p>If the {@link
+     * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
+     * credProtect} extension is not set in the request, this has no effect.
+     *
+     * <p>If the {@link
+     * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
+     * credProtect} extension is set in the request with {@link
+     * CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
+     * enforceCredentialProtectionPolicy} set to <code>false</code>, this has no effect.
+     *
+     * <p>If the {@link
+     * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
+     * credProtect} extension is set in the request with {@link
+     * CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
+     * enforceCredentialProtectionPolicy} set to <code>true</code>, then this throws an {@link
+     * IllegalArgumentException} if the <code>credProtect</code> authenticator extension output does
+     * not equal the {@link CredentialProtectionInput#getCredentialProtectionPolicy()
+     * credentialProtectionPolicy} set in the request.
+     *
+     * <p>This function is called automatically in {@link
+     * RelyingParty#finishRegistration(FinishRegistrationOptions)} when the request has {@link
+     * CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
+     * enforceCredentialProtectionPolicy} is set to <code>true</code>; you should not need to call
+     * it yourself.
+     *
+     * @param request the arguments to start the registration ceremony.
+     * @param response the response from the registration ceremony.
+     * @throws IllegalArgumentException if the {@link
+     *     RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
+     *     credProtect} extension is set in the request with {@link
+     *     CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
+     *     enforceCredentialProtectionPolicy} set to <code>true</code> and the <code>credProtect
+     *     </code> authenticator extension output does not equal the {@link
+     *     CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} set
+     *     in the request.
+     * @see <a
+     *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+     *     §12.1. Credential Protection (credProtect)</a>
+     */
+    public static void validateExtensionOutput(
+        PublicKeyCredentialCreationOptions request,
+        PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
+            response) {
+      request
+          .getExtensions()
+          .getCredProtect()
+          .ifPresent(
+              credProtect -> {
+                if (credProtect.isEnforceCredentialProtectionPolicy()) {
+                  Optional<CredentialProtectionPolicy> outputPolicy =
+                      response
+                          .getResponse()
+                          .getParsedAuthenticatorData()
+                          .getExtensions()
+                          .flatMap(CredentialProtection::parseAuthenticatorExtensionOutput);
+                  ExceptionUtil.assertTrue(
+                      outputPolicy.equals(Optional.of(credProtect.getCredentialProtectionPolicy())),
+                      "Unsatisfied credProtect policy: required %s, got: %s",
+                      credProtect.getCredentialProtectionPolicy(),
+                      outputPolicy);
+                }
+              });
+    }
+
+    static Optional<CredentialProtectionPolicy> parseAuthenticatorExtensionOutput(CBORObject cbor) {
+      return Optional.ofNullable(cbor.get(EXTENSION_ID))
+          .map(
+              cborObject ->
+                  cborObject.isNumber() && cborObject.AsNumber().IsInteger()
+                      ? cborObject.AsInt32()
+                      : null)
+          .flatMap(CredentialProtectionPolicy::fromCbor);
     }
   }
 

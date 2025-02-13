@@ -38,6 +38,8 @@ import com.yubico.webauthn.AssertionRequest
 import com.yubico.webauthn.TestAuthenticator
 import com.yubico.webauthn.WebAuthnTestCodecs
 import com.yubico.webauthn.data.Extensions.CredentialProperties.CredentialPropertiesOutput
+import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionInput
+import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionPolicy
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput
@@ -405,14 +407,19 @@ object Generators {
 
   object Extensions {
     private val RegistrationExtensionIds: Set[String] =
-      Set("appidExclude", "credProps", "largeBlob", "uvm")
+      Set("appidExclude", "credProps", "credProtect", "largeBlob", "uvm")
     private val AuthenticationExtensionIds: Set[String] =
       Set("appid", "largeBlob", "uvm")
 
     private val ClientRegistrationExtensionOutputIds: Set[String] =
       RegistrationExtensionIds - "uvm"
     private val AuthenticatorRegistrationExtensionOutputIds: Set[String] =
-      RegistrationExtensionIds -- Set("appidExclude", "credProps", "largeBlob")
+      RegistrationExtensionIds -- Set(
+        "appidExclude",
+        "credProps",
+        "credProtect",
+        "largeBlob",
+      )
 
     private val ClientAuthenticationExtensionOutputIds: Set[String] =
       AuthenticationExtensionIds - "uvm"
@@ -422,6 +429,8 @@ object Generators {
     def registrationExtensionInputs(
         appidExcludeGen: Gen[Option[AppId]] = Gen.option(arbitrary[AppId]),
         credPropsGen: Gen[Option[Boolean]] = Gen.option(arbitrary[Boolean]),
+        credProtectGen: Gen[Option[CredentialProtectionInput]] =
+          Gen.option(CredProtect.arbitraryCredProtectInput.arbitrary),
         largeBlobGen: Gen[
           Option[com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput]
         ] = Gen.option(LargeBlob.largeBlobRegistrationInput),
@@ -430,12 +439,14 @@ object Generators {
       for {
         appidExclude <- appidExcludeGen
         credProps <- credPropsGen
+        credProtect <- credProtectGen
         largeBlob <- halfsized(largeBlobGen)
         uvm <- uvmGen
       } yield {
         val b = RegistrationExtensionInputs.builder()
         appidExclude.foreach({ i => b.appidExclude(i) })
         credProps.foreach({ i => b.credProps(i) })
+        credProtect.foreach({ i => b.credProtect(i) })
         largeBlob.foreach({ i => b.largeBlob(i) })
         if (uvm.contains(true)) { b.uvm() }
         val result = b.build()
@@ -491,6 +502,8 @@ object Generators {
       )
 
     def authenticatorRegistrationExtensionOutputs(
+        credProtectGen: Gen[Option[CredentialProtectionPolicy]] =
+          arbitrary[Option[CredentialProtectionPolicy]],
         uvmGen: Gen[Option[CBORObject]] = Gen.option(Uvm.authenticatorOutput),
         includeUnknown: Boolean = true,
     ): Gen[CBORObject] =
@@ -499,9 +512,13 @@ object Generators {
           if (includeUnknown)
             halfsized(unknownAuthenticatorRegistrationExtensionOutput)
           else Gen.const(CBORObject.NewMap())
+        credProtect: Option[CredentialProtectionPolicy] <- credProtectGen
         uvm: Option[CBORObject] <- halfsized(uvmGen)
       } yield {
         val result = base
+        credProtect.foreach(policy =>
+          result.set("credProtect", CBORObject.FromObject(policy.cborValue))
+        )
         uvm.foreach(result.set("uvm", _))
         result
       }
@@ -598,6 +615,10 @@ object Generators {
             if (inputs.getCredProps) {
               resultBuilder.credProps()
             }
+          case "credProtect" =>
+            inputs.getCredProtect.ifPresent(input =>
+              resultBuilder.credProtect(input)
+            )
           case "largeBlob" =>
             resultBuilder.largeBlob(inputs.getLargeBlob orElse null)
           case "uvm" =>
@@ -639,6 +660,7 @@ object Generators {
             resultBuilder.appidExclude(clientOutputs.getAppidExclude.get)
           case "credProps" =>
             resultBuilder.credProps(clientOutputs.getCredProps orElse null)
+          case "credProtect" => // Skip
           case "largeBlob" =>
             resultBuilder.largeBlob(clientOutputs.getLargeBlob orElse null)
           case "uvm" => // Skip
@@ -903,6 +925,17 @@ object Generators {
           rk.foreach(b.rk(_))
           b.build()
         }
+    }
+
+    object CredProtect {
+      implicit val arbitraryCredProtectInput
+          : Arbitrary[CredentialProtectionInput] = Arbitrary(for {
+        policy <- arbitrary[CredentialProtectionPolicy]
+        enforce <- arbitrary[Boolean]
+      } yield {
+        if (enforce) { CredentialProtectionInput.require(policy) }
+        else { CredentialProtectionInput.prefer(policy) }
+      })
     }
 
     object LargeBlob {

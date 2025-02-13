@@ -32,6 +32,8 @@ import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionInput
+import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionPolicy
 import com.yubico.webauthn.data.Generators.Extensions.registrationExtensionInputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -465,6 +467,114 @@ class RelyingPartyStartOperationSpec
           )
 
           result.getExtensions.getUvm should be(true)
+        }
+      }
+
+      it("by default does not set the credProtect extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .build()
+        )
+        result.getExtensions.getCredProtect.toScala should be(None)
+      }
+
+      it("passes through the credProtect extension if enabled in StartRegistrationOptions.") {
+        val rp = relyingParty(userId = userId)
+
+        {
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                RegistrationExtensionInputs
+                  .builder()
+                  .credProtect(
+                    CredentialProtectionInput
+                      .prefer(CredentialProtectionPolicy.UV_OPTIONAL)
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          val credProtect = result.getExtensions.getCredProtect.toScala
+          credProtect should not be None
+          credProtect.get.getCredentialProtectionPolicy should be(
+            CredentialProtectionPolicy.UV_OPTIONAL
+          )
+          credProtect.get.isEnforceCredentialProtectionPolicy should be(false)
+        }
+        {
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                RegistrationExtensionInputs
+                  .builder()
+                  .credProtect(
+                    CredentialProtectionInput
+                      .require(CredentialProtectionPolicy.UV_REQUIRED)
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          val credProtect = result.getExtensions.getCredProtect.toScala
+          credProtect should not be None
+          credProtect.get.getCredentialProtectionPolicy should be(
+            CredentialProtectionPolicy.UV_REQUIRED
+          )
+          credProtect.get.isEnforceCredentialProtectionPolicy should be(true)
+        }
+
+        forAll {
+          (
+              extensions: RegistrationExtensionInputs,
+              policy: CredentialProtectionPolicy,
+              enforce: Boolean,
+          ) =>
+            val result = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(userId)
+                .extensions(
+                  extensions.toBuilder
+                    .credProtect(
+                      if (enforce) CredentialProtectionInput.require(policy)
+                      else CredentialProtectionInput.prefer(policy)
+                    )
+                    .build()
+                )
+                .build()
+            )
+
+            val credProtect = result.getExtensions.getCredProtect.toScala
+            credProtect should not be None
+            credProtect.get.getCredentialProtectionPolicy should equal(policy)
+            credProtect.get.isEnforceCredentialProtectionPolicy should equal(
+              enforce
+            )
+        }
+
+        forAll { (extensions: RegistrationExtensionInputs) =>
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                extensions.toBuilder
+                  .credProtect(Optional.empty[CredentialProtectionInput]())
+                  .build()
+              )
+              .build()
+          )
+          result.getExtensions.getCredProtect.toScala should be(None)
         }
       }
 
@@ -1336,6 +1446,114 @@ class RelyingPartyStartOperationSpec
           )
 
           result.getExtensions.getUvm should be(true)
+        }
+      }
+
+      it("by default does not set the credProtect extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .build()
+        )
+        result.getExtensions.getCredProtect.toScala should be(None)
+      }
+
+      it("passes through the credProtect extension if enabled in StartRegistrationOptions.") {
+        val rp = relyingParty(userId = userId)
+
+        {
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                RegistrationExtensionInputs
+                  .builder()
+                  .credProtect(
+                    CredentialProtectionInput
+                      .prefer(CredentialProtectionPolicy.UV_OPTIONAL)
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          val credProtect = result.getExtensions.getCredProtect.toScala
+          credProtect should not be None
+          credProtect.get.getCredentialProtectionPolicy should be(
+            CredentialProtectionPolicy.UV_OPTIONAL
+          )
+          credProtect.get.isEnforceCredentialProtectionPolicy should be(false)
+        }
+        {
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                RegistrationExtensionInputs
+                  .builder()
+                  .credProtect(
+                    CredentialProtectionInput
+                      .require(CredentialProtectionPolicy.UV_REQUIRED)
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          val credProtect = result.getExtensions.getCredProtect.toScala
+          credProtect should not be None
+          credProtect.get.getCredentialProtectionPolicy should be(
+            CredentialProtectionPolicy.UV_REQUIRED
+          )
+          credProtect.get.isEnforceCredentialProtectionPolicy should be(true)
+        }
+
+        forAll {
+          (
+              extensions: RegistrationExtensionInputs,
+              policy: CredentialProtectionPolicy,
+              enforce: Boolean,
+          ) =>
+            val result = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(userId)
+                .extensions(
+                  extensions.toBuilder
+                    .credProtect(
+                      if (enforce) CredentialProtectionInput.require(policy)
+                      else CredentialProtectionInput.prefer(policy)
+                    )
+                    .build()
+                )
+                .build()
+            )
+
+            val credProtect = result.getExtensions.getCredProtect.toScala
+            credProtect should not be None
+            credProtect.get.getCredentialProtectionPolicy should equal(policy)
+            credProtect.get.isEnforceCredentialProtectionPolicy should equal(
+              enforce
+            )
+        }
+
+        forAll { (extensions: RegistrationExtensionInputs) =>
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                extensions.toBuilder
+                  .credProtect(Optional.empty[CredentialProtectionInput]())
+                  .build()
+              )
+              .build()
+          )
+          result.getExtensions.getCredProtect.toScala should be(None)
         }
       }
 

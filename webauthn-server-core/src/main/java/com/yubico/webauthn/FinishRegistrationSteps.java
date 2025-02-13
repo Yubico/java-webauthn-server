@@ -39,6 +39,7 @@ import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.CollectedClientData;
+import com.yubico.webauthn.data.Extensions;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
@@ -337,7 +338,7 @@ final class FinishRegistrationSteps {
   }
 
   @Value
-  class Step16 implements Step<Step18> {
+  class Step16 implements Step<Step17> {
     private final ByteArray clientDataJsonHash;
     private final AttestationObject attestation;
 
@@ -369,12 +370,26 @@ final class FinishRegistrationSteps {
     }
 
     @Override
+    public Step17 nextStep() {
+      return new Step17(clientDataJsonHash, attestation);
+    }
+  }
+
+  @Value
+  class Step17 implements Step<Step18> {
+    private final ByteArray clientDataJsonHash;
+    private final AttestationObject attestation;
+
+    @Override
+    public void validate() {
+      Extensions.CredentialProtection.validateExtensionOutput(request, response);
+    }
+
+    @Override
     public Step18 nextStep() {
       return new Step18(clientDataJsonHash, attestation);
     }
   }
-
-  // Nothing to do for step 17
 
   @Value
   class Step18 implements Step<Step19> {
