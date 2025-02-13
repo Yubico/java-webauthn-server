@@ -39,8 +39,10 @@ import com.yubico.webauthn.data.AuthenticatorRegistrationExtensionOutputs;
 import com.yubico.webauthn.data.AuthenticatorResponse;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientRegistrationExtensionOutputs;
+import com.yubico.webauthn.data.Extensions;
 import com.yubico.webauthn.data.PublicKeyCredential;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.RegistrationExtensionInputs;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -365,6 +367,40 @@ public class RegistrationResult {
     return getClientExtensionOutputs()
         .flatMap(outputs -> outputs.getCredProps())
         .flatMap(credProps -> credProps.getRk());
+  }
+
+  /**
+   * Retrieve the <code>credProtect</code> extension policy that was set for the credential, if
+   * available.
+   *
+   * <p>If accessing this, you most likely also want to set the {@link
+   * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(Extensions.CredentialProtection.CredentialProtectionInput)
+   * credProtect} extension input in the {@link
+   * StartRegistrationOptions.StartRegistrationOptionsBuilder#extensions(RegistrationExtensionInputs)
+   * extensions} parameter of {@link StartRegistrationOptions}.
+   *
+   * <p>This output is signed by the authenticator, and thus its trustworthiness may be evaluated
+   * using <a
+   * href="https://developers.yubico.com/java-webauthn-server/#using_attestation">authenticator
+   * attestation</a>.
+   *
+   * @return the <code>credProtect</code> extension policy that was set for the credential, if
+   *     available.
+   * @see
+   *     StartRegistrationOptions.StartRegistrationOptionsBuilder#extensions(RegistrationExtensionInputs)
+   * @see
+   *     RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(Extensions.CredentialProtection.CredentialProtectionInput)
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+   *     §12.1. Credential Protection (credProtect)</a>
+   * @see <a href="https://developers.yubico.com/java-webauthn-server/#using_attestation">Using
+   *     attestation</a>
+   */
+  @JsonIgnore
+  public Optional<Extensions.CredentialProtection.CredentialProtectionPolicy>
+      getCredProtectPolicy() {
+    return getAuthenticatorExtensionOutputs()
+        .flatMap(AuthenticatorRegistrationExtensionOutputs::getCredProtect);
   }
 
   /**
