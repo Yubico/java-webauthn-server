@@ -135,14 +135,26 @@ public class RelyingPartyTest {
 
   @Test
   public void testOriginsWithAbsentOptionalSet() {
-    RelyingParty rp =
-        RelyingParty.builder()
-            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
-            .credentialRepository(unimplementedCredentialRepository())
-            .origins(Optional.empty())
-            .build();
+    {
+      RelyingParty rp =
+          RelyingParty.builder()
+              .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+              .credentialRepository(unimplementedCredentialRepository())
+              .origins(Optional.empty())
+              .build();
+      assertEquals(1, rp.getOrigins().size());
+    }
 
-    assertEquals(1, rp.getOrigins().size());
+    {
+      RelyingPartyV2<RegisteredCredential> rp =
+          RelyingParty.builder()
+              .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+              .credentialRepositoryV2(
+                  new CredentialRepositoryV1ToV2Adapter(unimplementedCredentialRepository()))
+              .origins(Optional.empty())
+              .build();
+      assertEquals(1, rp.getOrigins().size());
+    }
   }
 
   @Test
@@ -151,14 +163,26 @@ public class RelyingPartyTest {
     origins.add("test1");
     origins.add("test2");
 
-    RelyingParty rp =
-        RelyingParty.builder()
-            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
-            .credentialRepository(unimplementedCredentialRepository())
-            .origins(Optional.of(origins))
-            .build();
+    {
+      RelyingParty rp =
+          RelyingParty.builder()
+              .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+              .credentialRepository(unimplementedCredentialRepository())
+              .origins(Optional.of(origins))
+              .build();
+      assertEquals(2, rp.getOrigins().size());
+    }
 
-    assertEquals(2, rp.getOrigins().size());
+    {
+      RelyingPartyV2<RegisteredCredential> rp =
+          RelyingParty.builder()
+              .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+              .credentialRepositoryV2(
+                  new CredentialRepositoryV1ToV2Adapter(unimplementedCredentialRepository()))
+              .origins(Optional.of(origins))
+              .build();
+      assertEquals(2, rp.getOrigins().size());
+    }
   }
 
   @Test
