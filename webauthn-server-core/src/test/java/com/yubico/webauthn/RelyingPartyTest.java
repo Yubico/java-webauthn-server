@@ -134,7 +134,7 @@ public class RelyingPartyTest {
   }
 
   @Test
-  public void testOriginsWithEmptyOptionalSet() {
+  public void testOriginsWithAbsentOptionalSet() {
     RelyingParty rp =
         RelyingParty.builder()
             .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
