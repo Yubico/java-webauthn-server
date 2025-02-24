@@ -242,9 +242,11 @@ public class Extensions {
       private final CredentialProtectionPolicy credentialProtectionPolicy;
 
       /**
-       * If <code>true</code>, {@link RelyingParty#finishRegistration(FinishRegistrationOptions)}
-       * will validate that the policy set in {@link #getCredentialProtectionPolicy()} was satisfied
-       * and the browser is requested to fail the registration if the policy cannot be satisfied.
+       * If this is <code>true</code> and {@link #getCredentialProtectionPolicy()
+       * credentialProtectionPolicy} is not {@link CredentialProtectionPolicy#UV_OPTIONAL}, {@link
+       * RelyingParty#finishRegistration(FinishRegistrationOptions)} will validate that the policy
+       * set in {@link #getCredentialProtectionPolicy()} was satisfied and the browser is requested
+       * to fail the registration if the policy cannot be satisfied.
        *
        * <p>{@link CredentialProtectionInput#prefer(CredentialProtectionPolicy)} sets this to <code>
        * false</code>. {@link CredentialProtectionInput#require(CredentialProtectionPolicy)} sets
@@ -300,10 +302,11 @@ public class Extensions {
        * Create a Credential Protection (<code>credProtect</code>) extension input that requires the
        * given policy.
        *
-       * <p>If the policy cannot be satisfied, the browser is requested to abort the registration
-       * instead of proceeding. {@link RelyingParty#finishRegistration(FinishRegistrationOptions)}
-       * will validate that the policy returned in the authenticator extension output equals this
-       * input policy, and throw an exception otherwise. You can also use {@link
+       * <p>If the policy is not {@link CredentialProtectionPolicy#UV_OPTIONAL} and cannot be
+       * satisfied, the browser is requested to abort the registration instead of proceeding. {@link
+       * RelyingParty#finishRegistration(FinishRegistrationOptions)} will validate that the policy
+       * returned in the authenticator extension output equals this input policy, and throw an
+       * exception otherwise. You can also use {@link
        * AuthenticatorRegistrationExtensionOutputs#getCredProtect()} to inspect the extension output
        * yourself.
        *
@@ -337,22 +340,24 @@ public class Extensions {
      * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
      * credProtect} extension is set in the request with {@link
      * CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
-     * enforceCredentialProtectionPolicy} set to <code>false</code>, this has no effect.
+     * enforceCredentialProtectionPolicy} set to <code>false</code> or {@link
+     * CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} set to
+     * {@link CredentialProtectionPolicy#UV_OPTIONAL}, this has no effect.
      *
      * <p>If the {@link
      * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
      * credProtect} extension is set in the request with {@link
      * CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
-     * enforceCredentialProtectionPolicy} set to <code>true</code>, then this throws an {@link
+     * enforceCredentialProtectionPolicy} set to <code>true</code> and {@link
+     * CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} is not
+     * set to {@link CredentialProtectionPolicy#UV_OPTIONAL}, then this throws an {@link
      * IllegalArgumentException} if the <code>credProtect</code> authenticator extension output does
      * not equal the {@link CredentialProtectionInput#getCredentialProtectionPolicy()
      * credentialProtectionPolicy} set in the request.
      *
      * <p>This function is called automatically in {@link
-     * RelyingParty#finishRegistration(FinishRegistrationOptions)} when the request has {@link
-     * CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
-     * enforceCredentialProtectionPolicy} is set to <code>true</code>; you should not need to call
-     * it yourself.
+     * RelyingParty#finishRegistration(FinishRegistrationOptions)}; you should not need to call it
+     * yourself.
      *
      * @param request the arguments to start the registration ceremony.
      * @param response the response from the registration ceremony.
@@ -360,7 +365,9 @@ public class Extensions {
      *     RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
      *     credProtect} extension is set in the request with {@link
      *     CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
-     *     enforceCredentialProtectionPolicy} set to <code>true</code> and the <code>credProtect
+     *     enforceCredentialProtectionPolicy} set to <code>true</code> and {@link
+     *     CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} not
+     *     set to {@link CredentialProtectionPolicy#UV_OPTIONAL}, and the <code>credProtect
      *     </code> authenticator extension output does not equal the {@link
      *     CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} set
      *     in the request.
@@ -376,8 +383,10 @@ public class Extensions {
           .getExtensions()
           .getCredProtect()
           .ifPresent(
-              credProtect -> {
-                if (credProtect.isEnforceCredentialProtectionPolicy()) {
+              credProtectInput -> {
+                if (credProtectInput.isEnforceCredentialProtectionPolicy()
+                    && credProtectInput.getCredentialProtectionPolicy()
+                        != CredentialProtectionPolicy.UV_OPTIONAL) {
                   Optional<CredentialProtectionPolicy> outputPolicy =
                       response
                           .getResponse()
@@ -385,9 +394,10 @@ public class Extensions {
                           .getExtensions()
                           .flatMap(CredentialProtection::parseAuthenticatorExtensionOutput);
                   ExceptionUtil.assertTrue(
-                      outputPolicy.equals(Optional.of(credProtect.getCredentialProtectionPolicy())),
+                      outputPolicy.equals(
+                          Optional.of(credProtectInput.getCredentialProtectionPolicy())),
                       "Unsatisfied credProtect policy: required %s, got: %s",
-                      credProtect.getCredentialProtectionPolicy(),
+                      credProtectInput.getCredentialProtectionPolicy(),
                       outputPolicy);
                 }
               });

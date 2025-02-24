@@ -1134,8 +1134,12 @@ class RelyingPartyRegistrationSpec
             }
           }
 
-          it("Fails if credProtect is set with enforceCredentialProtectionPolicy=true and no output policy is returned.") {
-            forAll { policy: CredentialProtectionPolicy =>
+          it("Fails if credProtect is set with enforceCredentialProtectionPolicy=true and credProtectPolicy!=userVerificationOptional and no output policy is returned.") {
+            forAll(
+              arbitrary[CredentialProtectionPolicy].suchThat(
+                _ != CredentialProtectionPolicy.UV_OPTIONAL
+              )
+            ) { policy: CredentialProtectionPolicy =>
               val steps = finishRegistration(
                 testData = RegistrationTestData.Packed.BasicAttestation
                   .copy(
@@ -1153,47 +1157,63 @@ class RelyingPartyRegistrationSpec
             }
           }
 
-          it("Fails if credProtect is set with enforceCredentialProtectionPolicy=true and the output policy does not match the input policy.") {
-            forAll(arbitrary[CredentialProtectionPolicy], Gen.oneOf(1, 2)) {
-              (policy: CredentialProtectionPolicy, diff) =>
-                val authenticatorExtensionOutputs = CBORObject.NewMap()
-                authenticatorExtensionOutputs.set(
-                  "credProtect",
-                  CBORObject.FromObject(
-                    ((ReexportHelpers.credProtectPolicyCborValue(
-                      policy
-                    ) + diff - 1) % 3) + 1
-                  ),
-                )
-                val steps = finishRegistration(
-                  testData = RegistrationTestData.Packed.BasicAttestation
-                    .copy(
-                      requestedExtensions = RegistrationExtensionInputs
-                        .builder()
-                        .credProtect(CredentialProtectionInput.require(policy))
-                        .build()
+          it("Fails if credProtect is set with enforceCredentialProtectionPolicy=true and credProtectPolicy!=userVerificationOptional and the output policy does not match the input policy.") {
+            forAll(
+              arbitrary[CredentialProtectionPolicy].suchThat(
+                _ != CredentialProtectionPolicy.UV_OPTIONAL
+              ),
+              Gen.oneOf(1, 2),
+            ) { (policy: CredentialProtectionPolicy, diff) =>
+              val authenticatorExtensionOutputs = CBORObject.NewMap()
+              authenticatorExtensionOutputs.set(
+                "credProtect",
+                CBORObject.FromObject(
+                  ((ReexportHelpers.credProtectPolicyCborValue(
+                    policy
+                  ) + diff - 1) % 3) + 1
+                ),
+              )
+              val steps = finishRegistration(
+                testData = RegistrationTestData.Packed.BasicAttestation
+                  .copy(
+                    requestedExtensions = RegistrationExtensionInputs
+                      .builder()
+                      .credProtect(CredentialProtectionInput.require(policy))
+                      .build()
+                  )
+                  .editAuthenticatorData(authData =>
+                    new ByteArray(
+                      authData.getBytes.updated(
+                        32,
+                        (authData.getBytes()(32) | 0x80).toByte,
+                      ) ++ authenticatorExtensionOutputs.EncodeToBytes()
                     )
-                    .editAuthenticatorData(authData =>
-                      new ByteArray(
-                        authData.getBytes.updated(
-                          32,
-                          (authData.getBytes()(32) | 0x80).toByte,
-                        ) ++ authenticatorExtensionOutputs.EncodeToBytes()
-                      )
-                    )
-                )
-                val stepAfter: Try[FinishRegistrationSteps#Step18] =
-                  steps.begin.next.next.next.next.next.next.next.next.next.next.next.tryNext
+                  )
+              )
+              val stepAfter: Try[FinishRegistrationSteps#Step18] =
+                steps.begin.next.next.next.next.next.next.next.next.next.next.next.tryNext
 
-                stepAfter shouldBe a[Failure[_]]
-                stepAfter.failed.get shouldBe an[IllegalArgumentException]
+              stepAfter shouldBe a[Failure[_]]
+              stepAfter.failed.get shouldBe an[IllegalArgumentException]
             }
           }
 
-          it("Succeeds regardless of output credProtect policy if credProtect is set with enforceCredentialProtectionPolicy=false.") {
-            forAll {
+          it("Succeeds regardless of output credProtect policy if credProtect is set with enforceCredentialProtectionPolicy=false or credProtectPolicy=userVerificationOptional.") {
+            val genCredPropsInput = for {
+              enforce <- arbitrary[Boolean]
+              policy <-
+                if (enforce) Gen.const(CredentialProtectionPolicy.UV_OPTIONAL)
+                else arbitrary[CredentialProtectionPolicy]
+            } yield {
+              if (enforce) CredentialProtectionInput.require(policy)
+              else CredentialProtectionInput.prefer(policy)
+            }
+            forAll(
+              genCredPropsInput,
+              arbitrary[Option[CredentialProtectionPolicy]],
+            ) {
               (
-                  inputPolicy: CredentialProtectionPolicy,
+                  credPropsInput: CredentialProtectionInput,
                   outputPolicy: Option[CredentialProtectionPolicy],
               ) =>
                 val authenticatorExtensionOutputs =
@@ -1212,9 +1232,7 @@ class RelyingPartyRegistrationSpec
                     .copy(
                       requestedExtensions = RegistrationExtensionInputs
                         .builder()
-                        .credProtect(
-                          CredentialProtectionInput.prefer(inputPolicy)
-                        )
+                        .credProtect(credPropsInput)
                         .build()
                     )
                     .editAuthenticatorData(authData =>
