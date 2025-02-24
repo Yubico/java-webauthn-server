@@ -55,6 +55,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
 
   private final AppId appidExclude;
   private final Boolean credProps;
+  private final Extensions.CredentialProtection.CredentialProtectionInput credProtect;
   private final Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob;
   private final Boolean uvm;
 
@@ -62,10 +63,13 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
   private RegistrationExtensionInputs(
       @JsonProperty("appidExclude") AppId appidExclude,
       @JsonProperty("credProps") Boolean credProps,
+      @JsonProperty("credProtect")
+          Extensions.CredentialProtection.CredentialProtectionInput credProtect,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
       @JsonProperty("uvm") Boolean uvm) {
     this.appidExclude = appidExclude;
     this.credProps = credProps;
+    this.credProtect = credProtect;
     this.largeBlob = largeBlob;
     this.uvm = uvm;
   }
@@ -81,6 +85,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     return new RegistrationExtensionInputs(
         this.appidExclude != null ? this.appidExclude : other.appidExclude,
         this.credProps != null ? this.credProps : other.credProps,
+        this.credProtect != null ? this.credProtect : other.credProtect,
         this.largeBlob != null ? this.largeBlob : other.largeBlob,
         this.uvm != null ? this.uvm : other.uvm);
   }
@@ -107,6 +112,18 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    */
   public boolean getCredProps() {
     return credProps != null && credProps;
+  }
+
+  /**
+   * @return The Credential Protection (<code>credProtect</code>) extension input, if set.
+   * @see
+   *     RegistrationExtensionInputsBuilder#credProtect(Extensions.CredentialProtection.CredentialProtectionInput)
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">§10.4.
+   *     Credential Properties Extension (credProps)</a>
+   */
+  public Optional<Extensions.CredentialProtection.CredentialProtectionInput> getCredProtect() {
+    return Optional.ofNullable(credProtect);
   }
 
   /** For JSON serialization, to omit false values. */
@@ -160,6 +177,9 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     }
     if (getCredProps()) {
       ids.add(Extensions.CredentialProperties.EXTENSION_ID);
+    }
+    if (getCredProtect().isPresent()) {
+      ids.add(Extensions.CredentialProtection.EXTENSION_ID);
     }
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
@@ -243,13 +263,46 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     }
 
     /**
+     * Enable or disable the Credential Protection (<code>credProtect</code>) extension.
+     *
+     * @see
+     *     Extensions.CredentialProtection.CredentialProtectionInput#prefer(Extensions.CredentialProtection.CredentialProtectionPolicy)
+     * @see
+     *     Extensions.CredentialProtection.CredentialProtectionInput#require(Extensions.CredentialProtection.CredentialProtectionPolicy)
+     * @see <a
+     *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+     *     §12.1. Credential Protection (credProtect)</a>
+     */
+    public RegistrationExtensionInputsBuilder credProtect(
+        Optional<Extensions.CredentialProtection.CredentialProtectionInput> credProtect) {
+      this.credProtect = credProtect.orElse(null);
+      return this;
+    }
+
+    /**
+     * Enable the Credential Protection (<code>credProtect</code>) extension.
+     *
+     * @see
+     *     Extensions.CredentialProtection.CredentialProtectionInput#prefer(Extensions.CredentialProtection.CredentialProtectionPolicy)
+     * @see
+     *     Extensions.CredentialProtection.CredentialProtectionInput#require(Extensions.CredentialProtection.CredentialProtectionPolicy)
+     * @see <a
+     *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+     *     §12.1. Credential Protection (credProtect)</a>
+     */
+    public RegistrationExtensionInputsBuilder credProtect(
+        Extensions.CredentialProtection.CredentialProtectionInput credProtect) {
+      this.credProtect = credProtect;
+      return this;
+    }
+
+    /**
      * Enable the Large blob storage extension (<code>largeBlob</code>).
      *
      * <p>Alias of <code>largeBlob(new Extensions.LargeBlob.LargeBlobRegistrationInput(support))
      * </code>.
      *
-     * @param support an {@link
-     *     com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport}
+     * @param support an {@link Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport}
      *     value to set as the <code>support</code> attribute of the <code>largeBlob</code>
      *     extension input.
      * @see #largeBlob(Extensions.LargeBlob.LargeBlobRegistrationInput)
