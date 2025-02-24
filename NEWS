@@ -1,5 +1,6 @@
 == Version 2.7.0 (unreleased) ==
 
+* Added overloaded setter `RelyingPartyBuilder.origins(Optional<Set<String>>)`.
 * Added support for the CTAP2 `credProtect` extension.
 * (Experimental) Added a new suite of interfaces, starting with
   `CredentialRepositoryV2`. `RelyingParty` can now be configured with a

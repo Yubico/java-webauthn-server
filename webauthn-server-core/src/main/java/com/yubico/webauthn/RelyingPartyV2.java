@@ -563,6 +563,16 @@ public class RelyingPartyV2<C extends CredentialRecord> {
         Optional.empty();
     private @NonNull Optional<AttestationTrustSource> attestationTrustSource = Optional.empty();
 
+    public RelyingPartyV2Builder<C> origins(@NonNull Set<String> origins) {
+      this.origins = origins;
+      return this;
+    }
+
+    public RelyingPartyV2Builder<C> origins(Optional<Set<String>> origins) {
+      this.origins = origins.orElse(null);
+      return this;
+    }
+
     /**
      * The extension input to set for the <code>appid</code> and <code>appidExclude</code>
      * extensions.
