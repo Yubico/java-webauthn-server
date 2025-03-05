@@ -66,12 +66,16 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
 
   private final Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob;
 
+  private final Extensions.Prf.PrfAuthenticationOutput prf;
+
   @JsonCreator
   private ClientAssertionExtensionOutputs(
       @JsonProperty("appid") Boolean appid,
-      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob) {
+      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobAuthenticationOutput largeBlob,
+      @JsonProperty("prf") Extensions.Prf.PrfAuthenticationOutput prf) {
     this.appid = appid;
     this.largeBlob = largeBlob;
+    this.prf = prf;
   }
 
   @Override
@@ -83,6 +87,9 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
     }
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
+    if (prf != null) {
+      ids.add(Extensions.Prf.EXTENSION_ID);
     }
     return ids;
   }
@@ -112,6 +119,20 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    */
   public Optional<Extensions.LargeBlob.LargeBlobAuthenticationOutput> getLargeBlob() {
     return Optional.ofNullable(largeBlob);
+  }
+
+  /**
+   * The extension output for the <a
+   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">Large blob
+   * storage (<code>largeBlob</code>) extension</a>, if any.
+   *
+   * @see com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationOutput
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.Large
+   *     blob storage extension (largeBlob)</a>
+   */
+  public Optional<Extensions.Prf.PrfAuthenticationOutput> getPrf() {
+    return Optional.ofNullable(prf);
   }
 
   public static class ClientAssertionExtensionOutputsBuilder {

@@ -57,6 +57,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
   private final Boolean credProps;
   private final Extensions.CredentialProtection.CredentialProtectionInput credProtect;
   private final Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob;
+  private final Extensions.Prf.PrfRegistrationInput prf;
   private final Boolean uvm;
 
   @JsonCreator
@@ -66,11 +67,13 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
       @JsonProperty("credProtect")
           Extensions.CredentialProtection.CredentialProtectionInput credProtect,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
+      @JsonProperty("prf") Extensions.Prf.PrfRegistrationInput prf,
       @JsonProperty("uvm") Boolean uvm) {
     this.appidExclude = appidExclude;
     this.credProps = credProps;
     this.credProtect = credProtect;
     this.largeBlob = largeBlob;
+    this.prf = prf;
     this.uvm = uvm;
   }
 
@@ -87,6 +90,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
         this.credProps != null ? this.credProps : other.credProps,
         this.credProtect != null ? this.credProtect : other.credProtect,
         this.largeBlob != null ? this.largeBlob : other.largeBlob,
+        this.prf != null ? this.prf : other.prf,
         this.uvm != null ? this.uvm : other.uvm);
   }
 
@@ -148,6 +152,19 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
   }
 
   /**
+   * @return The value of the Pseudo-random function extension (<code>prf</code>) input if
+   *     configured, empty otherwise.
+   * @see RegistrationExtensionInputsBuilder#prf(Extensions.Prf.PrfRegistrationInput)
+   * @see RegistrationExtensionInputsBuilder#prf(Extensions.Prf.PrfValues)
+   * @see <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
+   *     Large blob storage extension (largeBlob)</a>
+   */
+  public Optional<Extensions.Prf.PrfRegistrationInput> getPrf() {
+    return Optional.ofNullable(prf);
+  }
+
+  /**
    * @return <code>true</code> if the User Verification Method Extension (<code>uvm</code>) is
    *     enabled, <code>false</code> otherwise.
    * @see RegistrationExtensionInputsBuilder#uvm()
@@ -183,6 +200,9 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     }
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
+    if (prf != null) {
+      ids.add(Extensions.Prf.EXTENSION_ID);
     }
     if (getUvm()) {
       ids.add(Extensions.Uvm.EXTENSION_ID);
@@ -327,6 +347,37 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     public RegistrationExtensionInputsBuilder largeBlob(
         Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob) {
       this.largeBlob = largeBlob;
+      return this;
+    }
+
+    /**
+     * Enable the Pseudo-random function extension (<code>prf</code>).
+     *
+     * <p>Alias of <code>prf(new Extensions.Prf.PrfRegistrationInput(eval))
+     * </code>.
+     *
+     * @param eval an {@link Extensions.Prf.PrfValues} value to set as the <code>eval</code>
+     *     attribute of the <code>prf</code> extension input.
+     * @see #prf(Extensions.Prf.PrfRegistrationInput)
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
+     *     Large blob storage extension (largeBlob)</a>
+     */
+    public RegistrationExtensionInputsBuilder prf(Extensions.Prf.PrfValues eval) {
+      this.prf = new Extensions.Prf.PrfRegistrationInput(eval);
+      return this;
+    }
+
+    /**
+     * Enable the Pseudo-random function extension (<code>prf</code>).
+     *
+     * @see #prf(Extensions.Prf.PrfValues)
+     * @see <a
+     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
+     *     Large blob storage extension (largeBlob)</a>
+     */
+    public RegistrationExtensionInputsBuilder prf(Extensions.Prf.PrfRegistrationInput prf) {
+      this.prf = prf;
       return this;
     }
 

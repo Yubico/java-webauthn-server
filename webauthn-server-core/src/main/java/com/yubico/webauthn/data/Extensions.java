@@ -15,6 +15,7 @@ import com.yubico.webauthn.extension.uvm.KeyProtectionType;
 import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
 import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -741,6 +742,198 @@ public class Extensions {
        */
       public Optional<Boolean> getWritten() {
         return Optional.ofNullable(written);
+      }
+    }
+  }
+
+  /**
+   * Definitions for the Pseudo-random function extension (<code>prf</code>).
+   *
+   * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random function
+   *     extension (prf)</a>
+   */
+  public static class Prf {
+    static final String EXTENSION_ID = "prf";
+
+    /**
+     * The known valid arguments for the Pseudo-random function extension (<code>prf</code>) input
+     * in registration and authentication ceremonies.
+     *
+     * <p>
+     *
+     * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
+     *     function extension (prf)</a>
+     */
+    @Value
+    public static class PrfValues {
+      /** */
+      @JsonProperty public final ByteArray first; // REQUIRED
+
+      @JsonProperty public final ByteArray second;
+
+      @JsonCreator
+      public PrfValues(
+          @JsonProperty("first") final ByteArray first,
+          @JsonProperty("second") final ByteArray second) {
+        this.first = first;
+        this.second = second;
+      }
+
+      public Optional<ByteArray> getFirst() {
+        return Optional.ofNullable(first);
+      }
+
+      public Optional<ByteArray> getSecond() {
+        return Optional.ofNullable(second);
+      }
+    }
+
+    /**
+     * Extension inputs for the Pseudo-random function extension (<code>prf</code>) in
+     * authentication ceremonies.
+     *
+     * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
+     *     function extension (prf)</a>
+     */
+    @Value
+    public static class PrfAuthenticationInput {
+      /** */
+      @JsonProperty private final PrfValues eval;
+
+      @JsonProperty
+      private final HashMap<PublicKeyCredentialDescriptor, PrfValues> evalByCredential;
+
+      @JsonCreator
+      public PrfAuthenticationInput(
+          @JsonProperty("eval") PrfValues eval,
+          @JsonProperty("evalByCredential")
+              HashMap<PublicKeyCredentialDescriptor, PrfValues> evalByCredential) {
+        this.eval = eval;
+        this.evalByCredential = evalByCredential;
+      }
+
+      public Optional<PrfValues> getEval() {
+        return Optional.ofNullable(eval);
+      }
+
+      public Optional<HashMap<PublicKeyCredentialDescriptor, PrfValues>> getEvalByCredential() {
+        return Optional.ofNullable(evalByCredential);
+      }
+    }
+
+    /**
+     * Extension inputs for the Pseudo-random function extension (<code>prf</code>) in registration
+     * ceremonies.
+     *
+     * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
+     *     function extension (prf)</a>
+     */
+    @Value
+    public static class PrfRegistrationInput {
+      /** */
+      @JsonProperty private final PrfValues eval;
+
+      @JsonCreator
+      public PrfRegistrationInput(@JsonProperty("eval") PrfValues eval) {
+        this.eval = eval;
+      }
+
+      public Optional<PrfValues> getEval() {
+        return Optional.ofNullable(eval);
+      }
+    }
+
+    /**
+     * Extension outputs for the Pseudo-random function extension (<code>prf</code>) in registration
+     * ceremonies.
+     *
+     * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
+     *     function extension (prf)</a>
+     */
+    @Value
+    public static class PrfRegistrationOutput {
+
+      /**
+       * <code>true</code> if, and only if, the one or two PRFs are available for use with the
+       * created credential.
+       *
+       * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
+       *     function extension (prf)</a>
+       */
+      @JsonProperty private final boolean enabled;
+
+      /**
+       * The results of evaluating the PRF for the inputs given in eval or evalByCredential.
+       *
+       * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
+       *     function extension (prf)</a>
+       */
+      @JsonProperty private final PrfValues results;
+
+      @JsonCreator
+      private PrfRegistrationOutput(
+          @JsonProperty("enabled") boolean enabled, @JsonProperty("results") PrfValues results) {
+        this.enabled = enabled;
+        this.results = results;
+      }
+
+      /** TODO */
+      public static PrfRegistrationOutput enabled(final boolean enabled) {
+        return new PrfRegistrationOutput(enabled, null);
+      }
+
+      /** TODO */
+      public static PrfRegistrationOutput results(final PrfValues results) {
+        return new PrfRegistrationOutput(true, results);
+      }
+
+      public Optional<Boolean> getEnabled() {
+        return Optional.of(enabled);
+      }
+
+      public Optional<PrfValues> getResults() {
+        return Optional.ofNullable(results);
+      }
+    }
+
+    /**
+     * Extension outputs for the Large blob storage extension (<code>largeBlob</code>) in
+     * authentication ceremonies.
+     *
+     * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
+     *     function extension (prf)</a>
+     */
+    @Value
+    public static class PrfAuthenticationOutput {
+
+      /**
+       * The results of evaluating the PRF for the inputs given in eval or evalByCredential.
+       *
+       * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
+       *     function extension (prf)</a>
+       */
+      @JsonProperty private final PrfValues results;
+
+      @JsonCreator
+      private PrfAuthenticationOutput(@JsonProperty("results") PrfValues results) {
+        this.results = results;
+      }
+
+      public static PrfAuthenticationOutput results(final PrfValues results) {
+        return new PrfAuthenticationOutput(results);
+      }
+
+      /**
+       * @return A present {@link Optional} if {@link LargeBlobAuthenticationInput#getRead()} was
+       *     <code>true</code> and the blob content was successfully read. Otherwise (if {@link
+       *     LargeBlobAuthenticationInput#getRead()} was <code>false</code> or the content failed to
+       *     be read) an empty {@link Optional}.
+       * @see <a
+       *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dom-authenticationextensionslargebloboutputs-blob">§10.5.
+       *     Large blob storage extension (largeBlob)</a>
+       */
+      public Optional<PrfValues> getResults() {
+        return Optional.ofNullable(results);
       }
     }
   }
