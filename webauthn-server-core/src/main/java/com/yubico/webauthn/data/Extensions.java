@@ -768,20 +768,16 @@ public class Extensions {
     @Value
     public static class PrfValues {
       /** */
-      @JsonProperty public final ByteArray first; // REQUIRED
+      @JsonProperty @NonNull public final ByteArray first;
 
       @JsonProperty public final ByteArray second;
 
       @JsonCreator
       public PrfValues(
-          @JsonProperty("first") final ByteArray first,
+          @JsonProperty("first") @NonNull final ByteArray first,
           @JsonProperty("second") final ByteArray second) {
         this.first = first;
         this.second = second;
-      }
-
-      public Optional<ByteArray> getFirst() {
-        return Optional.ofNullable(first);
       }
 
       public Optional<ByteArray> getSecond() {
