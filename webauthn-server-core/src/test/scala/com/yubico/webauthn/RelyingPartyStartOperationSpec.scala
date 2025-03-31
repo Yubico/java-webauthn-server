@@ -1086,7 +1086,7 @@ class RelyingPartyStartOperationSpec
         )
       }
 
-      it("sets the uvm extension if enabled in StartRegistrationOptions.") {
+      it("sets the uvm extension if enabled in StartAssertionOptions.") {
         forAll { extensions: AssertionExtensionInputs =>
           val rp = relyingParty(userId = userId)
           val result = rp.startAssertion(
@@ -2146,7 +2146,7 @@ class RelyingPartyStartOperationSpec
         )
       }
 
-      it("sets the uvm extension if enabled in StartRegistrationOptions.") {
+      it("sets the uvm extension if enabled in StartAssertionOptions.") {
         forAll { extensions: AssertionExtensionInputs =>
           val rp = relyingParty(userId = userId)
           val result = rp.startAssertion(
