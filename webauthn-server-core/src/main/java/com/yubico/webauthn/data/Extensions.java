@@ -15,6 +15,7 @@ import com.yubico.webauthn.extension.uvm.KeyProtectionType;
 import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
 import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -804,7 +805,8 @@ public class Extensions {
           @JsonProperty("eval") PrfValues eval,
           @JsonProperty("evalByCredential") Map<ByteArray, PrfValues> evalByCredential) {
         this.eval = eval;
-        this.evalByCredential = evalByCredential;
+        this.evalByCredential =
+            evalByCredential == null ? null : Collections.unmodifiableMap(evalByCredential);
       }
 
       public Optional<PrfValues> getEval() {
