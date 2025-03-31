@@ -1201,7 +1201,7 @@ class RelyingPartyRegistrationSpec
           }
 
           it("Succeeds regardless of output credProtect policy if credProtect is set with enforceCredentialProtectionPolicy=false or credProtectPolicy=userVerificationOptional.") {
-            val genCredPropsInput = for {
+            val genCredProtectInput = for {
               enforce <- arbitrary[Boolean]
               policy <-
                 if (enforce) Gen.const(CredentialProtectionPolicy.UV_OPTIONAL)
@@ -1211,11 +1211,11 @@ class RelyingPartyRegistrationSpec
               else CredentialProtectionInput.prefer(policy)
             }
             forAll(
-              genCredPropsInput,
+              genCredProtectInput,
               arbitrary[Option[CredentialProtectionPolicy]],
             ) {
               (
-                  credPropsInput: CredentialProtectionInput,
+                  credProtectInput: CredentialProtectionInput,
                   outputPolicy: Option[CredentialProtectionPolicy],
               ) =>
                 val authenticatorExtensionOutputs =
@@ -1234,7 +1234,7 @@ class RelyingPartyRegistrationSpec
                     .copy(
                       requestedExtensions = RegistrationExtensionInputs
                         .builder()
-                        .credProtect(credPropsInput)
+                        .credProtect(credProtectInput)
                         .build()
                     )
                     .editAuthenticatorData(authData =>
