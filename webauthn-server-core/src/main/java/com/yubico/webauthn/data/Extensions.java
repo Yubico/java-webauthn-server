@@ -17,6 +17,7 @@ import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -800,14 +801,12 @@ public class Extensions {
       /** */
       @JsonProperty private final PrfValues eval;
 
-      @JsonProperty
-      private final HashMap<PublicKeyCredentialDescriptor, PrfValues> evalByCredential;
+      @JsonProperty private final Map<ByteArray, PrfValues> evalByCredential;
 
       @JsonCreator
       public PrfAuthenticationInput(
           @JsonProperty("eval") PrfValues eval,
-          @JsonProperty("evalByCredential")
-              HashMap<PublicKeyCredentialDescriptor, PrfValues> evalByCredential) {
+          @JsonProperty("evalByCredential") Map<ByteArray, PrfValues> evalByCredential) {
         this.eval = eval;
         this.evalByCredential = evalByCredential;
       }
@@ -816,8 +815,23 @@ public class Extensions {
         return Optional.ofNullable(eval);
       }
 
-      public Optional<HashMap<PublicKeyCredentialDescriptor, PrfValues>> getEvalByCredential() {
+      public Optional<Map<ByteArray, PrfValues>> getEvalByCredential() {
         return Optional.ofNullable(evalByCredential);
+      }
+
+      static HashMap<ByteArray, PrfValues> descriptorsToIds(
+          Map<PublicKeyCredentialDescriptor, PrfValues> evalByCredential) {
+        return evalByCredential.entrySet().stream()
+            .reduce(
+                new HashMap<>(),
+                (ebc, entry) -> {
+                  ebc.put(entry.getKey().getId(), entry.getValue());
+                  return ebc;
+                },
+                (a, b) -> {
+                  a.putAll(b);
+                  return a;
+                });
       }
     }
 

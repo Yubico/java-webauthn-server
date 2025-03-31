@@ -30,8 +30,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.extension.appid.AppId;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Builder;
@@ -195,8 +195,10 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      */
     public AssertionExtensionInputsBuilder prf(
         Extensions.Prf.PrfValues eval,
-        HashMap<PublicKeyCredentialDescriptor, Extensions.Prf.PrfValues> evalByCredential) {
-      this.prf = new Extensions.Prf.PrfAuthenticationInput(eval, evalByCredential);
+        Map<PublicKeyCredentialDescriptor, Extensions.Prf.PrfValues> evalByCredential) {
+      this.prf =
+          new Extensions.Prf.PrfAuthenticationInput(
+              eval, Extensions.Prf.PrfAuthenticationInput.descriptorsToIds(evalByCredential));
       return this;
     }
 
