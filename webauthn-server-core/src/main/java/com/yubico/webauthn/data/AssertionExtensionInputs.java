@@ -197,8 +197,8 @@ public class AssertionExtensionInputs implements ExtensionInputs {
         Extensions.Prf.PrfValues eval,
         Map<PublicKeyCredentialDescriptor, Extensions.Prf.PrfValues> evalByCredential) {
       this.prf =
-          new Extensions.Prf.PrfAuthenticationInput(
-              eval, Extensions.Prf.PrfAuthenticationInput.descriptorsToIds(evalByCredential));
+          Extensions.Prf.PrfAuthenticationInput.evalByCredentialWithFallback(
+              evalByCredential, eval);
       return this;
     }
 

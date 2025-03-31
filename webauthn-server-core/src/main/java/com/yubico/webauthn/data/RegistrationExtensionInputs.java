@@ -364,7 +364,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      *     Large blob storage extension (largeBlob)</a>
      */
     public RegistrationExtensionInputsBuilder prf(Extensions.Prf.PrfValues eval) {
-      this.prf = new Extensions.Prf.PrfRegistrationInput(eval);
+      this.prf = Extensions.Prf.PrfRegistrationInput.eval(eval);
       return this;
     }
 

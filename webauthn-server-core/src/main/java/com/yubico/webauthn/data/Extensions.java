@@ -774,7 +774,7 @@ public class Extensions {
       @JsonProperty public final ByteArray second;
 
       @JsonCreator
-      public PrfValues(
+      private PrfValues(
           @JsonProperty("first") @NonNull final ByteArray first,
           @JsonProperty("second") final ByteArray second) {
         this.first = first;
@@ -783,6 +783,19 @@ public class Extensions {
 
       public Optional<ByteArray> getSecond() {
         return Optional.ofNullable(second);
+      }
+
+      public static PrfValues one(@NonNull ByteArray first) {
+        return new PrfValues(first, null);
+      }
+
+      public static PrfValues two(@NonNull ByteArray first, @NonNull ByteArray second) {
+        return new PrfValues(first, second);
+      }
+
+      public static PrfValues oneOrTwo(
+          @NonNull ByteArray first, @NonNull Optional<ByteArray> second) {
+        return new PrfValues(first, second.orElse(null));
       }
     }
 
@@ -801,7 +814,7 @@ public class Extensions {
       @JsonProperty private final Map<ByteArray, PrfValues> evalByCredential;
 
       @JsonCreator
-      public PrfAuthenticationInput(
+      private PrfAuthenticationInput(
           @JsonProperty("eval") PrfValues eval,
           @JsonProperty("evalByCredential") Map<ByteArray, PrfValues> evalByCredential) {
         this.eval = eval;
@@ -817,7 +830,7 @@ public class Extensions {
         return Optional.ofNullable(evalByCredential);
       }
 
-      static HashMap<ByteArray, PrfValues> descriptorsToIds(
+      private static HashMap<ByteArray, PrfValues> descriptorsToIds(
           Map<PublicKeyCredentialDescriptor, PrfValues> evalByCredential) {
         return evalByCredential.entrySet().stream()
             .reduce(
@@ -830,6 +843,21 @@ public class Extensions {
                   a.putAll(b);
                   return a;
                 });
+      }
+
+      public static PrfAuthenticationInput eval(@NonNull PrfValues eval) {
+        return new PrfAuthenticationInput(eval, null);
+      }
+
+      public static PrfAuthenticationInput evalByCredential(
+          @NonNull Map<PublicKeyCredentialDescriptor, PrfValues> evalByCredential) {
+        return new PrfAuthenticationInput(null, descriptorsToIds(evalByCredential));
+      }
+
+      public static PrfAuthenticationInput evalByCredentialWithFallback(
+          @NonNull Map<PublicKeyCredentialDescriptor, PrfValues> evalByCredential,
+          @NonNull PrfValues eval) {
+        return new PrfAuthenticationInput(eval, descriptorsToIds(evalByCredential));
       }
     }
 
@@ -846,12 +874,20 @@ public class Extensions {
       @JsonProperty private final PrfValues eval;
 
       @JsonCreator
-      public PrfRegistrationInput(@JsonProperty("eval") PrfValues eval) {
+      private PrfRegistrationInput(@JsonProperty("eval") PrfValues eval) {
         this.eval = eval;
       }
 
       public Optional<PrfValues> getEval() {
         return Optional.ofNullable(eval);
+      }
+
+      public static PrfRegistrationInput enable() {
+        return new PrfRegistrationInput(null);
+      }
+
+      public static PrfRegistrationInput eval(@NonNull PrfValues eval) {
+        return new PrfRegistrationInput(eval);
       }
     }
 
