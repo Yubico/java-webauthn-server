@@ -925,16 +925,6 @@ public class Extensions {
         this.results = results;
       }
 
-      /** TODO */
-      public static PrfRegistrationOutput enabled(final Boolean enabled) {
-        return new PrfRegistrationOutput(enabled, null);
-      }
-
-      /** TODO */
-      public static PrfRegistrationOutput results(final PrfValues results) {
-        return new PrfRegistrationOutput(true, results);
-      }
-
       public Optional<Boolean> getEnabled() {
         return Optional.ofNullable(enabled);
       }
@@ -965,10 +955,6 @@ public class Extensions {
       @JsonCreator
       PrfAuthenticationOutput(@JsonProperty("results") PrfValues results) {
         this.results = results;
-      }
-
-      public static PrfAuthenticationOutput results(final PrfValues results) {
-        return new PrfAuthenticationOutput(results);
       }
 
       /**
