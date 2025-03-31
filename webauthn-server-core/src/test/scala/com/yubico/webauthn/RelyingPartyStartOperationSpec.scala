@@ -34,6 +34,10 @@ import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionInput
 import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionPolicy
+import com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationInput
+import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationInput
+import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfAuthenticationInput
+import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfRegistrationInput
 import com.yubico.webauthn.data.Generators.Extensions.registrationExtensionInputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -578,6 +582,40 @@ class RelyingPartyStartOperationSpec
         }
       }
 
+      it("by default does not set the prf extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .build()
+        )
+        result.getExtensions.getPrf.toScala should be(
+          None
+        )
+      }
+
+      it("sets the prf extension if enabled in StartRegistrationOptions.") {
+        forAll {
+          (
+              extensions: RegistrationExtensionInputs,
+              prf: PrfRegistrationInput,
+          ) =>
+            val rp = relyingParty(userId = userId)
+            val result = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(userId)
+                .extensions(extensions.toBuilder.prf(prf).build())
+                .build()
+            )
+
+            result.getExtensions.getPrf.toScala should equal(
+              Some(prf)
+            )
+        }
+      }
+
       it("respects the residentKey setting.") {
         val rp = relyingParty(userId = userId)
 
@@ -1061,6 +1099,35 @@ class RelyingPartyStartOperationSpec
           result.getPublicKeyCredentialRequestOptions.getExtensions.getUvm should be(
             true
           )
+        }
+      }
+
+      it("by default does not set the prf extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .build()
+        )
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getPrf.toScala should be(
+          None
+        )
+      }
+
+      it("sets the prf extension if enabled in StartAssertionOptions.") {
+        forAll {
+          (extensions: AssertionExtensionInputs, prf: PrfAuthenticationInput) =>
+            val rp = relyingParty(userId = userId)
+            val result = rp.startAssertion(
+              StartAssertionOptions
+                .builder()
+                .extensions(extensions.toBuilder.prf(prf).build())
+                .build()
+            )
+
+            result.getPublicKeyCredentialRequestOptions.getExtensions.getPrf.toScala should equal(
+              Some(prf)
+            )
         }
       }
     }
@@ -1554,6 +1621,40 @@ class RelyingPartyStartOperationSpec
               .build()
           )
           result.getExtensions.getCredProtect.toScala should be(None)
+        }
+      }
+
+      it("by default does not set the prf extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .build()
+        )
+        result.getExtensions.getPrf.toScala should be(
+          None
+        )
+      }
+
+      it("sets the prf extension if enabled in StartRegistrationOptions.") {
+        forAll {
+          (
+              extensions: RegistrationExtensionInputs,
+              prf: PrfRegistrationInput,
+          ) =>
+            val rp = relyingParty(userId = userId)
+            val result = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(userId)
+                .extensions(extensions.toBuilder.prf(prf).build())
+                .build()
+            )
+
+            result.getExtensions.getPrf.toScala should equal(
+              Some(prf)
+            )
         }
       }
 
@@ -2058,6 +2159,35 @@ class RelyingPartyStartOperationSpec
           result.getPublicKeyCredentialRequestOptions.getExtensions.getUvm should be(
             true
           )
+        }
+      }
+
+      it("by default does not set the prf extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .build()
+        )
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getPrf.toScala should be(
+          None
+        )
+      }
+
+      it("sets the prf extension if enabled in StartAssertionOptions.") {
+        forAll {
+          (extensions: AssertionExtensionInputs, prf: PrfAuthenticationInput) =>
+            val rp = relyingParty(userId = userId)
+            val result = rp.startAssertion(
+              StartAssertionOptions
+                .builder()
+                .extensions(extensions.toBuilder.prf(prf).build())
+                .build()
+            )
+
+            result.getPublicKeyCredentialRequestOptions.getExtensions.getPrf.toScala should equal(
+              Some(prf)
+            )
         }
       }
     }

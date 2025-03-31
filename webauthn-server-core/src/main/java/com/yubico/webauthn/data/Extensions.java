@@ -908,7 +908,7 @@ public class Extensions {
        * @see <a href="https://www.w3.org/TR/webauthn-3/#prf-extension">§10.1.4. Pseudo-random
        *     function extension (prf)</a>
        */
-      @JsonProperty private final boolean enabled;
+      @JsonProperty private final Boolean enabled;
 
       /**
        * The results of evaluating the PRF for the inputs given in eval or evalByCredential.
@@ -919,14 +919,14 @@ public class Extensions {
       @JsonProperty private final PrfValues results;
 
       @JsonCreator
-      private PrfRegistrationOutput(
-          @JsonProperty("enabled") boolean enabled, @JsonProperty("results") PrfValues results) {
+      PrfRegistrationOutput(
+          @JsonProperty("enabled") Boolean enabled, @JsonProperty("results") PrfValues results) {
         this.enabled = enabled;
         this.results = results;
       }
 
       /** TODO */
-      public static PrfRegistrationOutput enabled(final boolean enabled) {
+      public static PrfRegistrationOutput enabled(final Boolean enabled) {
         return new PrfRegistrationOutput(enabled, null);
       }
 
@@ -936,7 +936,7 @@ public class Extensions {
       }
 
       public Optional<Boolean> getEnabled() {
-        return Optional.of(enabled);
+        return Optional.ofNullable(enabled);
       }
 
       public Optional<PrfValues> getResults() {
@@ -963,7 +963,7 @@ public class Extensions {
       @JsonProperty private final PrfValues results;
 
       @JsonCreator
-      private PrfAuthenticationOutput(@JsonProperty("results") PrfValues results) {
+      PrfAuthenticationOutput(@JsonProperty("results") PrfValues results) {
         this.results = results;
       }
 

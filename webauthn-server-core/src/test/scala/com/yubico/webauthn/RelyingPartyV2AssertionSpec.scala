@@ -41,7 +41,9 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
+import com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
+import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfAuthenticationOutput
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -2653,6 +2655,35 @@ class RelyingPartyV2AssertionSpec
           )
           result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.toScala should be(
             None
+          )
+        }
+      }
+
+      it("pass through prf extension outputs when present.") {
+        forAll(minSuccessful(3)) { prfOutput: PrfAuthenticationOutput =>
+          val result = rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(
+                testDataBase.assertion.get.request.toBuilder
+                  .userHandle(testDataBase.userId.getId)
+                  .build()
+              )
+              .response(
+                testDataBase.assertion.get.response.toBuilder
+                  .clientExtensionResults(
+                    ClientAssertionExtensionOutputs
+                      .builder()
+                      .prf(prfOutput)
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.getClientExtensionOutputs.get().getPrf.toScala should equal(
+            Some(prfOutput)
           )
         }
       }

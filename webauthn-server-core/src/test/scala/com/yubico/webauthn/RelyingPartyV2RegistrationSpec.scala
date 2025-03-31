@@ -57,7 +57,9 @@ import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtec
 import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionPolicy
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
+import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
+import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfRegistrationOutput
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -4455,6 +4457,33 @@ class RelyingPartyV2RegistrationSpec
 
           result.getClientExtensionOutputs.get.getLargeBlob.get.isSupported should be(
             true
+          )
+        }
+      }
+
+      it("pass through prf extension outputs when present.") {
+        forAll(minSuccessful(3)) { prfOutput: PrfRegistrationOutput =>
+          val testData = RegistrationTestData.Packed.BasicAttestation
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(
+                testData.request
+              )
+              .response(
+                testData.response.toBuilder
+                  .clientExtensionResults(
+                    ClientRegistrationExtensionOutputs
+                      .builder()
+                      .prf(prfOutput)
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+          result.getClientExtensionOutputs.get().getPrf.toScala should equal(
+            Some(prfOutput)
           )
         }
       }
