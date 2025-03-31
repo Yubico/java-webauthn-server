@@ -353,28 +353,10 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     /**
      * Enable the Pseudo-random function extension (<code>prf</code>).
      *
-     * <p>Alias of <code>prf(new Extensions.Prf.PrfRegistrationInput(eval))
-     * </code>.
-     *
-     * @param eval an {@link Extensions.Prf.PrfValues} value to set as the <code>eval</code>
-     *     attribute of the <code>prf</code> extension input.
-     * @see #prf(Extensions.Prf.PrfRegistrationInput)
-     * @see <a
-     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
-     *     Large blob storage extension (largeBlob)</a>
-     */
-    public RegistrationExtensionInputsBuilder prf(Extensions.Prf.PrfValues eval) {
-      this.prf = Extensions.Prf.PrfRegistrationInput.eval(eval);
-      return this;
-    }
-
-    /**
-     * Enable the Pseudo-random function extension (<code>prf</code>).
-     *
-     * @see #prf(Extensions.Prf.PrfValues)
-     * @see <a
-     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
-     *     Large blob storage extension (largeBlob)</a>
+     * @see Extensions.Prf.PrfRegistrationInput#enable()
+     * @see Extensions.Prf.PrfRegistrationInput#eval(Extensions.Prf.PrfValues)
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.5.
+     *     Pseudo-random function extension (prf)</a>
      */
     public RegistrationExtensionInputsBuilder prf(Extensions.Prf.PrfRegistrationInput prf) {
       this.prf = prf;

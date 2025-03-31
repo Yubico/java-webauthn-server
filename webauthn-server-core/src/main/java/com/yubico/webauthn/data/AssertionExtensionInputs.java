@@ -31,7 +31,6 @@ import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Builder;
@@ -177,28 +176,6 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     public AssertionExtensionInputsBuilder largeBlob(
         Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob) {
       this.largeBlob = largeBlob;
-      return this;
-    }
-
-    /**
-     * Enable the Pseudo-random function extension (<code>prf</code>).
-     *
-     * <p>Alias of <code>prf(new Extensions.Prf.PrfRegistrationInput(eval))
-     * </code>.
-     *
-     * @param eval an {@link Extensions.Prf.PrfValues} value to set as the <code>eval</code>
-     *     attribute of the <code>prf</code> extension input.
-     * @see #prf(Extensions.Prf.PrfRegistrationInput)
-     * @see <a
-     *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.
-     *     Large blob storage extension (largeBlob)</a>
-     */
-    public AssertionExtensionInputsBuilder prf(
-        Extensions.Prf.PrfValues eval,
-        Map<PublicKeyCredentialDescriptor, Extensions.Prf.PrfValues> evalByCredential) {
-      this.prf =
-          Extensions.Prf.PrfAuthenticationInput.evalByCredentialWithFallback(
-              evalByCredential, eval);
       return this;
     }
 
