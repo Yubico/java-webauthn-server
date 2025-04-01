@@ -112,7 +112,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">Large blob
    * storage (<code>largeBlob</code>) extension</a>, if any.
    *
-   * @see com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
+   * @see com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
    * @see <a
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.Large
    *     blob storage extension (largeBlob)</a>
@@ -123,13 +123,12 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
 
   /**
    * The extension output for the <a
-   * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">Large blob
-   * storage (<code>largeBlob</code>) extension</a>, if any.
+   * href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">Pseudo-random function
+   * (<code>prf</code>) extension</a>, if any.
    *
-   * @see com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationOutput
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.Large
-   *     blob storage extension (largeBlob)</a>
+   * @see com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationOutput
+   * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+   *     Pseudo-random function extension (prf)</a>
    */
   public Optional<Extensions.Prf.PrfAuthenticationOutput> getPrf() {
     return Optional.ofNullable(prf);

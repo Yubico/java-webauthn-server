@@ -136,12 +136,13 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
   }
 
   /**
-   * The extension output for the Pseudo-random function (<code>prf</code>), if any.
+   * The extension output for the <a
+   * href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">Pseudo-random function
+   * (<code>prf</code>) extension</a>, if any.
    *
    * @see com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationOutput
-   * @see <a
-   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-large-blob-extension">§10.5.Large
-   *     blob storage extension (largeBlob)</a>
+   * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+   *     Pseudo-random function extension (prf)</a>
    */
   public Optional<Extensions.Prf.PrfRegistrationOutput> getPrf() {
     return Optional.ofNullable(prf);
