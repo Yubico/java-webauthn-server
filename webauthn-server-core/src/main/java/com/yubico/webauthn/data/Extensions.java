@@ -783,7 +783,7 @@ public class Extensions {
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
        *     Pseudo-random function extension (prf)</a>
        */
-      @JsonProperty @NonNull public final ByteArray first;
+      @JsonProperty @NonNull private final ByteArray first;
 
       /**
        * The second PRF input to evaluate, if any, or the result of that evaluation.
@@ -793,7 +793,7 @@ public class Extensions {
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
        *     Pseudo-random function extension (prf)</a>
        */
-      @JsonProperty public final ByteArray second;
+      @JsonProperty private final ByteArray second;
 
       @JsonCreator
       private PrfValues(
