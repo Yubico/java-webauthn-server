@@ -57,6 +57,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
   private final Boolean credProps;
   private final Extensions.CredentialProtection.CredentialProtectionInput credProtect;
   private final Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob;
+  private final Extensions.Prf.PrfRegistrationInput prf;
   private final Boolean uvm;
 
   @JsonCreator
@@ -66,11 +67,13 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
       @JsonProperty("credProtect")
           Extensions.CredentialProtection.CredentialProtectionInput credProtect,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
+      @JsonProperty("prf") Extensions.Prf.PrfRegistrationInput prf,
       @JsonProperty("uvm") Boolean uvm) {
     this.appidExclude = appidExclude;
     this.credProps = credProps;
     this.credProtect = credProtect;
     this.largeBlob = largeBlob;
+    this.prf = prf;
     this.uvm = uvm;
   }
 
@@ -87,6 +90,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
         this.credProps != null ? this.credProps : other.credProps,
         this.credProtect != null ? this.credProtect : other.credProtect,
         this.largeBlob != null ? this.largeBlob : other.largeBlob,
+        this.prf != null ? this.prf : other.prf,
         this.uvm != null ? this.uvm : other.uvm);
   }
 
@@ -148,6 +152,21 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
   }
 
   /**
+   * The input to the Pseudo-random function extension (<code>prf</code>), if any.
+   *
+   * <p>This extension allows a Relying Party to evaluate outputs from a pseudo-random function
+   * (PRF) associated with a credential.
+   *
+   * @see Extensions.Prf.PrfRegistrationInput#enable()
+   * @see Extensions.Prf.PrfRegistrationInput#eval(Extensions.Prf.PrfValues)
+   * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+   *     Pseudo-random function extension (prf)</a>
+   */
+  public Optional<Extensions.Prf.PrfRegistrationInput> getPrf() {
+    return Optional.ofNullable(prf);
+  }
+
+  /**
    * @return <code>true</code> if the User Verification Method Extension (<code>uvm</code>) is
    *     enabled, <code>false</code> otherwise.
    * @see RegistrationExtensionInputsBuilder#uvm()
@@ -183,6 +202,9 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     }
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
+    if (prf != null) {
+      ids.add(Extensions.Prf.EXTENSION_ID);
     }
     if (getUvm()) {
       ids.add(Extensions.Uvm.EXTENSION_ID);
@@ -327,6 +349,34 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     public RegistrationExtensionInputsBuilder largeBlob(
         Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob) {
       this.largeBlob = largeBlob;
+      return this;
+    }
+
+    /**
+     * Enable the Pseudo-random function extension (<code>prf</code>).
+     *
+     * <p>This extension allows a Relying Party to evaluate outputs from a pseudo-random function
+     * (PRF) associated with a credential.
+     *
+     * <p>Use the {@link com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationInput} factory
+     * functions to construct the argument:
+     *
+     * <ul>
+     *   <li>Use {@link Extensions.Prf.PrfRegistrationInput#enable()} to request that the credential
+     *       be capable of PRF evaluation, but without evaluating the PRF at this time.
+     *   <li>Use {@link Extensions.Prf.PrfRegistrationInput#eval(Extensions.Prf.PrfValues)} to
+     *       request that the credential be capable of PRF evaluation and immediately evaluate it
+     *       for the given inputs. Note that not all authenticators support this, in which case a
+     *       follow-up authentication ceremony may be needed in order to evaluate the PRF.
+     * </ul>
+     *
+     * @see Extensions.Prf.PrfRegistrationInput#enable()
+     * @see Extensions.Prf.PrfRegistrationInput#eval(Extensions.Prf.PrfValues)
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    public RegistrationExtensionInputsBuilder prf(Extensions.Prf.PrfRegistrationInput prf) {
+      this.prf = prf;
       return this;
     }
 

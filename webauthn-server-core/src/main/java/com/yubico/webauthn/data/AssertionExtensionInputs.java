@@ -31,6 +31,7 @@ import com.yubico.webauthn.RelyingParty;
 import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.extension.appid.AppId;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Builder;
@@ -55,15 +56,18 @@ public class AssertionExtensionInputs implements ExtensionInputs {
 
   private final AppId appid;
   private final Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob;
+  private final Extensions.Prf.PrfAuthenticationInput prf;
   private final Boolean uvm;
 
   @JsonCreator
   private AssertionExtensionInputs(
       @JsonProperty("appid") AppId appid,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob,
+      @JsonProperty("prf") Extensions.Prf.PrfAuthenticationInput prf,
       @JsonProperty("uvm") Boolean uvm) {
     this.appid = appid;
     this.largeBlob = largeBlob;
+    this.prf = prf;
     this.uvm = (uvm != null && uvm) ? true : null;
   }
 
@@ -78,6 +82,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     return new AssertionExtensionInputs(
         this.appid != null ? this.appid : other.appid,
         this.largeBlob != null ? this.largeBlob : other.largeBlob,
+        this.prf != null ? this.prf : other.prf,
         this.uvm != null ? this.uvm : other.uvm);
   }
 
@@ -94,6 +99,9 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     }
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
+    if (prf != null) {
+      ids.add(Extensions.Prf.EXTENSION_ID);
     }
     if (getUvm()) {
       ids.add(Extensions.Uvm.EXTENSION_ID);
@@ -173,6 +181,37 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     }
 
     /**
+     * Enable the Pseudo-random function extension (<code>prf</code>).
+     *
+     * <p>This extension allows a Relying Party to evaluate outputs from a pseudo-random function
+     * (PRF) associated with a credential.
+     *
+     * <p>Use the {@link com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationInput} factory
+     * functions to construct the argument:
+     *
+     * <ul>
+     *   <li>Use {@link Extensions.Prf.PrfAuthenticationInput#eval(Extensions.Prf.PrfValues)} to use
+     *       the same PRF input for all credentials.
+     *   <li>Use {@link Extensions.Prf.PrfAuthenticationInput#evalByCredential(Map)} to use
+     *       different PRF inputs for different credentials.
+     *   <li>Use {@link Extensions.Prf.PrfAuthenticationInput#evalByCredentialWithFallback(Map,
+     *       Extensions.Prf.PrfValues)} to use different PRF inputs for different credentials, but
+     *       with a "fallback" input for credentials without their own input.
+     * </ul>
+     *
+     * @see Extensions.Prf.PrfAuthenticationInput#eval(Extensions.Prf.PrfValues)
+     * @see Extensions.Prf.PrfAuthenticationInput#evalByCredential(Map)
+     * @see Extensions.Prf.PrfAuthenticationInput#evalByCredentialWithFallback(Map,
+     *     Extensions.Prf.PrfValues)
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    public AssertionExtensionInputsBuilder prf(Extensions.Prf.PrfAuthenticationInput prf) {
+      this.prf = prf;
+      return this;
+    }
+
+    /**
      * Enable the User Verification Method Extension (<code>uvm</code>).
      *
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
@@ -230,6 +269,31 @@ public class AssertionExtensionInputs implements ExtensionInputs {
   private Extensions.LargeBlob.LargeBlobAuthenticationInput getLargeBlobJson() {
     return largeBlob != null && (largeBlob.getRead() || largeBlob.getWrite().isPresent())
         ? largeBlob
+        : null;
+  }
+
+  /**
+   * The input to the Pseudo-random function extension (<code>prf</code>), if any.
+   *
+   * <p>This extension allows a Relying Party to evaluate outputs from a pseudo-random function
+   * (PRF) associated with a credential.
+   *
+   * @see Extensions.Prf.PrfAuthenticationInput#eval(Extensions.Prf.PrfValues)
+   * @see Extensions.Prf.PrfAuthenticationInput#evalByCredential(Map)
+   * @see Extensions.Prf.PrfAuthenticationInput#evalByCredentialWithFallback(Map,
+   *     Extensions.Prf.PrfValues)
+   * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+   *     Pseudo-random function extension (prf)</a>
+   */
+  public Optional<Extensions.Prf.PrfAuthenticationInput> getPrf() {
+    return Optional.ofNullable(prf);
+  }
+
+  /** For JSON serialization, to omit false and null values. */
+  @JsonProperty("prf")
+  private Extensions.Prf.PrfAuthenticationInput getPrfJson() {
+    return prf != null && (prf.getEval().isPresent() || prf.getEvalByCredential().isPresent())
+        ? prf
         : null;
   }
 
