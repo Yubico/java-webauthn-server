@@ -1,8 +1,5 @@
-== Version 2.7.0 (unreleased) ==
+== Version 2.8.0 (unreleased) ==
 
-* Added overloaded setter `RelyingPartyBuilder.origins(Optional<Set<String>>)`.
-* Added support for the CTAP2 `credProtect` extension.
-* Added support for the `prf` extension.
 * (Experimental) Added a new suite of interfaces, starting with
   `CredentialRepositoryV2`. `RelyingParty` can now be configured with a
   `CredentialRepositoryV2` instance instead of a `CredentialRepository`
@@ -32,6 +29,12 @@
 * (Experimental) Added property `RegisteredCredential.transports`.
  ** NOTE: Experimental features may receive breaking changes without a major
     version increase.
+
+== Version 2.7.0 (unreleased) ==
+
+* Added overloaded setter `RelyingPartyBuilder.origins(Optional<Set<String>>)`.
+* Added support for the CTAP2 `credProtect` extension.
+* Added support for the `prf` extension.
 * (Experimental) Added option `FinishRegistrationOptions.isConditionalCreate` to
   allow UP=0 in registration response for registration ceremonies with
   `mediation: "conditional"`.
