@@ -23,8 +23,7 @@ Release candidate versions
     $ ./gradlew clean check
     ```
 
- 4. Update the Java version in the [`release-verify-signatures`
-    workflow](https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml#L42).
+ 4. Update the Java version in the [`release-verify-signatures` workflow][workflow-release-src].
 
     See the `openjdk version` line of output from `java -version`:
 
@@ -88,9 +87,7 @@ Release candidate versions
     - Note the JDK version shown by `java -version` in step 3.
       For example: `openjdk version "17.0.7" 2023-04-18`.
 
- 9. Check that the ["Reproducible binary"
-    workflow](https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
-    runs and succeeds.
+ 9. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
 
 
 Release versions
@@ -137,8 +134,7 @@ Release versions
 
  6. Update the version in JavaDoc links in the READMEs.
 
- 7. Update the Java version in the [`release-verify-signatures`
-    workflow](https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml#L42).
+ 7. Update the Java version in the [`release-verify-signatures` workflow][workflow-release-src].
 
     See the `openjdk version` line of output from `java -version`:
 
@@ -201,6 +197,8 @@ Release versions
     - Note the JDK version shown by `java -version` in step 6.
       For example: `openjdk version "17.0.7" 2023-04-18`.
 
-14. Check that the ["Reproducible binary"
-    workflow](https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
-    runs and succeeds.
+14. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
+
+
+[workflow-release]: https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml
+[workflow-release-src]: https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml#L42
