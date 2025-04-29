@@ -568,7 +568,7 @@ public class RelyingPartyV2<C extends CredentialRecord> {
       return this;
     }
 
-    public RelyingPartyV2Builder<C> origins(Optional<Set<String>> origins) {
+    public RelyingPartyV2Builder<C> origins(@NonNull Optional<Set<String>> origins) {
       this.origins = origins.orElse(null);
       return this;
     }

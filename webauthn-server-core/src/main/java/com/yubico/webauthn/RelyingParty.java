@@ -593,7 +593,7 @@ public class RelyingParty {
       return this;
     }
 
-    public RelyingPartyBuilder origins(Optional<Set<String>> origins) {
+    public RelyingPartyBuilder origins(@NonNull Optional<Set<String>> origins) {
       this.origins = origins.orElse(null);
       return this;
     }
