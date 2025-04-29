@@ -586,6 +586,7 @@ public class RelyingPartyV2<C extends CredentialRecord> {
      * data origin must be valid URLs. Origins that are not valid URLs are matched only by exact
      * string equality.
      *
+     * @since 2.7.0
      * @see #getIdentity()
      * @see #origins(Optional)
      */
@@ -619,6 +620,7 @@ public class RelyingPartyV2<C extends CredentialRecord> {
      * data origin must be valid URLs. Origins that are not valid URLs are matched only by exact
      * string equality.
      *
+     * @since 2.7.0
      * @see #getIdentity()
      * @see #origins(Set)
      */

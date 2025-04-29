@@ -126,6 +126,7 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    * href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">Pseudo-random function
    * (<code>prf</code>) extension</a>, if any.
    *
+   * @since 2.7.0
    * @see com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationOutput
    * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
    *     Pseudo-random function extension (prf)</a>

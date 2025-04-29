@@ -611,6 +611,7 @@ public class RelyingParty {
      * data origin must be valid URLs. Origins that are not valid URLs are matched only by exact
      * string equality.
      *
+     * @since 0.6.0
      * @see #getIdentity()
      * @see #origins(Optional)
      */
@@ -644,6 +645,7 @@ public class RelyingParty {
      * data origin must be valid URLs. Origins that are not valid URLs are matched only by exact
      * string equality.
      *
+     * @since 2.7.0
      * @see #getIdentity()
      * @see #origins(Set)
      */

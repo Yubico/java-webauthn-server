@@ -144,6 +144,7 @@ public final class AuthenticatorRegistrationExtensionOutputs
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">Credential
    *     Protection (credProtect) extension</a>, if any. This indicates the credential protection
    *     policy that was set for the credential.
+   * @since 2.7.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
    *     §12.1. Credential Protection (credProtect)</a>

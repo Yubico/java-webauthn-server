@@ -199,6 +199,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
      *       with a "fallback" input for credentials without their own input.
      * </ul>
      *
+     * @since 2.7.0
      * @see Extensions.Prf.PrfAuthenticationInput#eval(Extensions.Prf.PrfValues)
      * @see Extensions.Prf.PrfAuthenticationInput#evalByCredential(Map)
      * @see Extensions.Prf.PrfAuthenticationInput#evalByCredentialWithFallback(Map,
@@ -278,6 +279,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
    * <p>This extension allows a Relying Party to evaluate outputs from a pseudo-random function
    * (PRF) associated with a credential.
    *
+   * @since 2.7.0
    * @see Extensions.Prf.PrfAuthenticationInput#eval(Extensions.Prf.PrfValues)
    * @see Extensions.Prf.PrfAuthenticationInput#evalByCredential(Map)
    * @see Extensions.Prf.PrfAuthenticationInput#evalByCredentialWithFallback(Map,

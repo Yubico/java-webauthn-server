@@ -120,6 +120,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
 
   /**
    * @return The Credential Protection (<code>credProtect</code>) extension input, if set.
+   * @since 2.7.0
    * @see
    *     RegistrationExtensionInputsBuilder#credProtect(Extensions.CredentialProtection.CredentialProtectionInput)
    * @see <a
@@ -157,6 +158,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    * <p>This extension allows a Relying Party to evaluate outputs from a pseudo-random function
    * (PRF) associated with a credential.
    *
+   * @since 2.7.0
    * @see Extensions.Prf.PrfRegistrationInput#enable()
    * @see Extensions.Prf.PrfRegistrationInput#eval(Extensions.Prf.PrfValues)
    * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
@@ -287,6 +289,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     /**
      * Enable or disable the Credential Protection (<code>credProtect</code>) extension.
      *
+     * @since 2.7.0
      * @see
      *     Extensions.CredentialProtection.CredentialProtectionInput#prefer(Extensions.CredentialProtection.CredentialProtectionPolicy)
      * @see
@@ -304,6 +307,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     /**
      * Enable the Credential Protection (<code>credProtect</code>) extension.
      *
+     * @since 2.7.0
      * @see
      *     Extensions.CredentialProtection.CredentialProtectionInput#prefer(Extensions.CredentialProtection.CredentialProtectionPolicy)
      * @see
@@ -370,6 +374,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
      *       follow-up authentication ceremony may be needed in order to evaluate the PRF.
      * </ul>
      *
+     * @since 2.7.0
      * @see Extensions.Prf.PrfRegistrationInput#enable()
      * @see Extensions.Prf.PrfRegistrationInput#eval(Extensions.Prf.PrfValues)
      * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.

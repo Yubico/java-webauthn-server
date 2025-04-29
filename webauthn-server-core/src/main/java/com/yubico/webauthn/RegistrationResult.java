@@ -386,6 +386,7 @@ public class RegistrationResult {
    *
    * @return the <code>credProtect</code> extension policy that was set for the credential, if
    *     available.
+   * @since 2.7.0
    * @see
    *     StartRegistrationOptions.StartRegistrationOptionsBuilder#extensions(RegistrationExtensionInputs)
    * @see

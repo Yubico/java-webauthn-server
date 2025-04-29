@@ -120,6 +120,7 @@ public class Extensions {
   /**
    * Definitions for the Credential Protection (<code>credProtect</code>) extension.
    *
+   * @since 2.7.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
    *     §12.1. Credential Protection (credProtect)</a>
@@ -138,6 +139,7 @@ public class Extensions {
      *   <li>{@link #UV_REQUIRED}
      * </ul>
      *
+     * @since 2.7.0
      * @see <a
      *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
      *     §12.1. Credential Protection (credProtect)</a>
@@ -151,6 +153,7 @@ public class Extensions {
        * is the default behaviour if the extension is not specified; note however that some browsers
        * may set a different default extension input if the extension is not explicitly specified.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
        *     §12.1. Credential Protection (credProtect)</a>
@@ -173,6 +176,7 @@ public class Extensions {
        * was set in the call to {@link RelyingParty#startAssertion(StartAssertionOptions)}, and is
        * empty when neither was set.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
        *     §12.1. Credential Protection (credProtect)</a>
@@ -184,6 +188,7 @@ public class Extensions {
       /**
        * In this configuration, performing some form of user verification is always REQUIRED.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
        *     §12.1. Credential Protection (credProtect)</a>
@@ -226,6 +231,7 @@ public class Extensions {
      * <p>Instances may be created using the {@link #prefer(CredentialProtectionPolicy)} and {@link
      * #require(CredentialProtectionPolicy)} factory functions.
      *
+     * @since 2.7.0
      * @see <a
      *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
      *     §12.1. Credential Protection (credProtect)</a>
@@ -236,6 +242,7 @@ public class Extensions {
        * The requested credential protection policy. This policy may or may not be satisfied; see
        * {@link #isEnforceCredentialProtectionPolicy()}.
        *
+       * @since 2.7.0
        * @see CredentialProtectionPolicy
        * @see #isEnforceCredentialProtectionPolicy()
        * @see <a
@@ -255,6 +262,7 @@ public class Extensions {
        * false</code>. {@link CredentialProtectionInput#require(CredentialProtectionPolicy)} sets
        * this to <code>true</code>.
        *
+       * @since 2.7.0
        * @see CredentialProtectionPolicy
        * @see #getCredentialProtectionPolicy()
        * @see <a
@@ -291,6 +299,7 @@ public class Extensions {
        * @return a <code>credProtect</code> extension input that requests the given policy when
        *     possible. The browser is requested to continue the registration even if this policy
        *     cannot be satisfied.
+       * @since 2.7.0
        * @see #require(CredentialProtectionPolicy)
        * @see <a
        *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
@@ -321,6 +330,7 @@ public class Extensions {
        * @param policy the policy to require.
        * @return a <code>credProtect</code> extension input that requires the given policy. The
        *     browser is requested to abort the registration if this policy cannot be satisfied.
+       * @since 2.7.0
        * @see <a
        *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
        *     §12.1. Credential Protection (credProtect)</a>
@@ -374,6 +384,7 @@ public class Extensions {
      *     </code> authenticator extension output does not equal the {@link
      *     CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} set
      *     in the request.
+     * @since 2.7.0
      * @see <a
      *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
      *     §12.1. Credential Protection (credProtect)</a>
@@ -751,6 +762,7 @@ public class Extensions {
   /**
    * Definitions for the Pseudo-random function extension (<code>prf</code>).
    *
+   * @since 2.7.0
    * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
    *     Pseudo-random function extension (prf)</a>
    */
@@ -764,6 +776,7 @@ public class Extensions {
      * <p>{@link #getFirst()} is always present, but {@link #getSecond()} is empty when only one
      * input or output was given.
      *
+     * @since 2.7.0
      * @see #one(ByteArray)
      * @see #two(ByteArray, ByteArray)
      * @see #oneOrTwo(ByteArray, Optional)
@@ -778,6 +791,7 @@ public class Extensions {
       /**
        * The first PRF input to evaluate, or the result of that evaluation.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfvalues-first">AuthenticationExtensionsPRFValues.first</a>
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
@@ -788,6 +802,7 @@ public class Extensions {
       /**
        * The second PRF input to evaluate, if any, or the result of that evaluation.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfvalues-second">AuthenticationExtensionsPRFValues.second</a>
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
@@ -806,6 +821,7 @@ public class Extensions {
       /**
        * The second PRF input to evaluate, if any, or the result of that evaluation.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfvalues-second">AuthenticationExtensionsPRFValues.second</a>
        */
@@ -817,6 +833,7 @@ public class Extensions {
        * Construct a {@link PrfValues} with a single PRF input or output.
        *
        * @param first the PRF input or output. Must not be null.
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfvalues">dictionary
        *     AuthenticationExtensionsPRFValues</a>
@@ -832,6 +849,7 @@ public class Extensions {
        *
        * @param first the first PRF input or output. Must not be null.
        * @param second the second PRF input or output. Must not be null.
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfvalues">dictionary
        *     AuthenticationExtensionsPRFValues</a>
@@ -848,6 +866,7 @@ public class Extensions {
        *
        * @param first the first PRF input or output. Must not be null.
        * @param second the second PRF input or output, if any. Must not be null, but may be empty.
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfvalues">dictionary
        *     AuthenticationExtensionsPRFValues</a>
@@ -864,6 +883,7 @@ public class Extensions {
      * Inputs for the Pseudo-random function extension (<code>prf</code>) in authentication
      * ceremonies.
      *
+     * @since 2.7.0
      * @see <a
      *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfinputs">dictionary
      *     AuthenticationExtensionsPRFInputs</a>
@@ -876,6 +896,7 @@ public class Extensions {
        * PRF inputs to use for any credential without a dedicated input listed in {@link
        * #getEvalByCredential()}.
        *
+       * @since 2.7.0
        * @see #eval(PrfValues)
        * @see #evalByCredentialWithFallback(Map, PrfValues)
        * @see <a
@@ -890,6 +911,7 @@ public class Extensions {
        * mapping here fall back to the inputs in {@link #getEval()} if present, otherwise no PRF is
        * evaluated for those credentials.
        *
+       * @since 2.7.0
        * @see #evalByCredential(Map)
        * @see #evalByCredentialWithFallback(Map, PrfValues)
        * @see <a
@@ -912,6 +934,7 @@ public class Extensions {
        * PRF inputs to use for any credential without a dedicated input listed in {@link
        * #getEvalByCredential()}.
        *
+       * @since 2.7.0
        * @see #eval(PrfValues)
        * @see #evalByCredentialWithFallback(Map, PrfValues)
        * @see <a
@@ -928,6 +951,7 @@ public class Extensions {
        * mapping here fall back to the inputs in {@link #getEval()} if present, otherwise no PRF is
        * evaluated for those credentials.
        *
+       * @since 2.7.0
        * @see #evalByCredential(Map)
        * @see #evalByCredentialWithFallback(Map, PrfValues)
        * @see <a
@@ -957,6 +981,7 @@ public class Extensions {
       /**
        * Use the same PRF inputs for all credentials.
        *
+       * @since 2.7.0
        * @see #getEval()
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
@@ -971,6 +996,7 @@ public class Extensions {
        * Use different PRF inputs for different credentials, and skip PRF evaluation for any
        * credentials not present in the map.
        *
+       * @since 2.7.0
        * @see #getEvalByCredential()
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-evalbycredential">AuthenticationExtensionsPRFInputs.evalByCredential</a>
@@ -989,6 +1015,7 @@ public class Extensions {
        * @param evalByCredential a map of credential IDs to PRF inputs to use for that credential.
        * @param eval "fallback" inputs to use for any credential not listed in <code>
        *     evalByCredential</code>.
+       * @since 2.7.0
        * @see #getEvalByCredential()
        * @see #getEval() ()
        * @see <a
@@ -1009,6 +1036,7 @@ public class Extensions {
      * Inputs for the Pseudo-random function extension (<code>prf</code>) in registration
      * ceremonies.
      *
+     * @since 2.7.0
      * @see <a
      *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfinputs">dictionary
      *     AuthenticationExtensionsPRFInputs</a>
@@ -1022,6 +1050,7 @@ public class Extensions {
        * this, in which case a follow-up authentication ceremony may be needed in order to evaluate
        * the PRF.
        *
+       * @since 2.7.0
        * @see #eval(PrfValues)
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
@@ -1040,6 +1069,7 @@ public class Extensions {
        * this, in which case a follow-up authentication ceremony may be needed in order to evaluate
        * the PRF.
        *
+       * @since 2.7.0
        * @see #eval(PrfValues)
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
@@ -1053,6 +1083,7 @@ public class Extensions {
       /**
        * Enable PRF for the created credential, without evaluating the PRF at this time.
        *
+       * @since 2.7.0
        * @see #eval(PrfValues)
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
        *     Pseudo-random function extension (prf)</a>
@@ -1066,6 +1097,7 @@ public class Extensions {
        * given inputs. Note that not all authenticators support this, in which case a follow-up
        * authentication ceremony may be needed in order to evaluate the PRF.
        *
+       * @since 2.7.0
        * @see #enable()
        * @see #getEval()
        * @see <a
@@ -1082,6 +1114,7 @@ public class Extensions {
      * Outputs for the Pseudo-random function extension (<code>prf</code>) in registration
      * ceremonies.
      *
+     * @since 2.7.0
      * @see <a
      *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfoutputs">dictionary
      *     AuthenticationExtensionsPRFOutputs</a>
@@ -1094,6 +1127,7 @@ public class Extensions {
       /**
        * <code>true</code> if, and only if, a PRF is available for use with the created credential.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-enabled">AuthenticationExtensionsPRFOutputs.enabled</a>
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
@@ -1105,6 +1139,7 @@ public class Extensions {
        * The results of evaluating the PRF for the inputs given in {@link
        * PrfRegistrationInput#getEval() eval}, if any.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
@@ -1122,6 +1157,7 @@ public class Extensions {
       /**
        * <code>true</code> if, and only if, a PRF is available for use with the created credential.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-enabled">AuthenticationExtensionsPRFOutputs.enabled</a>
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
@@ -1135,6 +1171,7 @@ public class Extensions {
        * The results of evaluating the PRF for the inputs given in {@link
        * PrfRegistrationInput#getEval() eval}, if any.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
@@ -1149,6 +1186,7 @@ public class Extensions {
      * Outputs for the Pseudo-random function extension (<code>prf</code>) in authentication
      * ceremonies.
      *
+     * @since 2.7.0
      * @see <a
      *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfoutputs">dictionary
      *     AuthenticationExtensionsPRFOutputs</a>
@@ -1163,6 +1201,7 @@ public class Extensions {
        * PrfAuthenticationInput#getEval() eval} or {@link
        * PrfAuthenticationInput#getEvalByCredential() evalByCredential}, if any.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
@@ -1180,6 +1219,7 @@ public class Extensions {
        * PrfAuthenticationInput#getEval() eval} or {@link
        * PrfAuthenticationInput#getEvalByCredential() evalByCredential}, if any.
        *
+       * @since 2.7.0
        * @see <a
        *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
        * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
