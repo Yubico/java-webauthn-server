@@ -48,7 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @AllArgsConstructor
-final class FinishAssertionSteps<C extends CredentialRecord> {
+final class FinishAssertionSteps {
 
   private static final String CLIENT_DATA_TYPE = "webauthn.get";
   private static final String SPC_CLIENT_DATA_TYPE = "payment.get";
@@ -59,33 +59,13 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   private final Optional<ByteArray> callerTokenBindingId;
   private final Set<String> origins;
   private final String rpId;
-  private final CredentialRepositoryV2<C> credentialRepositoryV2;
-  private final Optional<UsernameRepository> usernameRepository;
+  private final CredentialRepository credentialRepository;
   private final boolean allowOriginPort;
   private final boolean allowOriginSubdomain;
   private final boolean validateSignatureCounter;
   private final boolean isSecurePaymentConfirmation;
 
-  static FinishAssertionSteps<RegisteredCredential> fromV1(
-      RelyingParty rp, FinishAssertionOptions options) {
-    final CredentialRepository credRepo = rp.getCredentialRepository();
-    final CredentialRepositoryV1ToV2Adapter credRepoV2 =
-        new CredentialRepositoryV1ToV2Adapter(credRepo);
-    return new FinishAssertionSteps<>(
-        options.getRequest(),
-        options.getResponse(),
-        options.getCallerTokenBindingId(),
-        rp.getOrigins(),
-        rp.getIdentity().getId(),
-        credRepoV2,
-        Optional.of(credRepoV2),
-        rp.isAllowOriginPort(),
-        rp.isAllowOriginSubdomain(),
-        rp.isValidateSignatureCounter(),
-        options.isSecurePaymentConfirmation());
-  }
-
-  FinishAssertionSteps(RelyingPartyV2<C> rp, FinishAssertionOptions options) {
+  FinishAssertionSteps(RelyingParty rp, FinishAssertionOptions options) {
     this(
         options.getRequest(),
         options.getResponse(),
@@ -93,7 +73,6 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
         rp.getOrigins(),
         rp.getIdentity().getId(),
         rp.getCredentialRepository(),
-        Optional.ofNullable(rp.getUsernameRepository()),
         rp.isAllowOriginPort(),
         rp.isAllowOriginSubdomain(),
         rp.isValidateSignatureCounter(),
@@ -101,7 +80,7 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   private Optional<String> getUsernameForUserHandle(final ByteArray userHandle) {
-    return usernameRepository.flatMap(unameRepo -> unameRepo.getUsernameForUserHandle(userHandle));
+    return credentialRepository.getUsernameForUserHandle(userHandle);
   }
 
   public Step5 begin() {
@@ -112,20 +91,12 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
     return begin().run();
   }
 
-  public AssertionResultV2<C> runV2() throws InvalidSignatureCountException {
-    return begin().runV2();
-  }
-
-  interface Step<C extends CredentialRecord, Next extends Step<C, ?>> {
+  interface Step<Next extends Step<?>> {
     Next nextStep();
 
     void validate() throws InvalidSignatureCountException;
 
     default Optional<AssertionResult> result() {
-      return Optional.empty();
-    }
-
-    default Optional<AssertionResultV2<C>> resultV2() {
       return Optional.empty();
     }
 
@@ -141,20 +112,12 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
         return next().run();
       }
     }
-
-    default AssertionResultV2<C> runV2() throws InvalidSignatureCountException {
-      if (resultV2().isPresent()) {
-        return resultV2().get();
-      } else {
-        return next().runV2();
-      }
-    }
   }
 
   // Steps 1 through 4 are to create the request and run the client-side part
 
   @Value
-  class Step5 implements Step<C, Step6> {
+  class Step5 implements Step<Step6> {
     @Override
     public Step6 nextStep() {
       return new Step6();
@@ -177,105 +140,86 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step6 implements Step<C, Step7> {
+  class Step6 implements Step<Step7> {
 
-    private final Optional<ByteArray> requestedUserHandle;
-    private final Optional<String> requestedUsername;
-    private final Optional<ByteArray> responseUserHandle;
+    private final Optional<ByteArray> userHandle =
+        OptionalUtil.orElseOptional(
+            request.getUserHandle(),
+            () ->
+                OptionalUtil.orElseOptional(
+                    response.getResponse().getUserHandle(),
+                    () ->
+                        request
+                            .getUsername()
+                            .flatMap(credentialRepository::getUserHandleForUsername)));
 
-    private final Optional<ByteArray> effectiveRequestUserHandle;
-    private final Optional<String> effectiveRequestUsername;
-    private final boolean userHandleDerivedFromUsername;
+    private final Optional<String> username =
+        OptionalUtil.orElseOptional(
+            request.getUsername(),
+            () -> userHandle.flatMap(credentialRepository::getUsernameForUserHandle));
 
-    private final Optional<ByteArray> finalUserHandle;
-    private final Optional<String> finalUsername;
-    private final Optional<C> registration;
-
-    public Step6() {
-      requestedUserHandle = request.getUserHandle();
-      requestedUsername = request.getUsername();
-      responseUserHandle = response.getResponse().getUserHandle();
-
-      effectiveRequestUserHandle =
-          OptionalUtil.orElseOptional(
-              requestedUserHandle,
-              () ->
-                  usernameRepository.flatMap(
-                      unr -> requestedUsername.flatMap(unr::getUserHandleForUsername)));
-
-      effectiveRequestUsername =
-          OptionalUtil.orElseOptional(
-              requestedUsername,
-              () ->
-                  requestedUserHandle.flatMap(FinishAssertionSteps.this::getUsernameForUserHandle));
-
-      userHandleDerivedFromUsername =
-          !requestedUserHandle.isPresent() && effectiveRequestUserHandle.isPresent();
-
-      finalUserHandle = OptionalUtil.orOptional(effectiveRequestUserHandle, responseUserHandle);
-      finalUsername =
-          OptionalUtil.orElseOptional(
-              effectiveRequestUsername,
-              () -> finalUserHandle.flatMap(FinishAssertionSteps.this::getUsernameForUserHandle));
-
-      registration =
-          finalUserHandle.flatMap(uh -> credentialRepositoryV2.lookup(response.getId(), uh));
-    }
+    private final Optional<RegisteredCredential> registration =
+        userHandle.flatMap(uh -> credentialRepository.lookup(response.getId(), uh));
 
     @Override
     public Step7 nextStep() {
-      return new Step7(finalUsername, finalUserHandle.get(), registration);
+      return new Step7(username.get(), userHandle.get(), registration);
     }
 
     @Override
     public void validate() {
       assertTrue(
-          !(request.getUsername().isPresent() && !usernameRepository.isPresent()),
-          "Cannot set request username when usernameRepository is not configured.");
+          request.getUsername().isPresent()
+              || request.getUserHandle().isPresent()
+              || response.getResponse().getUserHandle().isPresent(),
+          "At least one of username and user handle must be given; none was.");
+      if (request.getUserHandle().isPresent()
+          && response.getResponse().getUserHandle().isPresent()) {
+        assertTrue(
+            request.getUserHandle().get().equals(response.getResponse().getUserHandle().get()),
+            "User handle set in request (%s) does not match user handle in response (%s).",
+            request.getUserHandle().get(),
+            response.getResponse().getUserHandle().get());
+      }
 
       assertTrue(
-          finalUserHandle.isPresent(),
-          "Could not identify user to authenticate: none of requested username, requested user handle or response user handle are set.");
+          userHandle.isPresent(),
+          "User handle not found for username: %s",
+          request.getUsername(),
+          response.getResponse().getUserHandle());
 
-      if (requestedUserHandle.isPresent() && responseUserHandle.isPresent()) {
-        assertTrue(
-            requestedUserHandle.get().equals(responseUserHandle.get()),
-            "User handle set in request (%s) does not match user handle in response (%s).",
-            requestedUserHandle.get(),
-            responseUserHandle.get());
-      }
-
-      if (userHandleDerivedFromUsername && responseUserHandle.isPresent()) {
-        assertTrue(
-            effectiveRequestUserHandle.get().equals(responseUserHandle.get()),
-            "User handle in request (%s) (derived from username: %s) does not match user handle in response (%s).",
-            effectiveRequestUserHandle.get(),
-            requestedUsername.get(),
-            responseUserHandle.get());
-      }
+      assertTrue(
+          username.isPresent(),
+          "Username not found for userHandle: %s",
+          request.getUsername(),
+          response.getResponse().getUserHandle());
 
       assertTrue(registration.isPresent(), "Unknown credential: %s", response.getId());
 
       assertTrue(
-          finalUserHandle.get().equals(registration.get().getUserHandle()),
+          userHandle.get().equals(registration.get().getUserHandle()),
           "User handle %s does not own credential %s",
-          finalUserHandle.get(),
+          userHandle.get(),
           response.getId());
 
-      if (usernameRepository.isPresent()) {
+      final Optional<String> usernameFromRequest = request.getUsername();
+      final Optional<ByteArray> userHandleFromResponse = response.getResponse().getUserHandle();
+      if (usernameFromRequest.isPresent() && userHandleFromResponse.isPresent()) {
         assertTrue(
-            finalUsername.isPresent(),
-            "Unknown username for user handle: %s",
-            finalUserHandle.get());
+            userHandleFromResponse.equals(
+                credentialRepository.getUserHandleForUsername(usernameFromRequest.get())),
+            "User handle %s in response does not match username %s in request",
+            userHandleFromResponse,
+            usernameFromRequest);
       }
     }
   }
 
   @Value
-  class Step7 implements Step<C, Step8> {
-    private final Optional<String> username;
+  class Step7 implements Step<Step8> {
+    private final String username;
     private final ByteArray userHandle;
-    private final Optional<C> credential;
+    private final Optional<RegisteredCredential> credential;
 
     @Override
     public Step8 nextStep() {
@@ -293,10 +237,10 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step8 implements Step<C, Step10> {
+  class Step8 implements Step<Step10> {
 
-    private final Optional<String> username;
-    private final C credential;
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -326,9 +270,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   // Nothing to do for step 9
 
   @Value
-  class Step10 implements Step<C, Step11> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step10 implements Step<Step11> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -346,9 +290,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step11 implements Step<C, Step12> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step11 implements Step<Step12> {
+    private final String username;
+    private final RegisteredCredential credential;
     private final CollectedClientData clientData;
 
     @Override
@@ -369,9 +313,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step12 implements Step<C, Step13> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step12 implements Step<Step13> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -390,9 +334,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step13 implements Step<C, Step14> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step13 implements Step<Step14> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -410,9 +354,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step14 implements Step<C, Step15> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step14 implements Step<Step15> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -427,9 +371,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step15 implements Step<C, Step16> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step15 implements Step<Step16> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -459,9 +403,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step16 implements Step<C, Step17> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step16 implements Step<Step17> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -477,9 +421,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step17 implements Step<C, PendingStep16> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step17 implements Step<PendingStep16> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -502,9 +446,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   @Value
   // Step 16 in editor's draft as of 2022-11-09 https://w3c.github.io/webauthn/
   // TODO: Finalize this when spec matures
-  class PendingStep16 implements Step<C, Step18> {
-    private final Optional<String> username;
-    private final C credential;
+  class PendingStep16 implements Step<Step18> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -525,9 +469,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step18 implements Step<C, Step19> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step18 implements Step<Step19> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {}
@@ -539,9 +483,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step19 implements Step<C, Step20> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step19 implements Step<Step20> {
+    private final String username;
+    private final RegisteredCredential credential;
 
     @Override
     public void validate() {
@@ -559,9 +503,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step20 implements Step<C, Step21> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step20 implements Step<Step21> {
+    private final String username;
+    private final RegisteredCredential credential;
     private final ByteArray clientDataJsonHash;
 
     @Override
@@ -604,13 +548,13 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Step21 implements Step<C, Finished> {
-    private final Optional<String> username;
-    private final C credential;
+  class Step21 implements Step<Finished> {
+    private final String username;
+    private final RegisteredCredential credential;
     private final long assertionSignatureCount;
     private final long storedSignatureCountBefore;
 
-    public Step21(Optional<String> username, C credential) {
+    public Step21(String username, RegisteredCredential credential) {
       this.username = username;
       this.credential = credential;
       this.assertionSignatureCount =
@@ -638,9 +582,9 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
   }
 
   @Value
-  class Finished implements Step<C, Finished> {
-    private final C credential;
-    private final Optional<String> username;
+  class Finished implements Step<Finished> {
+    private final RegisteredCredential credential;
+    private final String username;
     private final long assertionSignatureCount;
     private final boolean signatureCounterValid;
 
@@ -658,16 +602,7 @@ final class FinishAssertionSteps<C extends CredentialRecord> {
     public Optional<AssertionResult> result() {
       return Optional.of(
           new AssertionResult(
-              true,
-              response,
-              (RegisteredCredential) credential,
-              username.get(),
-              signatureCounterValid));
-    }
-
-    public Optional<AssertionResultV2<C>> resultV2() {
-      return Optional.of(
-          new AssertionResultV2<C>(true, response, credential, signatureCounterValid));
+              true, response, (RegisteredCredential) credential, username, signatureCounterValid));
     }
   }
 }

@@ -29,7 +29,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.ComparableUtil;
 import com.yubico.webauthn.RegistrationResult;
-import com.yubico.webauthn.ToPublicKeyCredentialDescriptor;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
@@ -50,8 +49,7 @@ import lombok.Value;
  */
 @Value
 @Builder(toBuilder = true)
-public class PublicKeyCredentialDescriptor
-    implements Comparable<PublicKeyCredentialDescriptor>, ToPublicKeyCredentialDescriptor {
+public class PublicKeyCredentialDescriptor implements Comparable<PublicKeyCredentialDescriptor> {
 
   /** The type of the credential the caller is referring to. */
   @NonNull @Builder.Default
@@ -108,18 +106,6 @@ public class PublicKeyCredentialDescriptor
 
   public static PublicKeyCredentialDescriptorBuilder.MandatoryStages builder() {
     return new PublicKeyCredentialDescriptorBuilder.MandatoryStages();
-  }
-
-  /**
-   * This implementation of {@link
-   * ToPublicKeyCredentialDescriptor#toPublicKeyCredentialDescriptor()} is a no-op which returns
-   * <code>this</code> unchanged.
-   *
-   * @return <code>this</code>.
-   */
-  @Override
-  public PublicKeyCredentialDescriptor toPublicKeyCredentialDescriptor() {
-    return this;
   }
 
   public static class PublicKeyCredentialDescriptorBuilder {

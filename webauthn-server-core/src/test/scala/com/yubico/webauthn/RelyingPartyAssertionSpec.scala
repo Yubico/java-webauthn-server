@@ -197,7 +197,7 @@ class RelyingPartyAssertionSpec
       userVerificationRequirement: UserVerificationRequirement =
         UserVerificationRequirement.PREFERRED,
       validateSignatureCounter: Boolean = true,
-  ): FinishAssertionSteps[RegisteredCredential] = {
+  ): FinishAssertionSteps = {
     val clientDataJsonBytes: ByteArray =
       if (clientDataJson == null) null
       else new ByteArray(clientDataJson.getBytes("UTF-8"))
@@ -579,7 +579,7 @@ class RelyingPartyAssertionSpec
               ),
               credentialId = new ByteArray(Array(0, 1, 2, 3)),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step5 =
+            val step: FinishAssertionSteps#Step5 =
               steps.begin
 
             step.validations shouldBe a[Failure[_]]
@@ -603,7 +603,7 @@ class RelyingPartyAssertionSpec
               ),
               credentialId = new ByteArray(Array(4, 5, 6, 7)),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step5 =
+            val step: FinishAssertionSteps#Step5 =
               steps.begin
 
             step.validations shouldBe a[Success[_]]
@@ -621,7 +621,7 @@ class RelyingPartyAssertionSpec
                 allowCredentials = allowCredentials,
                 credentialId = new ByteArray(Array(0, 1, 2, 3)),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step5 =
+              val step: FinishAssertionSteps#Step5 =
                 steps.begin
 
               step.validations shouldBe a[Success[_]]
@@ -679,7 +679,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = Some(owner.username),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
@@ -696,7 +696,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 userHandleForResponse = Some(owner.userHandle),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
@@ -711,7 +711,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = Some(owner.username),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Success[_]]
@@ -729,7 +729,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 userHandleForResponse = None,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
@@ -746,7 +746,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
@@ -764,7 +764,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
@@ -780,7 +780,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
@@ -796,7 +796,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
@@ -811,7 +811,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Success[_]]
@@ -826,7 +826,7 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step6 =
+              val step: FinishAssertionSteps#Step6 =
                 steps.begin.next
 
               step.validations shouldBe a[Success[_]]
@@ -854,7 +854,7 @@ class RelyingPartyAssertionSpec
               )
             )
             val step: steps.Step7 = new steps.Step7(
-              Some(Defaults.username).toJava,
+              Defaults.username,
               Defaults.userHandle,
               None.toJava,
             )
@@ -879,7 +879,7 @@ class RelyingPartyAssertionSpec
                 )
               )
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step7 =
+            val step: FinishAssertionSteps#Step7 =
               steps.begin.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -890,7 +890,7 @@ class RelyingPartyAssertionSpec
         describe("8. Let cData, authData and sig denote the value of response’s clientDataJSON, authenticatorData, and signature respectively.") {
           it("Succeeds if all three are present.") {
             val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step8 =
+            val step: FinishAssertionSteps#Step8 =
               steps.begin.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -945,7 +945,7 @@ class RelyingPartyAssertionSpec
                 "type": ""
               }"""
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step10 =
+            val step: FinishAssertionSteps#Step10 =
               steps.begin.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -959,7 +959,7 @@ class RelyingPartyAssertionSpec
         ) {
           it("The default test case succeeds.") {
             val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step11 =
+            val step: FinishAssertionSteps#Step11 =
               steps.begin.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -978,7 +978,7 @@ class RelyingPartyAssertionSpec
               ),
               isSecurePaymentConfirmation = isSecurePaymentConfirmation,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step11 =
+            val step: FinishAssertionSteps#Step11 =
               steps.begin.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1010,7 +1010,7 @@ class RelyingPartyAssertionSpec
             it("the default test case fails.") {
               val steps =
                 finishAssertion(isSecurePaymentConfirmation = Some(true))
-              val step: FinishAssertionSteps[RegisteredCredential]#Step11 =
+              val step: FinishAssertionSteps#Step11 =
                 steps.begin.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1028,7 +1028,7 @@ class RelyingPartyAssertionSpec
                     .set[ObjectNode]("type", new TextNode("payment.get"))
                 ),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step11 =
+              val step: FinishAssertionSteps#Step11 =
                 steps.begin.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
@@ -1072,7 +1072,7 @@ class RelyingPartyAssertionSpec
         it("12. Verify that the value of C.challenge equals the base64url encoding of options.challenge.") {
           val steps =
             finishAssertion(challenge = new ByteArray(Array.fill(16)(0)))
-          val step: FinishAssertionSteps[RegisteredCredential]#Step12 =
+          val step: FinishAssertionSteps#Step12 =
             steps.begin.next.next.next.next.next.next
 
           step.validations shouldBe a[Failure[_]]
@@ -1097,7 +1097,7 @@ class RelyingPartyAssertionSpec
               allowOriginPort = allowOriginPort,
               allowOriginSubdomain = allowOriginSubdomain,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step13 =
+            val step: FinishAssertionSteps#Step13 =
               steps.begin.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1120,7 +1120,7 @@ class RelyingPartyAssertionSpec
               allowOriginPort = allowOriginPort,
               allowOriginSubdomain = allowOriginSubdomain,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step13 =
+            val step: FinishAssertionSteps#Step13 =
               steps.begin.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1298,7 +1298,7 @@ class RelyingPartyAssertionSpec
         describe("14. Verify that the value of C.tokenBinding.status matches the state of Token Binding for the TLS connection over which the attestation was obtained.") {
           it("Verification succeeds if neither side uses token binding ID.") {
             val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1309,7 +1309,7 @@ class RelyingPartyAssertionSpec
             val clientDataJson =
               """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","type":"webauthn.get"}"""
             val steps = finishAssertion(clientDataJson = clientDataJson)
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1320,7 +1320,7 @@ class RelyingPartyAssertionSpec
             val clientDataJson =
               """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","hashAlgorithm":"SHA-256","tokenBinding":{"status":"supported"},"type":"webauthn.get"}"""
             val steps = finishAssertion(clientDataJson = clientDataJson)
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1335,7 +1335,7 @@ class RelyingPartyAssertionSpec
                 Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
               clientDataJson = clientDataJson,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1350,7 +1350,7 @@ class RelyingPartyAssertionSpec
               callerTokenBindingId = None,
               clientDataJson = clientDataJson,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1364,7 +1364,7 @@ class RelyingPartyAssertionSpec
               callerTokenBindingId = None,
               clientDataJson = clientDataJson,
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+            val step: FinishAssertionSteps#Step14 =
               steps.begin.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1381,7 +1381,7 @@ class RelyingPartyAssertionSpec
                   Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
@@ -1396,7 +1396,7 @@ class RelyingPartyAssertionSpec
                   Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1412,7 +1412,7 @@ class RelyingPartyAssertionSpec
                   Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1428,7 +1428,7 @@ class RelyingPartyAssertionSpec
                   Some(ByteArray.fromBase64Url("YELLOWSUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1444,7 +1444,7 @@ class RelyingPartyAssertionSpec
                   Some(ByteArray.fromBase64Url("ORANGESUBMARINE")),
                 clientDataJson = clientDataJson,
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step14 =
+              val step: FinishAssertionSteps#Step14 =
                 steps.begin.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1460,7 +1460,7 @@ class RelyingPartyAssertionSpec
               rpId = Defaults.rpId.toBuilder.id("root.evil").build(),
               origins = Some(Set("https://localhost")),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+            val step: FinishAssertionSteps#Step15 =
               steps.begin.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1470,7 +1470,7 @@ class RelyingPartyAssertionSpec
 
           it("Succeeds if RP ID is the same.") {
             val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+            val step: FinishAssertionSteps#Step15 =
               steps.begin.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1492,7 +1492,7 @@ class RelyingPartyAssertionSpec
                     .drop(32)
                 ),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+              val step: FinishAssertionSteps#Step15 =
                 steps.begin.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
@@ -1502,7 +1502,7 @@ class RelyingPartyAssertionSpec
 
             it("succeeds if RP ID is the SHA-256 hash of the standard RP ID.") {
               val steps = finishAssertion(requestedExtensions = extensions)
-              val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+              val step: FinishAssertionSteps#Step15 =
                 steps.begin.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
@@ -1518,7 +1518,7 @@ class RelyingPartyAssertionSpec
                   ).getBytes ++ Defaults.authenticatorData.getBytes.drop(32)
                 ),
               )
-              val step: FinishAssertionSteps[RegisteredCredential]#Step15 =
+              val step: FinishAssertionSteps#Step15 =
                 steps.begin.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Success[_]]
@@ -1529,13 +1529,13 @@ class RelyingPartyAssertionSpec
 
         {
           def checks[
-              Next <: FinishAssertionSteps.Step[RegisteredCredential, _],
-              Step <: FinishAssertionSteps.Step[RegisteredCredential, Next],
+              Next <: FinishAssertionSteps.Step[_],
+              Step <: FinishAssertionSteps.Step[Next],
           ](
-              stepsToStep: FinishAssertionSteps[RegisteredCredential] => Step
+              stepsToStep: FinishAssertionSteps => Step
           ) = {
             def check[Ret](
-                stepsToStep: FinishAssertionSteps[RegisteredCredential] => Step
+                stepsToStep: FinishAssertionSteps => Step
             )(
                 chk: Step => Ret
             )(uvr: UserVerificationRequirement, authData: ByteArray): Ret = {
@@ -1546,7 +1546,7 @@ class RelyingPartyAssertionSpec
               chk(stepsToStep(steps))
             }
             def checkFailsWith(
-                stepsToStep: FinishAssertionSteps[RegisteredCredential] => Step
+                stepsToStep: FinishAssertionSteps => Step
             ): (UserVerificationRequirement, ByteArray) => Unit =
               check(stepsToStep) { step =>
                 step.validations shouldBe a[Failure[_]]
@@ -1556,7 +1556,7 @@ class RelyingPartyAssertionSpec
                 step.tryNext shouldBe a[Failure[_]]
               }
             def checkSucceedsWith(
-                stepsToStep: FinishAssertionSteps[RegisteredCredential] => Step
+                stepsToStep: FinishAssertionSteps => Step
             ): (UserVerificationRequirement, ByteArray) => Unit =
               check(stepsToStep) { step =>
                 step.validations shouldBe a[Success[_]]
@@ -1586,9 +1586,7 @@ class RelyingPartyAssertionSpec
                 .toArray
             )
             val (checkFails, checkSucceeds) =
-              checks[FinishAssertionSteps[
-                RegisteredCredential
-              ]#Step17, FinishAssertionSteps[RegisteredCredential]#Step16](
+              checks[FinishAssertionSteps#Step17, FinishAssertionSteps#Step16](
                 _.begin.next.next.next.next.next.next.next.next.next.next
               )
 
@@ -1638,8 +1636,8 @@ class RelyingPartyAssertionSpec
             )
             val (checkFails, checkSucceeds) =
               checks[
-                FinishAssertionSteps[RegisteredCredential]#PendingStep16,
-                FinishAssertionSteps[RegisteredCredential]#Step17,
+                FinishAssertionSteps#PendingStep16,
+                FinishAssertionSteps#Step17,
               ](
                 _.begin.next.next.next.next.next.next.next.next.next.next.next
               )
@@ -1681,8 +1679,7 @@ class RelyingPartyAssertionSpec
                 backupFlagsGen = arbitrary[Boolean].map(bs => (true, bs)),
               )
             ) { authData =>
-              val step
-                  : FinishAssertionSteps[RegisteredCredential]#PendingStep16 =
+              val step: FinishAssertionSteps#PendingStep16 =
                 finishAssertion(
                   authenticatorData = authData,
                   credentialRepository = Some(
@@ -1720,8 +1717,7 @@ class RelyingPartyAssertionSpec
               arbitrary[Boolean],
             ) {
               case (authData, storedBs) =>
-                val step
-                    : FinishAssertionSteps[RegisteredCredential]#PendingStep16 =
+                val step: FinishAssertionSteps#PendingStep16 =
                   finishAssertion(
                     authenticatorData = authData,
                     credentialRepository = Some(
@@ -1758,7 +1754,7 @@ class RelyingPartyAssertionSpec
                   requestedExtensions = extensionInputs,
                   clientExtensionResults = clientExtensionOutputs,
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step18 =
+                val step: FinishAssertionSteps#Step18 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1773,7 +1769,7 @@ class RelyingPartyAssertionSpec
                   requestedExtensions = extensionInputs,
                   clientExtensionResults = clientExtensionOutputs,
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step18 =
+                val step: FinishAssertionSteps#Step18 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1798,7 +1794,7 @@ class RelyingPartyAssertionSpec
                     )
                   ),
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step18 =
+                val step: FinishAssertionSteps#Step18 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1823,7 +1819,7 @@ class RelyingPartyAssertionSpec
                     )
                   ),
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step18 =
+                val step: FinishAssertionSteps#Step18 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1834,7 +1830,7 @@ class RelyingPartyAssertionSpec
 
         it("19. Let hash be the result of computing a hash over the cData using SHA-256.") {
           val steps = finishAssertion()
-          val step: FinishAssertionSteps[RegisteredCredential]#Step19 =
+          val step: FinishAssertionSteps#Step19 =
             steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a[Success[_]]
@@ -1851,7 +1847,7 @@ class RelyingPartyAssertionSpec
         describe("20. Using credentialPublicKey, verify that sig is a valid signature over the binary concatenation of authData and hash.") {
           it("The default test case succeeds.") {
             val steps = finishAssertion()
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Success[_]]
@@ -1868,7 +1864,7 @@ class RelyingPartyAssertionSpec
                   .set("foo", jsonFactory.textNode("bar"))
               )
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1887,7 +1883,7 @@ class RelyingPartyAssertionSpec
               rpId = Defaults.rpId.toBuilder.id(rpId).build(),
               origins = Some(Set("https://localhost")),
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1907,7 +1903,7 @@ class RelyingPartyAssertionSpec
                   .toArray
               )
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1923,7 +1919,7 @@ class RelyingPartyAssertionSpec
                   .toArray
               )
             )
-            val step: FinishAssertionSteps[RegisteredCredential]#Step20 =
+            val step: FinishAssertionSteps#Step20 =
               steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
             step.validations shouldBe a[Failure[_]]
@@ -1970,7 +1966,7 @@ class RelyingPartyAssertionSpec
                   credentialRepository = Some(cr),
                   validateSignatureCounter = true,
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                val step: FinishAssertionSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Success[_]]
@@ -1987,7 +1983,7 @@ class RelyingPartyAssertionSpec
                   credentialRepository = Some(cr),
                   validateSignatureCounter = true,
                 )
-                val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                val step: FinishAssertionSteps#Step21 =
                   steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
@@ -2009,7 +2005,7 @@ class RelyingPartyAssertionSpec
                     credentialRepository = Some(cr),
                     validateSignatureCounter = true,
                   )
-                  val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                  val step: FinishAssertionSteps#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
@@ -2029,7 +2025,7 @@ class RelyingPartyAssertionSpec
                     credentialRepository = Some(cr),
                     validateSignatureCounter = false,
                   )
-                  val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                  val step: FinishAssertionSteps#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
                   step.validations shouldBe a[Success[_]]
@@ -2043,7 +2039,7 @@ class RelyingPartyAssertionSpec
                     credentialRepository = Some(cr),
                     validateSignatureCounter = true,
                   )
-                  val step: FinishAssertionSteps[RegisteredCredential]#Step21 =
+                  val step: FinishAssertionSteps#Step21 =
                     steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
                   val result = Try(step.run())
 
@@ -2072,7 +2068,7 @@ class RelyingPartyAssertionSpec
 
         it("22. If all the above steps are successful, continue with the authentication ceremony as appropriate. Otherwise, fail the authentication ceremony.") {
           val steps = finishAssertion()
-          val step: FinishAssertionSteps[RegisteredCredential]#Finished =
+          val step: FinishAssertionSteps#Finished =
             steps.begin.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next.next
 
           step.validations shouldBe a[Success[_]]
