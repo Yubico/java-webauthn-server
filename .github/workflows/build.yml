@@ -84,9 +84,16 @@ jobs:
       if: ${{ matrix.java != 8 }}  # JDK 8 does not produce reproducible binaries
       run: |
         ./gradlew clean primaryPublishJar
-        find . -name '*.jar' | xargs sha256sum | tee checksums.sha256sum
-        ./gradlew clean primaryPublishJar && sha256sum -c checksums.sha256sum
-        ./gradlew clean primaryPublishJar && sha256sum -c checksums.sha256sum
+        find . -name '*.jar' | grep -v buildSrc | grep -v gradle-wrapper | xargs sha256sum | tee java-webauthn-server-artifacts.sha256sum
+        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts.sha256sum
+        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts.sha256sum
+
+    - name: Archive artifact checksums
+      if: ${{ matrix.java != 8 }}  # JDK 8 does not produce reproducible binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: artifact-checksums-java${{ matrix.java }}-${{ matrix.distribution }}
+        path: java-webauthn-server-artifacts.sha256sum
 
   publish-test-results:
     name: Publish test results
