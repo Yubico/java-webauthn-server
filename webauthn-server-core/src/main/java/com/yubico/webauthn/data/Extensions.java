@@ -880,6 +880,156 @@ public class Extensions {
     }
 
     /**
+     * Inputs for the Pseudo-random function extension (<code>prf</code>) in registration
+     * ceremonies.
+     *
+     * @since 2.7.0
+     * @see <a
+     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfinputs">dictionary
+     *     AuthenticationExtensionsPRFInputs</a>
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    @Value
+    public static class PrfRegistrationInput {
+      /**
+       * PRF inputs to evaluate immediately if possible. Note that not all authenticators support
+       * this, in which case a follow-up authentication ceremony may be needed in order to evaluate
+       * the PRF.
+       *
+       * @since 2.7.0
+       * @see #eval(PrfValues)
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final PrfValues eval;
+
+      @JsonCreator
+      private PrfRegistrationInput(@JsonProperty("eval") PrfValues eval) {
+        this.eval = eval;
+      }
+
+      /**
+       * PRF inputs to evaluate immediately if possible. Note that not all authenticators support
+       * this, in which case a follow-up authentication ceremony may be needed in order to evaluate
+       * the PRF.
+       *
+       * @since 2.7.0
+       * @see #eval(PrfValues)
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<PrfValues> getEval() {
+        return Optional.ofNullable(eval);
+      }
+
+      /**
+       * Enable PRF for the created credential, without evaluating the PRF at this time.
+       *
+       * @since 2.7.0
+       * @see #eval(PrfValues)
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfRegistrationInput enable() {
+        return new PrfRegistrationInput(null);
+      }
+
+      /**
+       * Enable PRF for the created credential, and attempt to immediately evaluate the PRF with the
+       * given inputs. Note that not all authenticators support this, in which case a follow-up
+       * authentication ceremony may be needed in order to evaluate the PRF.
+       *
+       * @since 2.7.0
+       * @see #enable()
+       * @see #getEval()
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfRegistrationInput eval(@NonNull PrfValues eval) {
+        return new PrfRegistrationInput(eval);
+      }
+    }
+
+    /**
+     * Outputs for the Pseudo-random function extension (<code>prf</code>) in registration
+     * ceremonies.
+     *
+     * @since 2.7.0
+     * @see <a
+     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfoutputs">dictionary
+     *     AuthenticationExtensionsPRFOutputs</a>
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    @Value
+    public static class PrfRegistrationOutput {
+
+      /**
+       * <code>true</code> if, and only if, a PRF is available for use with the created credential.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-enabled">AuthenticationExtensionsPRFOutputs.enabled</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final Boolean enabled;
+
+      /**
+       * The results of evaluating the PRF for the inputs given in {@link
+       * PrfRegistrationInput#getEval() eval}, if any.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final PrfValues results;
+
+      @JsonCreator
+      PrfRegistrationOutput(
+          @JsonProperty("enabled") Boolean enabled, @JsonProperty("results") PrfValues results) {
+        this.enabled = enabled;
+        this.results = results;
+      }
+
+      /**
+       * <code>true</code> if, and only if, a PRF is available for use with the created credential.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-enabled">AuthenticationExtensionsPRFOutputs.enabled</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<Boolean> getEnabled() {
+        return Optional.ofNullable(enabled);
+      }
+
+      /**
+       * The results of evaluating the PRF for the inputs given in {@link
+       * PrfRegistrationInput#getEval() eval}, if any.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<PrfValues> getResults() {
+        return Optional.ofNullable(results);
+      }
+    }
+
+    /**
      * Inputs for the Pseudo-random function extension (<code>prf</code>) in authentication
      * ceremonies.
      *
@@ -1029,156 +1179,6 @@ public class Extensions {
           @NonNull Map<PublicKeyCredentialDescriptor, PrfValues> evalByCredential,
           @NonNull PrfValues eval) {
         return new PrfAuthenticationInput(eval, descriptorsToIds(evalByCredential));
-      }
-    }
-
-    /**
-     * Inputs for the Pseudo-random function extension (<code>prf</code>) in registration
-     * ceremonies.
-     *
-     * @since 2.7.0
-     * @see <a
-     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfinputs">dictionary
-     *     AuthenticationExtensionsPRFInputs</a>
-     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-     *     Pseudo-random function extension (prf)</a>
-     */
-    @Value
-    public static class PrfRegistrationInput {
-      /**
-       * PRF inputs to evaluate immediately if possible. Note that not all authenticators support
-       * this, in which case a follow-up authentication ceremony may be needed in order to evaluate
-       * the PRF.
-       *
-       * @since 2.7.0
-       * @see #eval(PrfValues)
-       * @see <a
-       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
-       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-       *     Pseudo-random function extension (prf)</a>
-       */
-      @JsonProperty private final PrfValues eval;
-
-      @JsonCreator
-      private PrfRegistrationInput(@JsonProperty("eval") PrfValues eval) {
-        this.eval = eval;
-      }
-
-      /**
-       * PRF inputs to evaluate immediately if possible. Note that not all authenticators support
-       * this, in which case a follow-up authentication ceremony may be needed in order to evaluate
-       * the PRF.
-       *
-       * @since 2.7.0
-       * @see #eval(PrfValues)
-       * @see <a
-       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
-       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-       *     Pseudo-random function extension (prf)</a>
-       */
-      public Optional<PrfValues> getEval() {
-        return Optional.ofNullable(eval);
-      }
-
-      /**
-       * Enable PRF for the created credential, without evaluating the PRF at this time.
-       *
-       * @since 2.7.0
-       * @see #eval(PrfValues)
-       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-       *     Pseudo-random function extension (prf)</a>
-       */
-      public static PrfRegistrationInput enable() {
-        return new PrfRegistrationInput(null);
-      }
-
-      /**
-       * Enable PRF for the created credential, and attempt to immediately evaluate the PRF with the
-       * given inputs. Note that not all authenticators support this, in which case a follow-up
-       * authentication ceremony may be needed in order to evaluate the PRF.
-       *
-       * @since 2.7.0
-       * @see #enable()
-       * @see #getEval()
-       * @see <a
-       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
-       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-       *     Pseudo-random function extension (prf)</a>
-       */
-      public static PrfRegistrationInput eval(@NonNull PrfValues eval) {
-        return new PrfRegistrationInput(eval);
-      }
-    }
-
-    /**
-     * Outputs for the Pseudo-random function extension (<code>prf</code>) in registration
-     * ceremonies.
-     *
-     * @since 2.7.0
-     * @see <a
-     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfoutputs">dictionary
-     *     AuthenticationExtensionsPRFOutputs</a>
-     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-     *     Pseudo-random function extension (prf)</a>
-     */
-    @Value
-    public static class PrfRegistrationOutput {
-
-      /**
-       * <code>true</code> if, and only if, a PRF is available for use with the created credential.
-       *
-       * @since 2.7.0
-       * @see <a
-       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-enabled">AuthenticationExtensionsPRFOutputs.enabled</a>
-       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-       *     Pseudo-random function extension (prf)</a>
-       */
-      @JsonProperty private final Boolean enabled;
-
-      /**
-       * The results of evaluating the PRF for the inputs given in {@link
-       * PrfRegistrationInput#getEval() eval}, if any.
-       *
-       * @since 2.7.0
-       * @see <a
-       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
-       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-       *     Pseudo-random function extension (prf)</a>
-       */
-      @JsonProperty private final PrfValues results;
-
-      @JsonCreator
-      PrfRegistrationOutput(
-          @JsonProperty("enabled") Boolean enabled, @JsonProperty("results") PrfValues results) {
-        this.enabled = enabled;
-        this.results = results;
-      }
-
-      /**
-       * <code>true</code> if, and only if, a PRF is available for use with the created credential.
-       *
-       * @since 2.7.0
-       * @see <a
-       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-enabled">AuthenticationExtensionsPRFOutputs.enabled</a>
-       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-       *     Pseudo-random function extension (prf)</a>
-       */
-      public Optional<Boolean> getEnabled() {
-        return Optional.ofNullable(enabled);
-      }
-
-      /**
-       * The results of evaluating the PRF for the inputs given in {@link
-       * PrfRegistrationInput#getEval() eval}, if any.
-       *
-       * @since 2.7.0
-       * @see <a
-       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
-       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
-       *     Pseudo-random function extension (prf)</a>
-       */
-      public Optional<PrfValues> getResults() {
-        return Optional.ofNullable(results);
       }
     }
 
