@@ -89,6 +89,7 @@ final class FinishRegistrationSteps {
   private final Clock clock;
   private final boolean allowOriginPort;
   private final boolean allowOriginSubdomain;
+  private final boolean isConditionalCreate;
 
   static FinishRegistrationSteps fromV1(RelyingParty rp, FinishRegistrationOptions options) {
     return new FinishRegistrationSteps(
@@ -102,7 +103,8 @@ final class FinishRegistrationSteps {
         new CredentialRepositoryV1ToV2Adapter(rp.getCredentialRepository()),
         rp.getClock(),
         rp.isAllowOriginPort(),
-        rp.isAllowOriginSubdomain());
+        rp.isAllowOriginSubdomain(),
+        options.isConditionalCreate());
   }
 
   FinishRegistrationSteps(RelyingPartyV2<?> rp, FinishRegistrationOptions options) {
@@ -117,7 +119,8 @@ final class FinishRegistrationSteps {
         rp.getCredentialRepository(),
         rp.getClock(),
         rp.isAllowOriginPort(),
-        rp.isAllowOriginSubdomain());
+        rp.isAllowOriginSubdomain(),
+        options.isConditionalCreate());
   }
 
   public Step6 begin() {
@@ -303,8 +306,8 @@ final class FinishRegistrationSteps {
     @Override
     public void validate() {
       assertTrue(
-          response.getResponse().getParsedAuthenticatorData().getFlags().UP,
-          "User Presence is required.");
+          isConditionalCreate || response.getResponse().getParsedAuthenticatorData().getFlags().UP,
+          "User Presence is required unless isConditionalCreate is true.");
     }
 
     @Override

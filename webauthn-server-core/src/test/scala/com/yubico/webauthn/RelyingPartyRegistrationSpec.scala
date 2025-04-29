@@ -164,6 +164,7 @@ class RelyingPartyRegistrationSpec
       pubkeyCredParams: Option[List[PublicKeyCredentialParameters]] = None,
       testData: RegistrationTestData,
       clock: Clock = Clock.systemUTC(),
+      isConditionalCreate: Boolean = false,
   ): FinishRegistrationSteps = {
     var builder = RelyingParty
       .builder()
@@ -191,6 +192,7 @@ class RelyingPartyRegistrationSpec
       )
       .response(testData.response)
       .callerTokenBindingId(callerTokenBindingId.toJava)
+      .isConditionalCreate(isConditionalCreate)
       .build()
 
     builder
@@ -873,6 +875,7 @@ class RelyingPartyRegistrationSpec
             )(chk: Step => B)(
                 uvr: UserVerificationRequirement,
                 authDataEdit: ByteArray => ByteArray,
+                isConditionalCreate: Boolean,
             ): B = {
               val steps = finishRegistration(
                 testData = testData
@@ -884,14 +887,19 @@ class RelyingPartyRegistrationSpec
                         .build()
                     )
                   )
-                  .editAuthenticatorData(authDataEdit)
+                  .editAuthenticatorData(authDataEdit),
+                isConditionalCreate = isConditionalCreate,
               )
               chk(stepsToStep(steps))
             }
 
             def checkFailsWith(
                 stepsToStep: FinishRegistrationSteps => Step
-            ): (UserVerificationRequirement, ByteArray => ByteArray) => Unit =
+            ): (
+                UserVerificationRequirement,
+                ByteArray => ByteArray,
+                Boolean,
+            ) => Unit =
               check(stepsToStep) { step =>
                 step.validations shouldBe a[Failure[_]]
                 step.validations.failed.get shouldBe an[
@@ -902,7 +910,11 @@ class RelyingPartyRegistrationSpec
 
             def checkSucceedsWith(
                 stepsToStep: FinishRegistrationSteps => Step
-            ): (UserVerificationRequirement, ByteArray => ByteArray) => Unit =
+            ): (
+                UserVerificationRequirement,
+                ByteArray => ByteArray,
+                Boolean,
+            ) => Unit =
               check(stepsToStep) { step =>
                 step.validations shouldBe a[Success[_]]
                 step.tryNext shouldBe a[Success[_]]
@@ -912,13 +924,39 @@ class RelyingPartyRegistrationSpec
           }
 
           describe("14. Verify that the User Present bit of the flags in authData is set.") {
-            val (checkFails, checkSucceeds) = checks[
+            val (chkf, chks) = checks[
               FinishRegistrationSteps#Step15,
               FinishRegistrationSteps#Step14,
             ](_.begin.next.next.next.next.next.next.next.next)
+            def checkFails(
+                uvr: UserVerificationRequirement,
+                authDataEdit: ByteArray => ByteArray,
+                isConditionalCreate: Boolean = false,
+            ): Unit = chkf(uvr, authDataEdit, isConditionalCreate)
+            def checkSucceeds(
+                uvr: UserVerificationRequirement,
+                authDataEdit: ByteArray => ByteArray,
+                isConditionalCreate: Boolean = false,
+            ): Unit = chks(uvr, authDataEdit, isConditionalCreate)
 
             it("Fails if UV is discouraged and flag is not set.") {
               checkFails(UserVerificationRequirement.DISCOURAGED, upOff)
+            }
+
+            it("Fails if UV is discouraged, isConditionalCreate is false and flag is not set.") {
+              checkFails(
+                UserVerificationRequirement.DISCOURAGED,
+                upOff,
+                isConditionalCreate = false,
+              )
+            }
+
+            it("Succeeds if UV is discouraged, isConditionalCreate is true and flag is not set.") {
+              checkSucceeds(
+                UserVerificationRequirement.DISCOURAGED,
+                upOff,
+                isConditionalCreate = true,
+              )
             }
 
             it("Succeeds if UV is discouraged and flag is set.") {
@@ -949,10 +987,20 @@ class RelyingPartyRegistrationSpec
           }
 
           describe("15. If user verification is required for this registration, verify that the User Verified bit of the flags in authData is set.") {
-            val (checkFails, checkSucceeds) = checks[
+            val (chkf, chks) = checks[
               FinishRegistrationSteps#Step16,
               FinishRegistrationSteps#Step15,
             ](_.begin.next.next.next.next.next.next.next.next.next)
+            def checkFails(
+                uvr: UserVerificationRequirement,
+                authDataEdit: ByteArray => ByteArray,
+                isConditionalCreate: Boolean = false,
+            ): Unit = chkf(uvr, authDataEdit, isConditionalCreate)
+            def checkSucceeds(
+                uvr: UserVerificationRequirement,
+                authDataEdit: ByteArray => ByteArray,
+                isConditionalCreate: Boolean = false,
+            ): Unit = chks(uvr, authDataEdit, isConditionalCreate)
 
             it("Succeeds if UV is discouraged and flag is not set.") {
               checkSucceeds(UserVerificationRequirement.DISCOURAGED, uvOff)

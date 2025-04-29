@@ -32,6 +32,11 @@
 * (Experimental) Added property `RegisteredCredential.transports`.
  ** NOTE: Experimental features may receive breaking changes without a major
     version increase.
+* (Experimental) Added option `FinishRegistrationOptions.isConditionalCreate` to
+  allow UP=0 in registration response for registration ceremonies with
+  `mediation: "conditional"`.
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
 
 
 == Version 2.6.0 ==
