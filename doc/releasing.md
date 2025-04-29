@@ -15,6 +15,8 @@ Release candidate versions
     Gradle build script. Conversely, remove or downgrade to `implementation` any
     dependencies no longer exposed in the public API.
 
+    Add `@since` tags to the JavaDoc for new features.
+
  3. Run the tests one more time:
 
     ```
@@ -104,6 +106,8 @@ Release versions
     from `implementation` to `api` dependency declarations in the relevant
     Gradle build script. Conversely, remove or downgrade to `implementation` any
     dependencies no longer exposed in the public API.
+
+    Add `@since` tags to the JavaDoc for new features.
 
  3. Make a no-fast-forward merge from the last (non release candidate) release
     to the commit to be released:
