@@ -3,6 +3,8 @@ package com.yubico.webauthn.data
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.internal.util.JacksonCodecs
 import com.yubico.scalacheck.gen.JacksonGenerators.arbitraryObjectNode
+import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionInput
+import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionPolicy
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput
@@ -38,14 +40,23 @@ class ExtensionsSpec
 
   describe("RegistrationExtensionInputs") {
     describe("has a getExtensionIds() method which") {
-      it("contains exactly the names of contained extensions.") {
+      it("contains exactly the names of contained extensions, except for credProtect.") {
         forAll { input: RegistrationExtensionInputs =>
+          val expectedJsonKeys = input.getExtensionIds.asScala.flatMap(id => {
+            if (id == "credProtect") {
+              // credProtect does not gather all inputs under the extension ID as a map key.
+              List(
+                "credentialProtectionPolicy",
+                "enforceCredentialProtectionPolicy",
+              )
+            } else {
+              List(id)
+            }
+          })
           val json = JacksonCodecs.json().valueToTree[ObjectNode](input)
           val jsonKeyNames = json.fieldNames.asScala.toList
-          val extensionIds = input.getExtensionIds
 
-          jsonKeyNames.length should equal(extensionIds.size)
-          jsonKeyNames.toSet should equal(extensionIds.asScala)
+          jsonKeyNames.toSet should equal(expectedJsonKeys)
         }
       }
     }
@@ -74,6 +85,8 @@ class ExtensionsSpec
         """{
           |"appidExclude": "https://example.org",
           |"credProps": true,
+          |"credentialProtectionPolicy": "userVerificationRequired",
+          |"enforceCredentialProtectionPolicy": true,
           |"largeBlob": {
           |  "support": "required"
           |},
@@ -98,6 +111,7 @@ class ExtensionsSpec
         Set(
           "appidExclude",
           "credProps",
+          "credProtect",
           "largeBlob",
           "prf",
           "uvm",
@@ -107,6 +121,13 @@ class ExtensionsSpec
         Some(new AppId("https://example.org"))
       )
       decoded.getCredProps should equal(true)
+      decoded.getCredProtect.toScala should equal(
+        Some(
+          CredentialProtectionInput.require(
+            CredentialProtectionPolicy.UV_REQUIRED
+          )
+        )
+      )
       decoded.getLargeBlob.toScala should equal(
         Some(new LargeBlobRegistrationInput(LargeBlobSupport.REQUIRED))
       )

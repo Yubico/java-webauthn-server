@@ -25,6 +25,7 @@
 package com.yubico.webauthn.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yubico.webauthn.RelyingParty;
@@ -60,21 +61,45 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
   private final Extensions.Prf.PrfRegistrationInput prf;
   private final Boolean uvm;
 
-  @JsonCreator
   private RegistrationExtensionInputs(
-      @JsonProperty("appidExclude") AppId appidExclude,
-      @JsonProperty("credProps") Boolean credProps,
-      @JsonProperty("credProtect")
-          Extensions.CredentialProtection.CredentialProtectionInput credProtect,
-      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
-      @JsonProperty("prf") Extensions.Prf.PrfRegistrationInput prf,
-      @JsonProperty("uvm") Boolean uvm) {
+      AppId appidExclude,
+      Boolean credProps,
+      Extensions.CredentialProtection.CredentialProtectionInput credProtect,
+      Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
+      Extensions.Prf.PrfRegistrationInput prf,
+      Boolean uvm) {
     this.appidExclude = appidExclude;
     this.credProps = credProps;
     this.credProtect = credProtect;
     this.largeBlob = largeBlob;
     this.prf = prf;
     this.uvm = uvm;
+  }
+
+  @JsonCreator
+  private RegistrationExtensionInputs(
+      @JsonProperty("appidExclude") AppId appidExclude,
+      @JsonProperty("credProps") Boolean credProps,
+      @JsonProperty("credentialProtectionPolicy")
+          Extensions.CredentialProtection.CredentialProtectionPolicy credProtectPolicy,
+      @JsonProperty("enforceCredentialProtectionPolicy") Boolean enforceCredProtectPolicy,
+      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
+      @JsonProperty("prf") Extensions.Prf.PrfRegistrationInput prf,
+      @JsonProperty("uvm") Boolean uvm) {
+    this(
+        appidExclude,
+        credProps,
+        Optional.ofNullable(credProtectPolicy)
+            .map(
+                policy -> {
+                  return enforceCredProtectPolicy != null && enforceCredProtectPolicy
+                      ? Extensions.CredentialProtection.CredentialProtectionInput.require(policy)
+                      : Extensions.CredentialProtection.CredentialProtectionInput.prefer(policy);
+                })
+            .orElse(null),
+        largeBlob,
+        prf,
+        uvm);
   }
 
   /**
@@ -133,8 +158,34 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-authenticator-credential-properties-extension">§10.4.
    *     Credential Properties Extension (credProps)</a>
    */
+  @JsonIgnore
   public Optional<Extensions.CredentialProtection.CredentialProtectionInput> getCredProtect() {
     return Optional.ofNullable(credProtect);
+  }
+
+  /**
+   * For JSON serialization, because credProtect does not group all inputs under the "credProtect"
+   * key.
+   */
+  @JsonProperty("credentialProtectionPolicy")
+  private Optional<Extensions.CredentialProtection.CredentialProtectionPolicy>
+      getCredProtectPolicy() {
+    return getCredProtect()
+        .map(
+            Extensions.CredentialProtection.CredentialProtectionInput
+                ::getCredentialProtectionPolicy);
+  }
+
+  /**
+   * For JSON serialization, because credProtect does not group all inputs under the "credProtect"
+   * key.
+   */
+  @JsonProperty("enforceCredentialProtectionPolicy")
+  private Optional<Boolean> getEnforceCredProtectPolicy() {
+    return getCredProtect()
+        .map(
+            Extensions.CredentialProtection.CredentialProtectionInput
+                ::isEnforceCredentialProtectionPolicy);
   }
 
   /**
