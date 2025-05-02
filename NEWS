@@ -1,3 +1,35 @@
+== Version 2.8.0 (unreleased) ==
+
+* (Experimental) Added a new suite of interfaces, starting with
+  `CredentialRepositoryV2`. `RelyingParty` can now be configured with a
+  `CredentialRepositoryV2` instance instead of a `CredentialRepository`
+  instance. This changes the result of the `RelyingParty` builder to
+  `RelyingPartyV2`. `CredentialRepositoryV2` and `RelyingPartyV2` enable a suite
+  of new features:
+ ** `CredentialRepositoryV2` does not assume that the application has usernames,
+    instead username support is modular. In addition to the
+    `CredentialRepositoryV2`, `RelyingPartyV2` can be optionally configured with
+    a `UsernameRepository` as well. If a `UsernameRepository` is not set, then
+    `RelyingPartyV2.startAssertion(StartAssertionOptions)` will fail at runtime
+    if `StartAssertionOptions.username` is set.
+ ** `CredentialRepositoryV2` uses a new interface `CredentialRecord` to
+    represent registered credentials, instead of the concrete
+    `RegisteredCredential` class (although `RegisteredCredential` also
+    implements `CredentialRecord`). This provides implementations greater
+    flexibility while also automating the type conversion to
+    `PublicKeyCredentialDescriptor` needed in `startRegistration()` and
+    `startAssertion()`.
+ ** `RelyingPartyV2.finishAssertion()` returns a new type `AssertionResultV2`
+    with a new method `getCredential()`, which returns the `CredentialRecord`
+    that was verified. The return type of `getCredential()` is generic and
+    preserves the concrete type of `CredentialRecord` returned by the
+    `CredentialRepositoryV2` implementation.
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+* (Experimental) Added property `RegisteredCredential.transports`.
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+
 == Version 2.7.0 (unreleased) ==
 
 * Added overloaded setter `RelyingPartyBuilder.origins(Optional<Set<String>>)`.
