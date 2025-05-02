@@ -1,5 +1,7 @@
 == Version 2.7.0 (unreleased) ==
 
+New features:
+
 * Added overloaded setter `RelyingPartyBuilder.origins(Optional<Set<String>>)`.
 * Added support for the CTAP2 `credProtect` extension.
 * Added support for the `prf` extension.
