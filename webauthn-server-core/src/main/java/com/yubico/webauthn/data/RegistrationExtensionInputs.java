@@ -118,6 +118,12 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
     return credProps != null && credProps;
   }
 
+  /** For JSON serialization, to omit false values. */
+  @JsonProperty("credProps")
+  private Boolean getCredPropsJson() {
+    return getCredProps() ? true : null;
+  }
+
   /**
    * @return The Credential Protection (<code>credProtect</code>) extension input, if set.
    * @since 2.7.0
@@ -129,12 +135,6 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    */
   public Optional<Extensions.CredentialProtection.CredentialProtectionInput> getCredProtect() {
     return Optional.ofNullable(credProtect);
-  }
-
-  /** For JSON serialization, to omit false values. */
-  @JsonProperty("credProps")
-  private Boolean getCredPropsJson() {
-    return getCredProps() ? true : null;
   }
 
   /**
