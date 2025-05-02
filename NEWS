@@ -1,5 +1,7 @@
 == Version 2.8.0 (unreleased) ==
 
+New features:
+
 * (Experimental) Added a new suite of interfaces, starting with
   `CredentialRepositoryV2`. `RelyingParty` can now be configured with a
   `CredentialRepositoryV2` instance instead of a `CredentialRepository`
