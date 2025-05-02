@@ -8,6 +8,9 @@ import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutp
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
+import com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationInput
+import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationInput
+import com.yubico.webauthn.data.Extensions.Prf.PrfValues
 import com.yubico.webauthn.data.Generators.arbitraryAssertionExtensionInputs
 import com.yubico.webauthn.data.Generators.arbitraryClientRegistrationExtensionOutputs
 import com.yubico.webauthn.data.Generators.arbitraryRegistrationExtensionInputs
@@ -23,6 +26,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters.IteratorHasAsScala
+import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.jdk.CollectionConverters.SetHasAsScala
 import scala.jdk.OptionConverters.RichOptional
 
@@ -73,6 +77,12 @@ class ExtensionsSpec
           |"largeBlob": {
           |  "support": "required"
           |},
+          |"prf": {
+          |  "eval": {
+          |    "first": "AAAA",
+          |    "second": "BBBB"
+          |  }
+          |},
           |"uvm": true
           |}""".stripMargin
 
@@ -85,7 +95,13 @@ class ExtensionsSpec
 
       decoded should not be null
       decoded.getExtensionIds.asScala should equal(
-        Set("appidExclude", "credProps", "largeBlob", "uvm")
+        Set(
+          "appidExclude",
+          "credProps",
+          "largeBlob",
+          "prf",
+          "uvm",
+        )
       )
       decoded.getAppidExclude.toScala should equal(
         Some(new AppId("https://example.org"))
@@ -93,6 +109,16 @@ class ExtensionsSpec
       decoded.getCredProps should equal(true)
       decoded.getLargeBlob.toScala should equal(
         Some(new LargeBlobRegistrationInput(LargeBlobSupport.REQUIRED))
+      )
+      decoded.getPrf.toScala should equal(
+        Some(
+          PrfRegistrationInput.eval(
+            PrfValues.two(
+              ByteArray.fromBase64Url("AAAA"),
+              ByteArray.fromBase64Url("BBBB"),
+            )
+          )
+        )
       )
       decoded.getUvm should be(true)
 
@@ -161,6 +187,21 @@ class ExtensionsSpec
           |"largeBlob": {
           |  "read": true
           |},
+          |"prf": {
+          |  "eval": {
+          |    "first": "AAAA",
+          |    "second": "BBBB"
+          |  },
+          |  "evalByCredential": {
+          |    "CCCC": {
+          |      "first": "DDDD"
+          |    },
+          |    "EEEE": {
+          |      "first": "FFFF",
+          |      "second": "GGGG"
+          |    }
+          |  }
+          |},
           |"uvm": true
           |}""".stripMargin
 
@@ -173,13 +214,36 @@ class ExtensionsSpec
 
       decoded should not be null
       decoded.getExtensionIds.asScala should equal(
-        Set("appid", "largeBlob", "uvm")
+        Set("appid", "largeBlob", "prf", "uvm")
       )
       decoded.getAppid.toScala should equal(
         Some(new AppId("https://example.org"))
       )
       decoded.getLargeBlob.toScala should equal(
         Some(LargeBlobAuthenticationInput.read())
+      )
+      decoded.getPrf.toScala should equal(
+        Some(
+          PrfAuthenticationInput.evalByCredentialWithFallback(
+            Map(
+              PublicKeyCredentialDescriptor
+                .builder()
+                .id(ByteArray.fromBase64Url("CCCC"))
+                .build() -> PrfValues.one(ByteArray.fromBase64Url("DDDD")),
+              PublicKeyCredentialDescriptor
+                .builder()
+                .id(ByteArray.fromBase64Url("EEEE"))
+                .build() -> PrfValues.two(
+                ByteArray.fromBase64Url("FFFF"),
+                ByteArray.fromBase64Url("GGGG"),
+              ),
+            ).asJava,
+            PrfValues.two(
+              ByteArray.fromBase64Url("AAAA"),
+              ByteArray.fromBase64Url("BBBB"),
+            ),
+          )
+        )
       )
       decoded.getUvm should be(true)
 
