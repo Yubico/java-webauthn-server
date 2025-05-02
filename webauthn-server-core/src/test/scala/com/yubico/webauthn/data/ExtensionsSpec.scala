@@ -90,6 +90,7 @@ class ExtensionsSpec
       decoded.getAppidExclude.toScala should equal(
         Some(new AppId("https://example.org"))
       )
+      decoded.getCredProps should equal(true)
       decoded.getLargeBlob.toScala should equal(
         Some(new LargeBlobRegistrationInput(LargeBlobSupport.REQUIRED))
       )
