@@ -16,7 +16,10 @@ dependencyResolutionManagement {
         create("constraintLibs") {
             library("cbor", "com.upokecenter:cbor:[4.5.1,5)")
             library("guava", "com.google.guava:guava:[24.1.1,33)")
-            library("httpclient5", "org.apache.httpcomponents.client5:httpclient5:[5.0.0,6)")
+            library("httpclient5", "org.apache.httpcomponents.client5", "httpclient5").version {
+              strictly("[5.0.0,6)")
+              reject("[5.4-alpha1,5.4.3)")
+            }
             library("slf4j", "org.slf4j:slf4j-api:[1.7.25,3)")
 
             val jacksonVer = version("jackson", "[2.13.2.1,3)")

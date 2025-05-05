@@ -11,6 +11,12 @@ New features:
  ** NOTE: Experimental features may receive breaking changes without a major
     version increase.
 
+Fixes:
+
+* Excluded CVE-2025-27820 vulnerable versions of Apache httpclient5 from
+  dependency resolution. Note that this might only affect consumers using Gradle
+  module metadata.
+
 
 == Version 2.6.0 ==
 
