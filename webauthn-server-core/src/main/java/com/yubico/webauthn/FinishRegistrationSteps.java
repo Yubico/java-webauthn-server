@@ -85,13 +85,29 @@ final class FinishRegistrationSteps {
   private final String rpId;
   private final boolean allowUntrustedAttestation;
   private final Optional<AttestationTrustSource> attestationTrustSource;
-  private final CredentialRepository credentialRepository;
+  private final CredentialRepositoryV2<?> credentialRepositoryV2;
   private final Clock clock;
   private final boolean allowOriginPort;
   private final boolean allowOriginSubdomain;
   private final boolean isConditionalCreate;
 
-  FinishRegistrationSteps(RelyingParty rp, FinishRegistrationOptions options) {
+  static FinishRegistrationSteps fromV1(RelyingParty rp, FinishRegistrationOptions options) {
+    return new FinishRegistrationSteps(
+        options.getRequest(),
+        options.getResponse(),
+        options.getCallerTokenBindingId(),
+        rp.getOrigins(),
+        rp.getIdentity().getId(),
+        rp.isAllowUntrustedAttestation(),
+        rp.getAttestationTrustSource(),
+        new CredentialRepositoryV1ToV2Adapter(rp.getCredentialRepository()),
+        rp.getClock(),
+        rp.isAllowOriginPort(),
+        rp.isAllowOriginSubdomain(),
+        options.isConditionalCreate());
+  }
+
+  FinishRegistrationSteps(RelyingPartyV2<?> rp, FinishRegistrationOptions options) {
     this(
         options.getRequest(),
         options.getResponse(),
@@ -647,7 +663,7 @@ final class FinishRegistrationSteps {
     @Override
     public void validate() {
       assertTrue(
-          credentialRepository.lookupAll(response.getId()).isEmpty(),
+          !credentialRepositoryV2.credentialIdExists(response.getId()),
           "Credential ID is already registered: %s",
           response.getId());
     }
