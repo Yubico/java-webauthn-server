@@ -601,7 +601,8 @@ final class FinishAssertionSteps {
     @Override
     public Optional<AssertionResult> result() {
       return Optional.of(
-          new AssertionResult(true, response, credential, username, signatureCounterValid));
+          new AssertionResult(
+              true, response, (RegisteredCredential) credential, username, signatureCounterValid));
     }
   }
 }

@@ -223,18 +223,18 @@ class FidoMetadataServiceIntegrationTest
 
         it("a YubiKey Bio.") {
           check(
-            "YubiKey Bio Series",
+            "YubiKey Bio Series - FIDO Edition",
             RealExamples.YubikeyBio_5_5_4,
             attachmentHintsUsb,
           )
           check(
-            "YubiKey Bio Series",
+            "YubiKey Bio Series - FIDO Edition",
             RealExamples.YubikeyBio_5_5_5,
             attachmentHintsUsb,
           )
           withProviderContext(List(new BouncyCastleProvider)) { // Needed for JDK<14 because this example uses EdDSA
             check(
-              "YubiKey Bio Series",
+              "YubiKey Bio Series - FIDO Edition",
               RealExamples.YubikeyBio_5_5_6,
               attachmentHintsUsb,
             )

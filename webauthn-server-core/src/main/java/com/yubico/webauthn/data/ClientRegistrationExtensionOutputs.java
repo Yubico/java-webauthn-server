@@ -58,15 +58,19 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
 
   private final Extensions.LargeBlob.LargeBlobRegistrationOutput largeBlob;
 
+  private final Extensions.Prf.PrfRegistrationOutput prf;
+
   @JsonCreator
   private ClientRegistrationExtensionOutputs(
       @JsonProperty("appidExclude") Boolean appidExclude,
       @JsonProperty("credProps")
           Extensions.CredentialProperties.CredentialPropertiesOutput credProps,
-      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationOutput largeBlob) {
+      @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationOutput largeBlob,
+      @JsonProperty("prf") Extensions.Prf.PrfRegistrationOutput prf) {
     this.appidExclude = appidExclude;
     this.credProps = credProps;
     this.largeBlob = largeBlob;
+    this.prf = prf;
   }
 
   @Override
@@ -81,6 +85,9 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
     }
     if (largeBlob != null) {
       ids.add(Extensions.LargeBlob.EXTENSION_ID);
+    }
+    if (prf != null) {
+      ids.add(Extensions.Prf.EXTENSION_ID);
     }
     return ids;
   }
@@ -126,5 +133,19 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
    */
   public Optional<Extensions.LargeBlob.LargeBlobRegistrationOutput> getLargeBlob() {
     return Optional.ofNullable(largeBlob);
+  }
+
+  /**
+   * The extension output for the <a
+   * href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">Pseudo-random function
+   * (<code>prf</code>) extension</a>, if any.
+   *
+   * @since 2.7.0
+   * @see com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationOutput
+   * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+   *     Pseudo-random function extension (prf)</a>
+   */
+  public Optional<Extensions.Prf.PrfRegistrationOutput> getPrf() {
+    return Optional.ofNullable(prf);
   }
 }

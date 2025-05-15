@@ -15,14 +15,15 @@ Release candidate versions
     Gradle build script. Conversely, remove or downgrade to `implementation` any
     dependencies no longer exposed in the public API.
 
+    Add `@since` tags to the JavaDoc for new features.
+
  3. Run the tests one more time:
 
     ```
     $ ./gradlew clean check
     ```
 
- 4. Update the Java version in the [`release-verify-signatures`
-    workflow](https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml#L42).
+ 4. Update the Java version in the [`release-verify-signatures` workflow][workflow-release-src].
 
     See the `openjdk version` line of output from `java -version`:
 
@@ -44,21 +45,7 @@ Release candidate versions
     Check that this version is available in GitHub Actions. Commit this change,
     if any.
 
- 5. Tag the head commit with an `X.Y.Z-RCN` tag:
-
-    ```
-    $ git tag -a -s 1.4.0-RC1 -m "Pre-release 1.4.0-RC1"
-    ```
-
-    No tag body needed.
-
- 6. Publish to Sonatype Nexus:
-
-    ```
-    $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
-    ```
-
- 7. Push to GitHub.
+ 5. Push the branch to GitHub.
 
     If the pre-release makes significant changes to the project README, such
     that the README does not accurately reflect the latest non-pre-release
@@ -66,17 +53,47 @@ Release candidate versions
 
     ```
     $ git checkout -b release-1.4.0
-    $ git push origin release-1.4.0 1.4.0-RC1
+    $ git push origin release-1.4.0
     ```
 
     If the README still accurately reflects the latest non-pre-release version,
     you can simply push to main instead:
 
     ```
-    $ git push origin main 1.4.0-RC1
+    $ git push origin main
     ```
 
- 8. Make GitHub release.
+ 6. Wait for the ["build" workflow][workflow-build] to finish.
+    Download the `artifact-checksums-java17-temurin` artifact,
+    unpack it and verify that the artifact checksums match artifacts built locally:
+
+    ```
+    $ unzip artifact-checksums-java17-temurin.zip
+    $ VERSION=0.1.0-SNAPSHOT ./gradlew primaryPublishJar
+    $ sha256sum -c java-webauthn-server-artifacts.sha256sum
+    ```
+
+ 7. Tag the head commit with an `X.Y.Z-RCN` tag:
+
+    ```
+    $ git tag -a -s 1.4.0-RC1 -m "Pre-release 1.4.0-RC1"
+    ```
+
+    No tag body needed.
+
+ 8. Publish to Sonatype Nexus:
+
+    ```
+    $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+    ```
+
+ 9. Push the tag to GitHub:
+
+    ```
+    $ git push origin 1.4.0-RC1
+    ```
+
+10. Make GitHub release.
 
     - Use the new tag as the release tag.
     - Check the pre-release checkbox.
@@ -86,9 +103,7 @@ Release candidate versions
     - Note the JDK version shown by `java -version` in step 3.
       For example: `openjdk version "17.0.7" 2023-04-18`.
 
- 9. Check that the ["Reproducible binary"
-    workflow](https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
-    runs and succeeds.
+11. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
 
 
 Release versions
@@ -104,6 +119,8 @@ Release versions
     from `implementation` to `api` dependency declarations in the relevant
     Gradle build script. Conversely, remove or downgrade to `implementation` any
     dependencies no longer exposed in the public API.
+
+    Add `@since` tags to the JavaDoc for new features.
 
  3. Make a no-fast-forward merge from the last (non release candidate) release
     to the commit to be released:
@@ -133,8 +150,7 @@ Release versions
 
  6. Update the version in JavaDoc links in the READMEs.
 
- 7. Update the Java version in the [`release-verify-signatures`
-    workflow](https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml#L42).
+ 7. Update the Java version in the [`release-verify-signatures` workflow][workflow-release-src].
 
     See the `openjdk version` line of output from `java -version`:
 
@@ -168,7 +184,23 @@ Release versions
     $ ./gradlew clean check
     ```
 
-10. Tag the merge commit with an `X.Y.Z` tag:
+10. Push the branch to GitHub:
+
+    ```
+    $ git push origin main
+    ```
+
+11. Wait for the ["build" workflow][workflow-build] to finish.
+    Download the `artifact-checksums-java17-temurin` artifact,
+    unpack it and verify that the artifact checksums match artifacts built locally:
+
+    ```
+    $ unzip artifact-checksums-java17-temurin.zip
+    $ VERSION=0.1.0-SNAPSHOT ./gradlew primaryPublishJar
+    $ sha256sum -c java-webauthn-server-artifacts.sha256sum
+    ```
+
+12. Tag the merge commit with an `X.Y.Z` tag:
 
     ```
     $ git tag -a -s 1.4.0 -m "Release 1.4.0"
@@ -176,19 +208,19 @@ Release versions
 
     No tag body needed since that's included in the commit.
 
-11. Publish to Sonatype Nexus:
+12. Publish to Sonatype Nexus:
 
     ```
     $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
     ```
 
-12. Push to GitHub:
+13. Push the tag to GitHub:
 
     ```
-    $ git push origin main 1.4.0
+    $ git push origin 1.4.0
     ```
 
-13. Make GitHub release.
+14. Make GitHub release.
 
     - Use the new tag as the release tag.
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
@@ -197,6 +229,9 @@ Release versions
     - Note the JDK version shown by `java -version` in step 6.
       For example: `openjdk version "17.0.7" 2023-04-18`.
 
-14. Check that the ["Reproducible binary"
-    workflow](https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml)
-    runs and succeeds.
+15. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
+
+
+[workflow-build]: https://github.com/Yubico/java-webauthn-server/actions/workflows/build.yml
+[workflow-release]: https://github.com/Yubico/java-webauthn-server/actions/workflows/release-verify-signatures.yml
+[workflow-release-src]: https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml#L42

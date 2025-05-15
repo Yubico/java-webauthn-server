@@ -41,7 +41,9 @@ import com.yubico.webauthn.data.ClientAssertionExtensionOutputs
 import com.yubico.webauthn.data.CollectedClientData
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationInput
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobAuthenticationOutput
+import com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
+import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfAuthenticationOutput
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -577,7 +579,8 @@ class RelyingPartyAssertionSpec
               ),
               credentialId = new ByteArray(Array(0, 1, 2, 3)),
             )
-            val step: FinishAssertionSteps#Step5 = steps.begin
+            val step: FinishAssertionSteps#Step5 =
+              steps.begin
 
             step.validations shouldBe a[Failure[_]]
             step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -600,7 +603,8 @@ class RelyingPartyAssertionSpec
               ),
               credentialId = new ByteArray(Array(4, 5, 6, 7)),
             )
-            val step: FinishAssertionSteps#Step5 = steps.begin
+            val step: FinishAssertionSteps#Step5 =
+              steps.begin
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -617,7 +621,8 @@ class RelyingPartyAssertionSpec
                 allowCredentials = allowCredentials,
                 credentialId = new ByteArray(Array(0, 1, 2, 3)),
               )
-              val step: FinishAssertionSteps#Step5 = steps.begin
+              val step: FinishAssertionSteps#Step5 =
+                steps.begin
 
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
@@ -674,7 +679,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = Some(owner.username),
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -690,7 +696,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 userHandleForResponse = Some(owner.userHandle),
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -704,7 +711,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = Some(owner.username),
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
@@ -721,7 +729,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 userHandleForResponse = None,
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -737,7 +746,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -754,7 +764,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -769,7 +780,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -784,7 +796,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -798,7 +811,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
@@ -812,7 +826,8 @@ class RelyingPartyAssertionSpec
                 userHandleForUser = owner.userHandle,
                 usernameForRequest = None,
               )
-              val step: FinishAssertionSteps#Step6 = steps.begin.next
+              val step: FinishAssertionSteps#Step6 =
+                steps.begin.next
 
               step.validations shouldBe a[Success[_]]
               step.tryNext shouldBe a[Success[_]]
@@ -864,7 +879,8 @@ class RelyingPartyAssertionSpec
                 )
               )
             )
-            val step: FinishAssertionSteps#Step7 = steps.begin.next.next
+            val step: FinishAssertionSteps#Step7 =
+              steps.begin.next.next
 
             step.validations shouldBe a[Success[_]]
             step.tryNext shouldBe a[Success[_]]
@@ -874,7 +890,8 @@ class RelyingPartyAssertionSpec
         describe("8. Let cData, authData and sig denote the value of response’s clientDataJSON, authenticatorData, and signature respectively.") {
           it("Succeeds if all three are present.") {
             val steps = finishAssertion()
-            val step: FinishAssertionSteps#Step8 = steps.begin.next.next.next
+            val step: FinishAssertionSteps#Step8 =
+              steps.begin.next.next.next
 
             step.validations shouldBe a[Success[_]]
             step.clientData should not be null
@@ -1662,24 +1679,25 @@ class RelyingPartyAssertionSpec
                 backupFlagsGen = arbitrary[Boolean].map(bs => (true, bs)),
               )
             ) { authData =>
-              val step: FinishAssertionSteps#PendingStep16 = finishAssertion(
-                authenticatorData = authData,
-                credentialRepository = Some(
-                  Helpers.CredentialRepository.withUser(
-                    Defaults.user,
-                    RegisteredCredential
-                      .builder()
-                      .credentialId(Defaults.credentialId)
-                      .userHandle(Defaults.userHandle)
-                      .publicKeyCose(
-                        getPublicKeyBytes(Defaults.credentialKey)
-                      )
-                      .backupEligible(false)
-                      .backupState(false)
-                      .build(),
-                  )
-                ),
-              ).begin.next.next.next.next.next.next.next.next.next.next.next.next
+              val step: FinishAssertionSteps#PendingStep16 =
+                finishAssertion(
+                  authenticatorData = authData,
+                  credentialRepository = Some(
+                    Helpers.CredentialRepository.withUser(
+                      Defaults.user,
+                      RegisteredCredential
+                        .builder()
+                        .credentialId(Defaults.credentialId)
+                        .userHandle(Defaults.userHandle)
+                        .publicKeyCose(
+                          getPublicKeyBytes(Defaults.credentialKey)
+                        )
+                        .backupEligible(false)
+                        .backupState(false)
+                        .build(),
+                    )
+                  ),
+                ).begin.next.next.next.next.next.next.next.next.next.next.next.next
 
               step.validations shouldBe a[Failure[_]]
               step.validations.failed.get shouldBe an[IllegalArgumentException]
@@ -1699,24 +1717,25 @@ class RelyingPartyAssertionSpec
               arbitrary[Boolean],
             ) {
               case (authData, storedBs) =>
-                val step: FinishAssertionSteps#PendingStep16 = finishAssertion(
-                  authenticatorData = authData,
-                  credentialRepository = Some(
-                    Helpers.CredentialRepository.withUser(
-                      Defaults.user,
-                      RegisteredCredential
-                        .builder()
-                        .credentialId(Defaults.credentialId)
-                        .userHandle(Defaults.userHandle)
-                        .publicKeyCose(
-                          getPublicKeyBytes(Defaults.credentialKey)
-                        )
-                        .backupEligible(true)
-                        .backupState(storedBs)
-                        .build(),
-                    )
-                  ),
-                ).begin.next.next.next.next.next.next.next.next.next.next.next.next
+                val step: FinishAssertionSteps#PendingStep16 =
+                  finishAssertion(
+                    authenticatorData = authData,
+                    credentialRepository = Some(
+                      Helpers.CredentialRepository.withUser(
+                        Defaults.user,
+                        RegisteredCredential
+                          .builder()
+                          .credentialId(Defaults.credentialId)
+                          .userHandle(Defaults.userHandle)
+                          .publicKeyCose(
+                            getPublicKeyBytes(Defaults.credentialKey)
+                          )
+                          .backupEligible(true)
+                          .backupState(storedBs)
+                          .build(),
+                      )
+                    ),
+                  ).begin.next.next.next.next.next.next.next.next.next.next.next.next
 
                 step.validations shouldBe a[Failure[_]]
                 step.validations.failed.get shouldBe an[
@@ -2554,6 +2573,33 @@ class RelyingPartyAssertionSpec
           )
           result.getClientExtensionOutputs.get.getLargeBlob.get.getWritten.toScala should be(
             None
+          )
+        }
+      }
+
+      it("pass through prf extension outputs when present.") {
+        forAll(minSuccessful(3)) { prfOutput: PrfAuthenticationOutput =>
+          val result = rp.finishAssertion(
+            FinishAssertionOptions
+              .builder()
+              .request(
+                testDataBase.assertion.get.request
+              )
+              .response(
+                testDataBase.assertion.get.response.toBuilder
+                  .clientExtensionResults(
+                    ClientAssertionExtensionOutputs
+                      .builder()
+                      .prf(prfOutput)
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          result.getClientExtensionOutputs.get().getPrf.toScala should equal(
+            Some(prfOutput)
           )
         }
       }

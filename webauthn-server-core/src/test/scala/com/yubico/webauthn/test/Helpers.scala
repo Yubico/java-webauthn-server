@@ -110,5 +110,4 @@ object Helpers {
       .userHandle(user.getId)
       .publicKeyCose(result.getPublicKeyCose)
       .build()
-
 }

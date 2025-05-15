@@ -61,11 +61,15 @@ import lombok.extern.slf4j.Slf4j;
 public final class AuthenticatorRegistrationExtensionOutputs
     implements AuthenticatorExtensionOutputs {
 
+  private final Extensions.CredentialProtection.CredentialProtectionPolicy credProtect;
   private final List<Extensions.Uvm.UvmEntry> uvm;
 
   @JsonCreator
   private AuthenticatorRegistrationExtensionOutputs(
+      @JsonProperty("credProtect")
+          Extensions.CredentialProtection.CredentialProtectionPolicy credProtect,
       @JsonProperty("uvm") List<Extensions.Uvm.UvmEntry> uvm) {
+    this.credProtect = credProtect;
     this.uvm = uvm == null ? null : CollectionUtil.immutableList(uvm);
   }
 
@@ -107,6 +111,8 @@ public final class AuthenticatorRegistrationExtensionOutputs
   static Optional<AuthenticatorRegistrationExtensionOutputs> fromCbor(CBORObject cbor) {
     AuthenticatorRegistrationExtensionOutputsBuilder b = builder();
 
+    Extensions.CredentialProtection.parseAuthenticatorExtensionOutput(cbor)
+        .ifPresent(b::credProtect);
     Extensions.Uvm.parseAuthenticatorExtensionOutput(cbor).ifPresent(b::uvm);
 
     AuthenticatorRegistrationExtensionOutputs result = b.build();
@@ -122,10 +128,29 @@ public final class AuthenticatorRegistrationExtensionOutputs
   @EqualsAndHashCode.Include
   public Set<String> getExtensionIds() {
     HashSet<String> ids = new HashSet<>();
+    if (credProtect != null) {
+      ids.add(Extensions.CredentialProtection.EXTENSION_ID);
+    }
     if (uvm != null) {
       ids.add(Extensions.Uvm.EXTENSION_ID);
     }
     return ids;
+  }
+
+  /**
+   * @return The <a
+   *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
+   *     extension output</a> for the <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">Credential
+   *     Protection (credProtect) extension</a>, if any. This indicates the credential protection
+   *     policy that was set for the credential.
+   * @since 2.7.0
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+   *     §12.1. Credential Protection (credProtect)</a>
+   */
+  public Optional<Extensions.CredentialProtection.CredentialProtectionPolicy> getCredProtect() {
+    return Optional.ofNullable(credProtect);
   }
 
   /**

@@ -588,6 +588,72 @@ public class RelyingParty {
         Optional.empty();
     private @NonNull Optional<AttestationTrustSource> attestationTrustSource = Optional.empty();
 
+    /**
+     * The allowed origins that returned authenticator responses will be compared against.
+     *
+     * <p>The default is the set containing only the string <code>
+     * "https://" + {@link #getIdentity()}.getId()</code>.
+     *
+     * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} and {@link
+     * RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>false
+     * </code> (the default), then a successful registration or authentication operation requires
+     * {@link CollectedClientData#getOrigin()} to exactly equal one of these values.
+     *
+     * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} is <code>true
+     * </code> , then the above rule is relaxed to allow any port number in {@link
+     * CollectedClientData#getOrigin()}, regardless of any port specified.
+     *
+     * <p>If {@link RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} is
+     * <code>true</code>, then the above rule is relaxed to allow any subdomain, of any depth, of
+     * any of these values.
+     *
+     * <p>For either of the above relaxations to take effect, both the allowed origin and the client
+     * data origin must be valid URLs. Origins that are not valid URLs are matched only by exact
+     * string equality.
+     *
+     * @since 0.6.0
+     * @see #getIdentity()
+     * @see #origins(Optional)
+     */
+    public RelyingPartyBuilder origins(@NonNull Set<String> origins) {
+      this.origins = origins;
+      return this;
+    }
+
+    /**
+     * The allowed origins that returned authenticator responses will be compared against.
+     *
+     * <p>If set to empty, this setting reverts to the default value.
+     *
+     * <p>The default is the set containing only the string <code>
+     * "https://" + {@link #getIdentity()}.getId()</code>.
+     *
+     * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} and {@link
+     * RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>false
+     * </code> (the default), then a successful registration or authentication operation requires
+     * {@link CollectedClientData#getOrigin()} to exactly equal one of these values.
+     *
+     * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} is <code>true
+     * </code> , then the above rule is relaxed to allow any port number in {@link
+     * CollectedClientData#getOrigin()}, regardless of any port specified.
+     *
+     * <p>If {@link RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} is
+     * <code>true</code>, then the above rule is relaxed to allow any subdomain, of any depth, of
+     * any of these values.
+     *
+     * <p>For either of the above relaxations to take effect, both the allowed origin and the client
+     * data origin must be valid URLs. Origins that are not valid URLs are matched only by exact
+     * string equality.
+     *
+     * @since 2.7.0
+     * @see #getIdentity()
+     * @see #origins(Set)
+     */
+    public RelyingPartyBuilder origins(@NonNull Optional<Set<String>> origins) {
+      this.origins = origins.orElse(null);
+      return this;
+    }
+
     public static class MandatoryStages {
       private final RelyingPartyBuilder builder = new RelyingPartyBuilder();
 

@@ -62,6 +62,25 @@ public class FinishRegistrationOptions {
   private final ByteArray callerTokenBindingId;
 
   /**
+   * If <code>true</code>, then user presence (UP) will not be required during registration
+   * verification. This is needed for <a
+   * href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-clientcapability-conditionalcreate">conditional
+   * create</a> operations.
+   *
+   * <p>The default is <code>false</code> (UP is required).
+   *
+   * @deprecated EXPERIMENTAL: This feature is from a not yet mature standard; it could change as
+   *     the standard matures.
+   * @since 2.7.0
+   * @see <a
+   *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-clientcapability-conditionalcreate">
+   *     <code>conditionalCreate</code> client capability</a>.
+   * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#authdata-flags-up"><code>UP
+   *     </code> flag in authenticator data</a>.
+   */
+  @Deprecated @Builder.Default private final boolean isConditionalCreate = false;
+
+  /**
    * The <a href="https://tools.ietf.org/html/rfc8471#section-3.2">token binding ID</a> of the
    * connection to the client, if any.
    *

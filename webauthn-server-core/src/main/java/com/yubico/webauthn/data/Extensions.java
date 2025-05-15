@@ -6,15 +6,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.upokecenter.cbor.CBORObject;
 import com.upokecenter.cbor.CBORType;
+import com.yubico.internal.util.ExceptionUtil;
+import com.yubico.webauthn.FinishRegistrationOptions;
+import com.yubico.webauthn.RelyingParty;
+import com.yubico.webauthn.StartAssertionOptions;
 import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.extension.uvm.KeyProtectionType;
 import com.yubico.webauthn.extension.uvm.MatcherProtectionType;
 import com.yubico.webauthn.extension.uvm.UserVerificationMethod;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NonNull;
 import lombok.Value;
@@ -105,6 +114,317 @@ public class Extensions {
       public Optional<Boolean> getRk() {
         return Optional.ofNullable(rk);
       }
+    }
+  }
+
+  /**
+   * Definitions for the Credential Protection (<code>credProtect</code>) extension.
+   *
+   * @since 2.7.0
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+   *     §12.1. Credential Protection (credProtect)</a>
+   */
+  public static class CredentialProtection {
+    static final String EXTENSION_ID = "credProtect";
+
+    /**
+     * Policy values for the Credential Protection (<code>credProtect</code>) extension.
+     *
+     * <p>Available values:
+     *
+     * <ul>
+     *   <li>{@link #UV_OPTIONAL}
+     *   <li>{@link #UV_OPTIONAL_WITH_CREDENTIAL_ID_LIST}
+     *   <li>{@link #UV_REQUIRED}
+     * </ul>
+     *
+     * @since 2.7.0
+     * @see <a
+     *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+     *     §12.1. Credential Protection (credProtect)</a>
+     * @see CredentialProtectionInput#prefer(CredentialProtectionPolicy)
+     * @see CredentialProtectionInput#require(CredentialProtectionPolicy)
+     */
+    @AllArgsConstructor
+    public enum CredentialProtectionPolicy {
+      /**
+       * In this configuration, performing some form of user verification is always OPTIONAL. This
+       * is the default behaviour if the extension is not specified; note however that some browsers
+       * may set a different default extension input if the extension is not explicitly specified.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+       *     Verification</a>
+       */
+      UV_OPTIONAL(0x01, "userVerificationOptional"),
+
+      /**
+       * In this configuration, performing some form of user verification is OPTIONAL when the
+       * credential is used as the second authentication factor, and REQUIRED when the credential is
+       * used as the first authentication factor.
+       *
+       * <p>In technical terms, user verification is REQUIRED when {@link
+       * PublicKeyCredentialRequestOptions#getAllowCredentials() allowCredentials} is empty and
+       * OPTIONAL when it is non-empty. {@link
+       * PublicKeyCredentialRequestOptions#getAllowCredentials() allowCredentials} is non-empty when
+       * {@link StartAssertionOptions.StartAssertionOptionsBuilder#username(String) username} or
+       * {@link StartAssertionOptions.StartAssertionOptionsBuilder#userHandle(ByteArray) userHandle}
+       * was set in the call to {@link RelyingParty#startAssertion(StartAssertionOptions)}, and is
+       * empty when neither was set.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+       *     Verification</a>
+       */
+      UV_OPTIONAL_WITH_CREDENTIAL_ID_LIST(0x02, "userVerificationOptionalWithCredentialIDList"),
+
+      /**
+       * In this configuration, performing some form of user verification is always REQUIRED.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#user-verification">User
+       *     Verification</a>
+       */
+      UV_REQUIRED(0x03, "userVerificationRequired");
+
+      final int cborValue;
+
+      @JsonValue private final String jsValue;
+
+      private static Optional<CredentialProtectionPolicy> fromCbor(int cborValue) {
+        return Arrays.stream(CredentialProtectionPolicy.values())
+            .filter(policy -> policy.cborValue == cborValue)
+            .findAny();
+      }
+
+      private static Optional<CredentialProtectionPolicy> fromJs(String jsonValue) {
+        return Arrays.stream(CredentialProtectionPolicy.values())
+            .filter(policy -> policy.jsValue.equals(jsonValue))
+            .findAny();
+      }
+
+      @JsonCreator
+      private static CredentialProtectionPolicy fromJsonString(@NonNull String value) {
+        return fromJs(value)
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        String.format(
+                            "Unknown %s value: %s",
+                            CredentialProtectionPolicy.class.getSimpleName(), value)));
+      }
+    }
+
+    /**
+     * Extension inputs for the Credential Protection (<code>credProtect</code>) extension.
+     *
+     * <p>Instances may be created using the {@link #prefer(CredentialProtectionPolicy)} and {@link
+     * #require(CredentialProtectionPolicy)} factory functions.
+     *
+     * @since 2.7.0
+     * @see <a
+     *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+     *     §12.1. Credential Protection (credProtect)</a>
+     */
+    @Value
+    public static class CredentialProtectionInput {
+      /**
+       * The requested credential protection policy. This policy may or may not be satisfied; see
+       * {@link #isEnforceCredentialProtectionPolicy()}.
+       *
+       * @since 2.7.0
+       * @see CredentialProtectionPolicy
+       * @see #isEnforceCredentialProtectionPolicy()
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       */
+      private final CredentialProtectionPolicy credentialProtectionPolicy;
+
+      /**
+       * If this is <code>true</code> and {@link #getCredentialProtectionPolicy()
+       * credentialProtectionPolicy} is not {@link CredentialProtectionPolicy#UV_OPTIONAL}, {@link
+       * RelyingParty#finishRegistration(FinishRegistrationOptions)} will validate that the policy
+       * set in {@link #getCredentialProtectionPolicy()} was satisfied and the browser is requested
+       * to fail the registration if the policy cannot be satisfied.
+       *
+       * <p>{@link CredentialProtectionInput#prefer(CredentialProtectionPolicy)} sets this to <code>
+       * false</code>. {@link CredentialProtectionInput#require(CredentialProtectionPolicy)} sets
+       * this to <code>true</code>.
+       *
+       * @since 2.7.0
+       * @see CredentialProtectionPolicy
+       * @see #getCredentialProtectionPolicy()
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       */
+      private final boolean enforceCredentialProtectionPolicy;
+
+      @JsonCreator
+      private CredentialProtectionInput(
+          @JsonProperty("credentialProtectionPolicy")
+              CredentialProtectionPolicy credentialProtectionPolicy,
+          @JsonProperty("enforceCredentialProtectionPolicy")
+              Boolean enforceCredentialProtectionPolicy) {
+        this.credentialProtectionPolicy = credentialProtectionPolicy;
+        this.enforceCredentialProtectionPolicy =
+            enforceCredentialProtectionPolicy != null && enforceCredentialProtectionPolicy;
+      }
+
+      /**
+       * Create a Credential Protection (<code>credProtect</code>) extension input that requests the
+       * given policy when possible.
+       *
+       * <p>If the policy cannot be satisfied, the browser is requested to continue the registration
+       * anyway. To determine what policy was applied, use {@link
+       * AuthenticatorRegistrationExtensionOutputs#getCredProtect()} to inspect the extension
+       * output. {@link RelyingParty#finishRegistration(FinishRegistrationOptions)} will not
+       * validate what policy was applied.
+       *
+       * <p>Use {@link #require(CredentialProtectionPolicy)} instead to forbid the registration from
+       * proceeding if the extension is not supported or the policy cannot be satisfied.
+       *
+       * @param policy the policy to request.
+       * @return a <code>credProtect</code> extension input that requests the given policy when
+       *     possible. The browser is requested to continue the registration even if this policy
+       *     cannot be satisfied.
+       * @since 2.7.0
+       * @see #require(CredentialProtectionPolicy)
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       */
+      public static CredentialProtectionInput prefer(
+          @NonNull final CredentialProtectionPolicy policy) {
+        return new CredentialProtectionInput(policy, false);
+      }
+
+      /**
+       * Create a Credential Protection (<code>credProtect</code>) extension input that requires the
+       * given policy.
+       *
+       * <p>If the policy is not {@link CredentialProtectionPolicy#UV_OPTIONAL} and cannot be
+       * satisfied, the browser is requested to abort the registration instead of proceeding. {@link
+       * RelyingParty#finishRegistration(FinishRegistrationOptions)} will validate that the policy
+       * returned in the authenticator extension output equals this input policy, and throw an
+       * exception otherwise. You can also use {@link
+       * AuthenticatorRegistrationExtensionOutputs#getCredProtect()} to inspect the extension output
+       * yourself.
+       *
+       * <p>Note that if the browser or authenticator does not support the extension, the
+       * registration will fail. Use {@link #prefer(CredentialProtectionPolicy)} instead to allow
+       * the registration to proceed if the extension is not supported or the policy cannot be
+       * satisfied.
+       *
+       * @param policy the policy to require.
+       * @return a <code>credProtect</code> extension input that requires the given policy. The
+       *     browser is requested to abort the registration if this policy cannot be satisfied.
+       * @since 2.7.0
+       * @see <a
+       *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+       *     §12.1. Credential Protection (credProtect)</a>
+       */
+      public static CredentialProtectionInput require(
+          @NonNull final CredentialProtectionPolicy policy) {
+        return new CredentialProtectionInput(policy, true);
+      }
+    }
+
+    /**
+     * Validate that the given response satisfies the <code>credProtect</code> extension policy set
+     * in the request.
+     *
+     * <p>If the {@link
+     * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
+     * credProtect} extension is not set in the request, this has no effect.
+     *
+     * <p>If the {@link
+     * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
+     * credProtect} extension is set in the request with {@link
+     * CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
+     * enforceCredentialProtectionPolicy} set to <code>false</code> or {@link
+     * CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} set to
+     * {@link CredentialProtectionPolicy#UV_OPTIONAL}, this has no effect.
+     *
+     * <p>If the {@link
+     * RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
+     * credProtect} extension is set in the request with {@link
+     * CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
+     * enforceCredentialProtectionPolicy} set to <code>true</code> and {@link
+     * CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} is not
+     * set to {@link CredentialProtectionPolicy#UV_OPTIONAL}, then this throws an {@link
+     * IllegalArgumentException} if the <code>credProtect</code> authenticator extension output does
+     * not equal the {@link CredentialProtectionInput#getCredentialProtectionPolicy()
+     * credentialProtectionPolicy} set in the request.
+     *
+     * <p>This function is called automatically in {@link
+     * RelyingParty#finishRegistration(FinishRegistrationOptions)}; you should not need to call it
+     * yourself.
+     *
+     * @param request the arguments to start the registration ceremony.
+     * @param response the response from the registration ceremony.
+     * @throws IllegalArgumentException if the {@link
+     *     RegistrationExtensionInputs.RegistrationExtensionInputsBuilder#credProtect(CredentialProtectionInput)
+     *     credProtect} extension is set in the request with {@link
+     *     CredentialProtectionInput#isEnforceCredentialProtectionPolicy()
+     *     enforceCredentialProtectionPolicy} set to <code>true</code> and {@link
+     *     CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} not
+     *     set to {@link CredentialProtectionPolicy#UV_OPTIONAL}, and the <code>credProtect
+     *     </code> authenticator extension output does not equal the {@link
+     *     CredentialProtectionInput#getCredentialProtectionPolicy() credentialProtectionPolicy} set
+     *     in the request.
+     * @since 2.7.0
+     * @see <a
+     *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#sctn-credProtect-extension">CTAP2
+     *     §12.1. Credential Protection (credProtect)</a>
+     */
+    public static void validateExtensionOutput(
+        PublicKeyCredentialCreationOptions request,
+        PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs>
+            response) {
+      request
+          .getExtensions()
+          .getCredProtect()
+          .ifPresent(
+              credProtectInput -> {
+                if (credProtectInput.isEnforceCredentialProtectionPolicy()
+                    && credProtectInput.getCredentialProtectionPolicy()
+                        != CredentialProtectionPolicy.UV_OPTIONAL) {
+                  Optional<CredentialProtectionPolicy> outputPolicy =
+                      response
+                          .getResponse()
+                          .getParsedAuthenticatorData()
+                          .getExtensions()
+                          .flatMap(CredentialProtection::parseAuthenticatorExtensionOutput);
+                  ExceptionUtil.assertTrue(
+                      outputPolicy.equals(
+                          Optional.of(credProtectInput.getCredentialProtectionPolicy())),
+                      "Unsatisfied credProtect policy: required %s, got: %s",
+                      credProtectInput.getCredentialProtectionPolicy(),
+                      outputPolicy);
+                }
+              });
+    }
+
+    static Optional<CredentialProtectionPolicy> parseAuthenticatorExtensionOutput(CBORObject cbor) {
+      return Optional.ofNullable(cbor.get(EXTENSION_ID))
+          .map(
+              cborObject ->
+                  cborObject.isNumber() && cborObject.AsNumber().IsInteger()
+                      ? cborObject.AsInt32()
+                      : null)
+          .flatMap(CredentialProtectionPolicy::fromCbor);
     }
   }
 
@@ -435,6 +755,478 @@ public class Extensions {
        */
       public Optional<Boolean> getWritten() {
         return Optional.ofNullable(written);
+      }
+    }
+  }
+
+  /**
+   * Definitions for the Pseudo-random function extension (<code>prf</code>).
+   *
+   * @since 2.7.0
+   * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+   *     Pseudo-random function extension (prf)</a>
+   */
+  public static class Prf {
+    static final String EXTENSION_ID = "prf";
+
+    /**
+     * One or two inputs to or outputs from the pseudo-random function (PRF) associated with a
+     * credential.
+     *
+     * <p>{@link #getFirst()} is always present, but {@link #getSecond()} is empty when only one
+     * input or output was given.
+     *
+     * @since 2.7.0
+     * @see #one(ByteArray)
+     * @see #two(ByteArray, ByteArray)
+     * @see #oneOrTwo(ByteArray, Optional)
+     * @see <a
+     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfvalues">dictionary
+     *     AuthenticationExtensionsPRFValues</a>
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    @Value
+    public static class PrfValues {
+      /**
+       * The first PRF input to evaluate, or the result of that evaluation.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfvalues-first">AuthenticationExtensionsPRFValues.first</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty @NonNull private final ByteArray first;
+
+      /**
+       * The second PRF input to evaluate, if any, or the result of that evaluation.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfvalues-second">AuthenticationExtensionsPRFValues.second</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final ByteArray second;
+
+      @JsonCreator
+      private PrfValues(
+          @JsonProperty("first") @NonNull final ByteArray first,
+          @JsonProperty("second") final ByteArray second) {
+        this.first = first;
+        this.second = second;
+      }
+
+      /**
+       * The second PRF input to evaluate, if any, or the result of that evaluation.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfvalues-second">AuthenticationExtensionsPRFValues.second</a>
+       */
+      public Optional<ByteArray> getSecond() {
+        return Optional.ofNullable(second);
+      }
+
+      /**
+       * Construct a {@link PrfValues} with a single PRF input or output.
+       *
+       * @param first the PRF input or output. Must not be null.
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfvalues">dictionary
+       *     AuthenticationExtensionsPRFValues</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfValues one(@NonNull ByteArray first) {
+        return new PrfValues(first, null);
+      }
+
+      /**
+       * Construct a {@link PrfValues} with two PRF inputs or outputs.
+       *
+       * @param first the first PRF input or output. Must not be null.
+       * @param second the second PRF input or output. Must not be null.
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfvalues">dictionary
+       *     AuthenticationExtensionsPRFValues</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfValues two(@NonNull ByteArray first, @NonNull ByteArray second) {
+        return new PrfValues(first, second);
+      }
+
+      /**
+       * Construct a {@link PrfValues} with two PRF inputs or outputs if <code>second</code> is
+       * present, otherwise a {@link PrfValues} with one inputs or output.
+       *
+       * @param first the first PRF input or output. Must not be null.
+       * @param second the second PRF input or output, if any. Must not be null, but may be empty.
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfvalues">dictionary
+       *     AuthenticationExtensionsPRFValues</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfValues oneOrTwo(
+          @NonNull ByteArray first, @NonNull Optional<ByteArray> second) {
+        return new PrfValues(first, second.orElse(null));
+      }
+    }
+
+    /**
+     * Inputs for the Pseudo-random function extension (<code>prf</code>) in registration
+     * ceremonies.
+     *
+     * @since 2.7.0
+     * @see <a
+     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfinputs">dictionary
+     *     AuthenticationExtensionsPRFInputs</a>
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    @Value
+    public static class PrfRegistrationInput {
+      /**
+       * PRF inputs to evaluate immediately if possible. Note that not all authenticators support
+       * this, in which case a follow-up authentication ceremony may be needed in order to evaluate
+       * the PRF.
+       *
+       * @since 2.7.0
+       * @see #eval(PrfValues)
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final PrfValues eval;
+
+      @JsonCreator
+      private PrfRegistrationInput(@JsonProperty("eval") PrfValues eval) {
+        this.eval = eval;
+      }
+
+      /**
+       * PRF inputs to evaluate immediately if possible. Note that not all authenticators support
+       * this, in which case a follow-up authentication ceremony may be needed in order to evaluate
+       * the PRF.
+       *
+       * @since 2.7.0
+       * @see #eval(PrfValues)
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<PrfValues> getEval() {
+        return Optional.ofNullable(eval);
+      }
+
+      /**
+       * Enable PRF for the created credential, without evaluating the PRF at this time.
+       *
+       * @since 2.7.0
+       * @see #eval(PrfValues)
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfRegistrationInput enable() {
+        return new PrfRegistrationInput(null);
+      }
+
+      /**
+       * Enable PRF for the created credential, and attempt to immediately evaluate the PRF with the
+       * given inputs. Note that not all authenticators support this, in which case a follow-up
+       * authentication ceremony may be needed in order to evaluate the PRF.
+       *
+       * @since 2.7.0
+       * @see #enable()
+       * @see #getEval()
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfRegistrationInput eval(@NonNull PrfValues eval) {
+        return new PrfRegistrationInput(eval);
+      }
+    }
+
+    /**
+     * Outputs for the Pseudo-random function extension (<code>prf</code>) in registration
+     * ceremonies.
+     *
+     * @since 2.7.0
+     * @see <a
+     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfoutputs">dictionary
+     *     AuthenticationExtensionsPRFOutputs</a>
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    @Value
+    public static class PrfRegistrationOutput {
+
+      /**
+       * <code>true</code> if, and only if, a PRF is available for use with the created credential.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-enabled">AuthenticationExtensionsPRFOutputs.enabled</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final Boolean enabled;
+
+      /**
+       * The results of evaluating the PRF for the inputs given in {@link
+       * PrfRegistrationInput#getEval() eval}, if any.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final PrfValues results;
+
+      @JsonCreator
+      PrfRegistrationOutput(
+          @JsonProperty("enabled") Boolean enabled, @JsonProperty("results") PrfValues results) {
+        this.enabled = enabled;
+        this.results = results;
+      }
+
+      /**
+       * <code>true</code> if, and only if, a PRF is available for use with the created credential.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-enabled">AuthenticationExtensionsPRFOutputs.enabled</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<Boolean> getEnabled() {
+        return Optional.ofNullable(enabled);
+      }
+
+      /**
+       * The results of evaluating the PRF for the inputs given in {@link
+       * PrfRegistrationInput#getEval() eval}, if any.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<PrfValues> getResults() {
+        return Optional.ofNullable(results);
+      }
+    }
+
+    /**
+     * Inputs for the Pseudo-random function extension (<code>prf</code>) in authentication
+     * ceremonies.
+     *
+     * @since 2.7.0
+     * @see <a
+     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfinputs">dictionary
+     *     AuthenticationExtensionsPRFInputs</a>
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    @Value
+    public static class PrfAuthenticationInput {
+      /**
+       * PRF inputs to use for any credential without a dedicated input listed in {@link
+       * #getEvalByCredential()}.
+       *
+       * @since 2.7.0
+       * @see #eval(PrfValues)
+       * @see #evalByCredentialWithFallback(Map, PrfValues)
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final PrfValues eval;
+
+      /**
+       * A map of credential IDs to PRF inputs to use for that credential. Credentials without a
+       * mapping here fall back to the inputs in {@link #getEval()} if present, otherwise no PRF is
+       * evaluated for those credentials.
+       *
+       * @since 2.7.0
+       * @see #evalByCredential(Map)
+       * @see #evalByCredentialWithFallback(Map, PrfValues)
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-evalbycredential">AuthenticationExtensionsPRFInputs.evalByCredential</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final Map<ByteArray, PrfValues> evalByCredential;
+
+      @JsonCreator
+      private PrfAuthenticationInput(
+          @JsonProperty("eval") PrfValues eval,
+          @JsonProperty("evalByCredential") Map<ByteArray, PrfValues> evalByCredential) {
+        this.eval = eval;
+        this.evalByCredential =
+            evalByCredential == null ? null : Collections.unmodifiableMap(evalByCredential);
+      }
+
+      /**
+       * PRF inputs to use for any credential without a dedicated input listed in {@link
+       * #getEvalByCredential()}.
+       *
+       * @since 2.7.0
+       * @see #eval(PrfValues)
+       * @see #evalByCredentialWithFallback(Map, PrfValues)
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<PrfValues> getEval() {
+        return Optional.ofNullable(eval);
+      }
+
+      /**
+       * A map of credential IDs to PRF inputs to use for that credential. Credentials without a
+       * mapping here fall back to the inputs in {@link #getEval()} if present, otherwise no PRF is
+       * evaluated for those credentials.
+       *
+       * @since 2.7.0
+       * @see #evalByCredential(Map)
+       * @see #evalByCredentialWithFallback(Map, PrfValues)
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-evalbycredential">AuthenticationExtensionsPRFInputs.evalByCredential</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<Map<ByteArray, PrfValues>> getEvalByCredential() {
+        return Optional.ofNullable(evalByCredential);
+      }
+
+      private static HashMap<ByteArray, PrfValues> descriptorsToIds(
+          Map<PublicKeyCredentialDescriptor, PrfValues> evalByCredential) {
+        return evalByCredential.entrySet().stream()
+            .reduce(
+                new HashMap<>(),
+                (ebc, entry) -> {
+                  ebc.put(entry.getKey().getId(), entry.getValue());
+                  return ebc;
+                },
+                (a, b) -> {
+                  a.putAll(b);
+                  return a;
+                });
+      }
+
+      /**
+       * Use the same PRF inputs for all credentials.
+       *
+       * @since 2.7.0
+       * @see #getEval()
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfAuthenticationInput eval(@NonNull PrfValues eval) {
+        return new PrfAuthenticationInput(eval, null);
+      }
+
+      /**
+       * Use different PRF inputs for different credentials, and skip PRF evaluation for any
+       * credentials not present in the map.
+       *
+       * @since 2.7.0
+       * @see #getEvalByCredential()
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-evalbycredential">AuthenticationExtensionsPRFInputs.evalByCredential</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfAuthenticationInput evalByCredential(
+          @NonNull Map<PublicKeyCredentialDescriptor, PrfValues> evalByCredential) {
+        return new PrfAuthenticationInput(null, descriptorsToIds(evalByCredential));
+      }
+
+      /**
+       * Use different PRF inputs for different credentials, and "fallback" inputs for any
+       * credentials not present in the map.
+       *
+       * @param evalByCredential a map of credential IDs to PRF inputs to use for that credential.
+       * @param eval "fallback" inputs to use for any credential not listed in <code>
+       *     evalByCredential</code>.
+       * @since 2.7.0
+       * @see #getEvalByCredential()
+       * @see #getEval() ()
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-evalbycredential">AuthenticationExtensionsPRFInputs.evalByCredential</a>
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfinputs-eval">AuthenticationExtensionsPRFInputs.eval</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public static PrfAuthenticationInput evalByCredentialWithFallback(
+          @NonNull Map<PublicKeyCredentialDescriptor, PrfValues> evalByCredential,
+          @NonNull PrfValues eval) {
+        return new PrfAuthenticationInput(eval, descriptorsToIds(evalByCredential));
+      }
+    }
+
+    /**
+     * Outputs for the Pseudo-random function extension (<code>prf</code>) in authentication
+     * ceremonies.
+     *
+     * @since 2.7.0
+     * @see <a
+     *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dictdef-authenticationextensionsprfoutputs">dictionary
+     *     AuthenticationExtensionsPRFOutputs</a>
+     * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+     *     Pseudo-random function extension (prf)</a>
+     */
+    @Value
+    public static class PrfAuthenticationOutput {
+
+      /**
+       * The results of evaluating the PRF for the inputs given in {@link
+       * PrfAuthenticationInput#getEval() eval} or {@link
+       * PrfAuthenticationInput#getEvalByCredential() evalByCredential}, if any.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      @JsonProperty private final PrfValues results;
+
+      @JsonCreator
+      PrfAuthenticationOutput(@JsonProperty("results") PrfValues results) {
+        this.results = results;
+      }
+
+      /**
+       * The results of evaluating the PRF for the inputs given in {@link
+       * PrfAuthenticationInput#getEval() eval} or {@link
+       * PrfAuthenticationInput#getEvalByCredential() evalByCredential}, if any.
+       *
+       * @since 2.7.0
+       * @see <a
+       *     href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#dom-authenticationextensionsprfoutputs-results">AuthenticationExtensionsPRFOutputs.results</a>
+       * @see <a href="https://www.w3.org/TR/2025/WD-webauthn-3-20250127/#prf-extension">§10.1.4.
+       *     Pseudo-random function extension (prf)</a>
+       */
+      public Optional<PrfValues> getResults() {
+        return Optional.ofNullable(results);
       }
     }
   }

@@ -104,6 +104,66 @@ public class RelyingPartyTest {
   }
 
   @Test
+  public void testOriginsWithEmptySet() {
+    Set<String> origins = new HashSet<>();
+
+    RelyingParty rp =
+        RelyingParty.builder()
+            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+            .credentialRepository(unimplementedCredentialRepository())
+            .origins(origins)
+            .build();
+
+    assertEquals(0, rp.getOrigins().size());
+  }
+
+  @Test
+  public void testOriginsWithSet() {
+    Set<String> origins = new HashSet<>();
+    origins.add("test1");
+    origins.add("test2");
+
+    RelyingParty rp =
+        RelyingParty.builder()
+            .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+            .credentialRepository(unimplementedCredentialRepository())
+            .origins(origins)
+            .build();
+
+    assertEquals(2, rp.getOrigins().size());
+  }
+
+  @Test
+  public void testOriginsWithAbsentOptionalSet() {
+    {
+      RelyingParty rp =
+          RelyingParty.builder()
+              .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+              .credentialRepository(unimplementedCredentialRepository())
+              .origins(Optional.empty())
+              .build();
+      assertEquals(1, rp.getOrigins().size());
+    }
+  }
+
+  @Test
+  public void testOriginsWithOptionalSet() {
+    Set<String> origins = new HashSet<>();
+    origins.add("test1");
+    origins.add("test2");
+
+    {
+      RelyingParty rp =
+          RelyingParty.builder()
+              .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+              .credentialRepository(unimplementedCredentialRepository())
+              .origins(Optional.of(origins))
+              .build();
+      assertEquals(2, rp.getOrigins().size());
+    }
+  }
+
+  @Test
   public void filtersAlgorithmsToThoseAvailable() throws HexException {
     for (Provider prov : Security.getProviders()) {
       if (prov.getName().contains("EC")) {

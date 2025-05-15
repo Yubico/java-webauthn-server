@@ -41,11 +41,15 @@ dependencies {
 }
 
 allprojects {
-  ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
-  ext.dirtyMarker = "-DIRTY"
-
-  apply plugin: 'com.cinnober.gradle.semver-git'
   apply plugin: 'idea'
+
+  if (System.env.VERSION) {
+    it.version = System.env.VERSION
+  } else {
+    ext.snapshotSuffix = "<count>.g<sha>-SNAPSHOT<dirty>"
+    ext.dirtyMarker = "-DIRTY"
+    apply plugin: 'com.cinnober.gradle.semver-git'
+  }
 
   idea.module {
     downloadJavadoc = true

@@ -1,3 +1,23 @@
+== Version 2.7.0 ==
+
+New features:
+
+* Added overloaded setter `RelyingPartyBuilder.origins(Optional<Set<String>>)`.
+* Added support for the CTAP2 `credProtect` extension.
+* Added support for the `prf` extension.
+* (Experimental) Added option `FinishRegistrationOptions.isConditionalCreate` to
+  allow UP=0 in registration response for registration ceremonies with
+  `mediation: "conditional"`.
+ ** NOTE: Experimental features may receive breaking changes without a major
+    version increase.
+
+Fixes:
+
+* Excluded CVE-2025-27820 vulnerable versions of Apache httpclient5 from
+  dependency resolution. Note that this might only affect consumers using Gradle
+  module metadata.
+
+
 == Version 2.6.0 ==
 
 `webauthn-server-core`:

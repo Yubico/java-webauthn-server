@@ -41,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Contains <a
  * href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#authenticator-extension-output">authenticator
- * extension outputs</a> from a <code>navigator.credentials.create()</code> operation.
+ * extension outputs</a> from a <code>navigator.credentials.get()</code> operation.
  *
  * <p>Note that there is no guarantee that any extension input present in {@link
  * RegistrationExtensionInputs} will have a corresponding output present here.

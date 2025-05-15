@@ -32,6 +32,12 @@ import com.yubico.webauthn.data.AuthenticatorAttachment
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria
 import com.yubico.webauthn.data.AuthenticatorTransport
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionInput
+import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionPolicy
+import com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationInput
+import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationInput
+import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfAuthenticationInput
+import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfRegistrationInput
 import com.yubico.webauthn.data.Generators.Extensions.registrationExtensionInputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -115,7 +121,7 @@ class RelyingPartyStartOperationSpec
         .identity(rpId)
         .credentialRepository(credRepo(credentials, userId))
         .preferredPubkeyParams(List(PublicKeyCredentialParameters.ES256).asJava)
-        .origins(Set.empty.asJava)
+        .origins(Set.empty[String].asJava)
       appId.foreach { appid => builder = builder.appId(appid) }
       attestationConveyancePreference.foreach { acp =>
         builder = builder.attestationConveyancePreference(acp)
@@ -464,6 +470,148 @@ class RelyingPartyStartOperationSpec
           )
 
           result.getExtensions.getUvm should be(true)
+        }
+      }
+
+      it("by default does not set the credProtect extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .build()
+        )
+        result.getExtensions.getCredProtect.toScala should be(None)
+      }
+
+      it("passes through the credProtect extension if enabled in StartRegistrationOptions.") {
+        val rp = relyingParty(userId = userId)
+
+        {
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                RegistrationExtensionInputs
+                  .builder()
+                  .credProtect(
+                    CredentialProtectionInput
+                      .prefer(CredentialProtectionPolicy.UV_OPTIONAL)
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          val credProtect = result.getExtensions.getCredProtect.toScala
+          credProtect should not be None
+          credProtect.get.getCredentialProtectionPolicy should be(
+            CredentialProtectionPolicy.UV_OPTIONAL
+          )
+          credProtect.get.isEnforceCredentialProtectionPolicy should be(false)
+        }
+        {
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                RegistrationExtensionInputs
+                  .builder()
+                  .credProtect(
+                    CredentialProtectionInput
+                      .require(CredentialProtectionPolicy.UV_REQUIRED)
+                  )
+                  .build()
+              )
+              .build()
+          )
+
+          val credProtect = result.getExtensions.getCredProtect.toScala
+          credProtect should not be None
+          credProtect.get.getCredentialProtectionPolicy should be(
+            CredentialProtectionPolicy.UV_REQUIRED
+          )
+          credProtect.get.isEnforceCredentialProtectionPolicy should be(true)
+        }
+
+        forAll {
+          (
+              extensions: RegistrationExtensionInputs,
+              policy: CredentialProtectionPolicy,
+              enforce: Boolean,
+          ) =>
+            val result = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(userId)
+                .extensions(
+                  extensions.toBuilder
+                    .credProtect(
+                      if (enforce) CredentialProtectionInput.require(policy)
+                      else CredentialProtectionInput.prefer(policy)
+                    )
+                    .build()
+                )
+                .build()
+            )
+
+            val credProtect = result.getExtensions.getCredProtect.toScala
+            credProtect should not be None
+            credProtect.get.getCredentialProtectionPolicy should equal(policy)
+            credProtect.get.isEnforceCredentialProtectionPolicy should equal(
+              enforce
+            )
+        }
+
+        forAll { (extensions: RegistrationExtensionInputs) =>
+          val result = rp.startRegistration(
+            StartRegistrationOptions
+              .builder()
+              .user(userId)
+              .extensions(
+                extensions.toBuilder
+                  .credProtect(Optional.empty[CredentialProtectionInput]())
+                  .build()
+              )
+              .build()
+          )
+          result.getExtensions.getCredProtect.toScala should be(None)
+        }
+      }
+
+      it("by default does not set the prf extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .build()
+        )
+        result.getExtensions.getPrf.toScala should be(
+          None
+        )
+      }
+
+      it("sets the prf extension if enabled in StartRegistrationOptions.") {
+        forAll {
+          (
+              extensions: RegistrationExtensionInputs,
+              prf: PrfRegistrationInput,
+          ) =>
+            val rp = relyingParty(userId = userId)
+            val result = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(userId)
+                .extensions(extensions.toBuilder.prf(prf).build())
+                .build()
+            )
+
+            result.getExtensions.getPrf.toScala should equal(
+              Some(prf)
+            )
         }
       }
 
@@ -937,7 +1085,7 @@ class RelyingPartyStartOperationSpec
         )
       }
 
-      it("sets the uvm extension if enabled in StartRegistrationOptions.") {
+      it("sets the uvm extension if enabled in StartAssertionOptions.") {
         forAll { extensions: AssertionExtensionInputs =>
           val rp = relyingParty(userId = userId)
           val result = rp.startAssertion(
@@ -950,6 +1098,35 @@ class RelyingPartyStartOperationSpec
           result.getPublicKeyCredentialRequestOptions.getExtensions.getUvm should be(
             true
           )
+        }
+      }
+
+      it("by default does not set the prf extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startAssertion(
+          StartAssertionOptions
+            .builder()
+            .build()
+        )
+        result.getPublicKeyCredentialRequestOptions.getExtensions.getPrf.toScala should be(
+          None
+        )
+      }
+
+      it("sets the prf extension if enabled in StartAssertionOptions.") {
+        forAll {
+          (extensions: AssertionExtensionInputs, prf: PrfAuthenticationInput) =>
+            val rp = relyingParty(userId = userId)
+            val result = rp.startAssertion(
+              StartAssertionOptions
+                .builder()
+                .extensions(extensions.toBuilder.prf(prf).build())
+                .build()
+            )
+
+            result.getPublicKeyCredentialRequestOptions.getExtensions.getPrf.toScala should equal(
+              Some(prf)
+            )
         }
       }
     }
