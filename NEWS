@@ -2,6 +2,7 @@
 
 New features:
 
+* Added JavaDoc to `COSEAlgorithmIdentifier` constants.
 * (Experimental) Added a new suite of interfaces, starting with
   `CredentialRepositoryV2`. `RelyingParty` can now be configured with a
   `CredentialRepositoryV2` instance instead of a `CredentialRepository`
