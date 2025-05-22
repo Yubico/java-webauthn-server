@@ -210,13 +210,14 @@ public class RelyingParty {
    * <ol>
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES256}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#EdDSA EdDSA}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES384}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES512}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES384 ES384}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES512 ES512}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS384 RS384}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS512 RS512}
    * </ol>
    *
+   * @since 0.2.0
    * @see PublicKeyCredentialCreationOptions#getAttestation()
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
