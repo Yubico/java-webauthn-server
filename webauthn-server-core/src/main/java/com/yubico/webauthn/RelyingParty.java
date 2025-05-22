@@ -210,8 +210,8 @@ public class RelyingParty {
    * <ol>
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES256}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#EdDSA EdDSA}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES384}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES512}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES384 ES384}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES512 ES512}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS384 RS384}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS512 RS512}
