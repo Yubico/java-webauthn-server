@@ -217,6 +217,7 @@ public class RelyingParty {
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS512 RS512}
    * </ol>
    *
+   * @since 0.2.0
    * @see PublicKeyCredentialCreationOptions#getAttestation()
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
