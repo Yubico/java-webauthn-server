@@ -32,6 +32,7 @@ import lombok.Value;
 /**
  * Used to supply additional parameters when creating a new credential.
  *
+ * @since 0.2.0
  * @see <a
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#dictdef-publickeycredentialparameters">§5.3.
  *     Parameters for Credential Generation (dictionary PublicKeyCredentialParameters) </a>
@@ -44,10 +45,16 @@ public class PublicKeyCredentialParameters {
    * Specifies the cryptographic signature algorithm with which the newly generated credential will
    * be used, and thus also the type of asymmetric key pair to be generated, e.g., RSA or Elliptic
    * Curve.
+   *
+   * @since 0.2.0
    */
   @NonNull private final COSEAlgorithmIdentifier alg;
 
-  /** Specifies the type of credential to be created. */
+  /**
+   * Specifies the type of credential to be created.
+   *
+   * @since 0.2.0
+   */
   @NonNull @Builder.Default
   private final PublicKeyCredentialType type = PublicKeyCredentialType.PUBLIC_KEY;
 
@@ -61,6 +68,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#EdDSA} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 1.4.0
    */
   public static final PublicKeyCredentialParameters EdDSA =
       builder().alg(COSEAlgorithmIdentifier.EdDSA).build();
@@ -68,6 +77,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#ES256} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 0.3.0
    */
   public static final PublicKeyCredentialParameters ES256 =
       builder().alg(COSEAlgorithmIdentifier.ES256).build();
@@ -75,6 +86,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#ES384} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 2.1.0
    */
   public static final PublicKeyCredentialParameters ES384 =
       builder().alg(COSEAlgorithmIdentifier.ES384).build();
@@ -82,6 +95,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#ES512} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 2.1.0
    */
   public static final PublicKeyCredentialParameters ES512 =
       builder().alg(COSEAlgorithmIdentifier.ES512).build();
@@ -89,6 +104,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#RS1} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 1.5.0
    */
   public static final PublicKeyCredentialParameters RS1 =
       builder().alg(COSEAlgorithmIdentifier.RS1).build();
@@ -96,6 +113,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#RS256} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 0.3.0
    */
   public static final PublicKeyCredentialParameters RS256 =
       builder().alg(COSEAlgorithmIdentifier.RS256).build();
@@ -103,6 +122,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#RS384} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 2.4.0
    */
   public static final PublicKeyCredentialParameters RS384 =
       builder().alg(COSEAlgorithmIdentifier.RS384).build();
@@ -110,6 +131,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#RS512} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 2.4.0
    */
   public static final PublicKeyCredentialParameters RS512 =
       builder().alg(COSEAlgorithmIdentifier.RS512).build();
@@ -127,6 +150,7 @@ public class PublicKeyCredentialParameters {
        * {@link PublicKeyCredentialParametersBuilder#alg(COSEAlgorithmIdentifier) alg} is a required
        * parameter.
        *
+       * @since 0.3.0
        * @see PublicKeyCredentialParametersBuilder#alg(COSEAlgorithmIdentifier)
        */
       public PublicKeyCredentialParametersBuilder alg(COSEAlgorithmIdentifier alg) {
