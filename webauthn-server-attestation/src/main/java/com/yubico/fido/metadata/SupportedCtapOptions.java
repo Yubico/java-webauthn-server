@@ -1,8 +1,8 @@
 package com.yubico.fido.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
@@ -18,7 +18,6 @@ import lombok.extern.jackson.Jacksonized;
 @Value
 @Builder
 @Jacksonized
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class SupportedCtapOptions {
 
   /**
@@ -157,4 +156,46 @@ public class SupportedCtapOptions {
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
   @Builder.Default boolean alwaysUv = false;
+
+  @JsonCreator
+  private SupportedCtapOptions(
+      @JsonProperty("plat") Boolean plat,
+      @JsonProperty("rk") Boolean rk,
+      @JsonProperty("clientPin") Boolean clientPin,
+      @JsonProperty("up") Boolean up,
+      @JsonProperty("uv") Boolean uv,
+      @JsonProperty("pinUvAuthToken") Boolean pinUvAuthToken,
+      @JsonProperty("noMcGaPermissionsWithClientPin") Boolean noMcGaPermissionsWithClientPin,
+      @JsonProperty("largeBlobs") Boolean largeBlobs,
+      @JsonProperty("ep") Boolean ep,
+      @JsonProperty("bioEnroll") Boolean bioEnroll,
+      @JsonProperty("userVerificationMgmtPreview") Boolean userVerificationMgmtPreview,
+      @JsonProperty("uvBioEnroll") Boolean uvBioEnroll,
+      @JsonProperty("authnrCfg") Boolean authnrCfg,
+      @JsonProperty("uvAcfg") Boolean uvAcfg,
+      @JsonProperty("credMgmt") Boolean credMgmt,
+      @JsonProperty("credentialMgmtPreview") Boolean credentialMgmtPreview,
+      @JsonProperty("setMinPINLength") Boolean setMinPINLength,
+      @JsonProperty("makeCredUvNotRqd") Boolean makeCredUvNotRqd,
+      @JsonProperty("alwaysUv") Boolean alwaysUv) {
+    this.plat = plat;
+    this.rk = rk;
+    this.clientPin = clientPin != null;
+    this.up = up;
+    this.uv = uv != null;
+    this.pinUvAuthToken = Boolean.TRUE.equals(pinUvAuthToken);
+    this.noMcGaPermissionsWithClientPin = Boolean.TRUE.equals(noMcGaPermissionsWithClientPin);
+    this.largeBlobs = Boolean.TRUE.equals(largeBlobs);
+    this.ep = ep != null;
+    this.bioEnroll = bioEnroll != null;
+    this.userVerificationMgmtPreview = userVerificationMgmtPreview != null;
+    this.uvBioEnroll = Boolean.TRUE.equals(uvBioEnroll);
+    this.authnrCfg = Boolean.TRUE.equals(authnrCfg);
+    this.uvAcfg = Boolean.TRUE.equals(uvAcfg);
+    this.credMgmt = Boolean.TRUE.equals(credMgmt);
+    this.credentialMgmtPreview = Boolean.TRUE.equals(credentialMgmtPreview);
+    this.setMinPINLength = Boolean.TRUE.equals(setMinPINLength);
+    this.makeCredUvNotRqd = Boolean.TRUE.equals(makeCredUvNotRqd);
+    this.alwaysUv = alwaysUv != null;
+  }
 }
