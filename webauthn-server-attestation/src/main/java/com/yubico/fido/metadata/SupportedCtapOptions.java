@@ -24,30 +24,14 @@ public class SupportedCtapOptions {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean plat = false;
+  boolean plat;
 
   /**
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean rk = false;
-
-  /**
-   * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
-   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
-   */
-  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-  @Builder.Default
-  boolean clientPin = false;
-
-  /**
-   * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
-   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
-   */
-  @Builder.Default boolean up = false;
+  boolean rk;
 
   /**
    * @see <a
@@ -55,8 +39,22 @@ public class SupportedCtapOptions {
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
   @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-  @Builder.Default
-  boolean uv = false;
+  boolean clientPin;
+
+  /**
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
+   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
+   */
+  boolean up;
+
+  /**
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
+   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
+   */
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  boolean uv;
 
   /**
    * @see <a
@@ -64,31 +62,21 @@ public class SupportedCtapOptions {
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
   @JsonAlias("uvToken")
-  @Builder.Default
-  boolean pinUvAuthToken = false;
+  boolean pinUvAuthToken;
 
   /**
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean noMcGaPermissionsWithClientPin = false;
+  boolean noMcGaPermissionsWithClientPin;
 
   /**
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean largeBlobs = false;
-
-  /**
-   * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
-   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
-   */
-  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-  @Builder.Default
-  boolean ep = false;
+  boolean largeBlobs;
 
   /**
    * @see <a
@@ -96,8 +84,7 @@ public class SupportedCtapOptions {
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
   @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-  @Builder.Default
-  boolean bioEnroll = false;
+  boolean ep;
 
   /**
    * @see <a
@@ -105,15 +92,22 @@ public class SupportedCtapOptions {
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
   @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-  @Builder.Default
-  boolean userVerificationMgmtPreview = false;
+  boolean bioEnroll;
 
   /**
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean uvBioEnroll = false;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  boolean userVerificationMgmtPreview;
+
+  /**
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
+   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
+   */
+  boolean uvBioEnroll;
 
   /**
    * @see <a
@@ -121,45 +115,21 @@ public class SupportedCtapOptions {
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
   @JsonAlias("config")
-  @Builder.Default
-  boolean authnrCfg = false;
+  boolean authnrCfg;
 
   /**
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean uvAcfg = false;
+  boolean uvAcfg;
 
   /**
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean credMgmt = false;
-
-  /**
-   * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
-   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
-   */
-  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-  @Builder.Default
-  boolean credentialMgmtPreview = false;
-
-  /**
-   * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
-   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
-   */
-  @Builder.Default boolean setMinPINLength = false;
-
-  /**
-   * @see <a
-   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
-   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
-   */
-  @Builder.Default boolean makeCredUvNotRqd = false;
+  boolean credMgmt;
 
   /**
    * @see <a
@@ -167,8 +137,29 @@ public class SupportedCtapOptions {
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
   @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-  @Builder.Default
-  boolean alwaysUv = false;
+  boolean credentialMgmtPreview;
+
+  /**
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
+   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
+   */
+  boolean setMinPINLength;
+
+  /**
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
+   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
+   */
+  boolean makeCredUvNotRqd;
+
+  /**
+   * @see <a
+   *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
+   *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
+   */
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  boolean alwaysUv;
 
   @JsonCreator
   private SupportedCtapOptions(
