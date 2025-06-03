@@ -2,10 +2,10 @@ package com.yubico.fido.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Value;
-import lombok.extern.jackson.Jacksonized;
 
 /**
  * A fixed-keys map of CTAP2 option names to Boolean values representing whether an authenticator
@@ -17,7 +17,6 @@ import lombok.extern.jackson.Jacksonized;
  */
 @Value
 @Builder
-@Jacksonized
 public class SupportedCtapOptions {
 
   /**
@@ -39,7 +38,9 @@ public class SupportedCtapOptions {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean clientPin = false;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  @Builder.Default
+  boolean clientPin = false;
 
   /**
    * @see <a
@@ -53,7 +54,9 @@ public class SupportedCtapOptions {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean uv = false;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  @Builder.Default
+  boolean uv = false;
 
   /**
    * @see <a
@@ -83,21 +86,27 @@ public class SupportedCtapOptions {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean ep = false;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  @Builder.Default
+  boolean ep = false;
 
   /**
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean bioEnroll = false;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  @Builder.Default
+  boolean bioEnroll = false;
 
   /**
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean userVerificationMgmtPreview = false;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  @Builder.Default
+  boolean userVerificationMgmtPreview = false;
 
   /**
    * @see <a
@@ -134,7 +143,9 @@ public class SupportedCtapOptions {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean credentialMgmtPreview = false;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  @Builder.Default
+  boolean credentialMgmtPreview = false;
 
   /**
    * @see <a
@@ -155,7 +166,9 @@ public class SupportedCtapOptions {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @Builder.Default boolean alwaysUv = false;
+  @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+  @Builder.Default
+  boolean alwaysUv = false;
 
   @JsonCreator
   private SupportedCtapOptions(
@@ -178,10 +191,10 @@ public class SupportedCtapOptions {
       @JsonProperty("setMinPINLength") Boolean setMinPINLength,
       @JsonProperty("makeCredUvNotRqd") Boolean makeCredUvNotRqd,
       @JsonProperty("alwaysUv") Boolean alwaysUv) {
-    this.plat = plat;
-    this.rk = rk;
+    this.plat = Boolean.TRUE.equals(plat);
+    this.rk = Boolean.TRUE.equals(rk);
     this.clientPin = clientPin != null;
-    this.up = up;
+    this.up = Boolean.TRUE.equals(up);
     this.uv = uv != null;
     this.pinUvAuthToken = Boolean.TRUE.equals(pinUvAuthToken);
     this.noMcGaPermissionsWithClientPin = Boolean.TRUE.equals(noMcGaPermissionsWithClientPin);

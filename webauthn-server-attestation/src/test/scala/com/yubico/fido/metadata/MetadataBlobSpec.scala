@@ -57,6 +57,31 @@ class MetadataBlobSpec
   }
 
   describe("SupportedCtapOptions") {
+    it("can be parsed from an empty JSON object.") {
+      val options = JacksonCodecs
+        .json()
+        .readValue("{}", classOf[SupportedCtapOptions])
+      options should not be null
+      options.isPlat should be(false)
+      options.isRk should be(false)
+      options.isUp should be(false)
+      options.isUv should be(false)
+      options.isPinUvAuthToken should be(false)
+      options.isNoMcGaPermissionsWithClientPin should be(false)
+      options.isLargeBlobs should be(false)
+      options.isEp should be(false)
+      options.isBioEnroll should be(false)
+      options.isUserVerificationMgmtPreview should be(false)
+      options.isUvBioEnroll should be(false)
+      options.isAuthnrCfg should be(false)
+      options.isUvAcfg should be(false)
+      options.isCredMgmt should be(false)
+      options.isCredentialMgmtPreview should be(false)
+      options.isSetMinPINLength should be(false)
+      options.isMakeCredUvNotRqd should be(false)
+      options.isAlwaysUv should be(false)
+    }
+
     it(
       "are structurally identical after multiple (de)serialization round-trips."
     ) {
