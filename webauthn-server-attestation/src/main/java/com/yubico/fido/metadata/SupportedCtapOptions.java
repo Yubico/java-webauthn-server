@@ -61,7 +61,6 @@ public class SupportedCtapOptions {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @JsonAlias("uvToken")
   boolean pinUvAuthToken;
 
   /**
@@ -114,7 +113,6 @@ public class SupportedCtapOptions {
    *     href="https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-20210615.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
    */
-  @JsonAlias("config")
   boolean authnrCfg;
 
   /**
@@ -168,14 +166,14 @@ public class SupportedCtapOptions {
       @JsonProperty("clientPin") Boolean clientPin,
       @JsonProperty("up") Boolean up,
       @JsonProperty("uv") Boolean uv,
-      @JsonProperty("pinUvAuthToken") Boolean pinUvAuthToken,
+      @JsonAlias("uvToken") @JsonProperty("pinUvAuthToken") Boolean pinUvAuthToken,
       @JsonProperty("noMcGaPermissionsWithClientPin") Boolean noMcGaPermissionsWithClientPin,
       @JsonProperty("largeBlobs") Boolean largeBlobs,
       @JsonProperty("ep") Boolean ep,
       @JsonProperty("bioEnroll") Boolean bioEnroll,
       @JsonProperty("userVerificationMgmtPreview") Boolean userVerificationMgmtPreview,
       @JsonProperty("uvBioEnroll") Boolean uvBioEnroll,
-      @JsonProperty("authnrCfg") Boolean authnrCfg,
+      @JsonAlias("config") @JsonProperty("authnrCfg") Boolean authnrCfg,
       @JsonProperty("uvAcfg") Boolean uvAcfg,
       @JsonProperty("credMgmt") Boolean credMgmt,
       @JsonProperty("credentialMgmtPreview") Boolean credentialMgmtPreview,
