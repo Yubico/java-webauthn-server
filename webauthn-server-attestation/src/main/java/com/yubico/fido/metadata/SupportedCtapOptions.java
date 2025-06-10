@@ -34,6 +34,8 @@ public class SupportedCtapOptions {
   boolean rk;
 
   /**
+   * If set to <code>true</code> the device is capable of accepting PIN.
+   *
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250228/fido-client-to-authenticator-protocol-v2.2-ps-20250228.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -49,6 +51,8 @@ public class SupportedCtapOptions {
   boolean up;
 
   /**
+   * If set to <code>true</code> the device is capable of built-in user verification.
+   *
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250228/fido-client-to-authenticator-protocol-v2.2-ps-20250228.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -78,6 +82,8 @@ public class SupportedCtapOptions {
   boolean largeBlobs;
 
   /**
+   * If set to <code>true</code> the authenticator is enterprise attestation capable.
+   *
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250228/fido-client-to-authenticator-protocol-v2.2-ps-20250228.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -86,6 +92,8 @@ public class SupportedCtapOptions {
   boolean ep;
 
   /**
+   * If set to <code>true</code> the authenticator supports the authenticatorBioEnrollment commands.
+   *
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250228/fido-client-to-authenticator-protocol-v2.2-ps-20250228.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -94,6 +102,9 @@ public class SupportedCtapOptions {
   boolean bioEnroll;
 
   /**
+   * If set to <code>true</code> the authenticator supports the Prototype authenticatorBioEnrollment
+   * (0x40) commands.
+   *
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250228/fido-client-to-authenticator-protocol-v2.2-ps-20250228.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -159,6 +170,9 @@ public class SupportedCtapOptions {
   boolean makeCredUvNotRqd;
 
   /**
+   * If set to <code>true</code> the authenticator supports the Always Require User Verification
+   * feature.
+   *
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250228/fido-client-to-authenticator-protocol-v2.2-ps-20250228.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
