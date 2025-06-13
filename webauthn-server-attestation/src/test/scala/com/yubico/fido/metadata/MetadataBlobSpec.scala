@@ -76,6 +76,7 @@ class MetadataBlobSpec
       options.isAuthnrCfg should be(false)
       options.isUvAcfg should be(false)
       options.isCredMgmt should be(false)
+      options.isPerCredMgmtRO should be(false)
       options.isCredentialMgmtPreview should be(false)
       options.isSetMinPINLength should be(false)
       options.isMakeCredUvNotRqd should be(false)
