@@ -1232,6 +1232,476 @@ public class Extensions {
   }
 
   /**
+   * Definitions for the Secure Payment Confirmation extension (<code>SPC</code>).
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+   *     Secure Payment Confirmation extension (SPC)</a>
+   */
+  public static class Spc {
+    static final String EXTENSION_ID = "payment";
+
+    /**
+     * Extension inputs for the Secure Payment Confirmation extension (<code>SPC</code>) in
+     * registration ceremonies.
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+     *     Secure Payment Confirmation extension (SPC)</a>
+     */
+    @Value
+    @Builder(toBuilder = true)
+    public static class SpcRegistrationInput {
+      /**
+       * If <code>true</code>, indicates that the extension is active.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-ispayment">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final boolean isPayment;
+
+      /**
+       * The list of allowed types of credential restricting the types of cryptographic algorithms
+       * used for the browser bound key.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-browserboundpubkeycredparams">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final List<PublicKeyCredentialParameters> browserBoundPubKeyCredParams;
+
+      @JsonCreator
+      private SpcRegistrationInput(
+          @JsonProperty("isPayment") final boolean isPayment,
+          @JsonProperty("browserBoundPubKeyCredParams")
+              final List<PublicKeyCredentialParameters> browserBoundPubKeyCredParams) {
+        this.isPayment = isPayment;
+        this.browserBoundPubKeyCredParams = browserBoundPubKeyCredParams;
+      }
+
+      /**
+       * If <code>true</code>, indicates that the extension is active.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-ispayment">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public boolean getIsPayment() {
+        return isPayment;
+      }
+
+      /**
+       * The list of allowed types of credential restricting the types of cryptographic algorithms
+       * used for the browser bound key.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-browserboundpubkeycredparams">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<List<PublicKeyCredentialParameters>> getBrowserBoundPubKeyCredParams() {
+        return Optional.ofNullable(browserBoundPubKeyCredParams);
+      }
+    }
+
+    /**
+     * Extension inputs for the Secure Payment Confirmation extension (<code>SPC</code>) in
+     * authentication ceremonies.
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+     *     Secure Payment Confirmation extension (SPC)</a>
+     */
+    @Value
+    @Builder(toBuilder = true)
+    public static class SpcAuthenticationInput {
+      /**
+       * If <code>true</code>, indicates that the extension is active.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-ispayment">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final boolean isPayment;
+
+      /**
+       * The list of allowed types of credential restricting the types of cryptographic algorithms
+       * used for the browser bound key.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-browserboundpubkeycredparams">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final List<PublicKeyCredentialParameters> browserBoundPubKeyCredParams;
+
+      /**
+       * The Relying Party id of the credential(s) being used.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-rpid">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final String rpId;
+
+      /**
+       * The origin of the top-level frame.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-toporigin">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final String topOrigin;
+
+      /**
+       * The payee name, if present, that was displayed to the user.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-payeename">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final String payeeName;
+
+      /**
+       * The payee origin, if present, that was displayed to the user.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-payeeorigin">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final String payeeOrigin;
+
+      /**
+       * The logos, if any, that were displayed to the user in the transaction dialog.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-paymententitieslogos">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final List<PaymentEntityLogo> paymentEntitiesLogos;
+
+      /**
+       * The transaction amount that was displayed to the user.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-total">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final PaymentCurrencyAmount total;
+
+      /**
+       * The instrument details that were displayed to the user.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-instrument">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final PaymentCredentialInstrument instrument;
+
+      @JsonCreator
+      private SpcAuthenticationInput(
+          @JsonProperty("isPayment") final boolean isPayment,
+          @JsonProperty("browserBoundPubKeyCredParams")
+              final List<PublicKeyCredentialParameters> browserBoundPubKeyCredParams,
+          @JsonProperty("rpId") final String rpId,
+          @JsonProperty("topOrigin") final String topOrigin,
+          @JsonProperty("payeeName") final String payeeName,
+          @JsonProperty("payeeOrigin") final String payeeOrigin,
+          @JsonProperty("paymentEntitiesLogos") final List<PaymentEntityLogo> paymentEntitiesLogos,
+          @JsonProperty("total") final PaymentCurrencyAmount total,
+          @JsonProperty("instrument") final PaymentCredentialInstrument instrument) {
+        this.isPayment = isPayment;
+        this.browserBoundPubKeyCredParams = browserBoundPubKeyCredParams;
+        this.rpId = rpId;
+        this.topOrigin = topOrigin;
+        this.payeeName = payeeName;
+        this.payeeOrigin = payeeOrigin;
+        this.paymentEntitiesLogos = paymentEntitiesLogos;
+        this.total = total;
+        this.instrument = instrument;
+      }
+
+      /**
+       * If <code>true</code>, indicates that the extension is active.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-ispayment">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public boolean getIsPayment() {
+        return isPayment;
+      }
+
+      /**
+       * The list of allowed types of credential restricting the types of cryptographic algorithms
+       * used for the browser bound key.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-browserboundpubkeycredparams">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<List<PublicKeyCredentialParameters>> getBrowserBoundPubKeyCredParams() {
+        return Optional.ofNullable(browserBoundPubKeyCredParams);
+      }
+
+      /**
+       * The Relying Party id of the credential(s) being used.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-rpid">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<String> getRpId() {
+        return Optional.ofNullable(rpId);
+      }
+
+      /**
+       * The origin of the top-level frame.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-toporigin">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<String> getTopOrigin() {
+        return Optional.ofNullable(topOrigin);
+      }
+
+      /**
+       * The payee name, if present, that was displayed to the user.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-payeename">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<String> getPayeeName() {
+        return Optional.ofNullable(payeeName);
+      }
+
+      /**
+       * The payee origin, if present, that was displayed to the user.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-payeeorigin">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<String> getPayeeOrigin() {
+        return Optional.ofNullable(payeeOrigin);
+      }
+
+      /**
+       * The logos, if any, that were displayed to the user in the transaction dialog.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-paymententitieslogos">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<List<PaymentEntityLogo>> getPaymentEntitiesLogos() {
+        return Optional.ofNullable(paymentEntitiesLogos);
+      }
+
+      /**
+       * The transaction amount that was displayed to the user.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-total">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<PaymentCurrencyAmount> getTotal() {
+        return Optional.ofNullable(total);
+      }
+
+      /**
+       * The instrument details that were displayed to the user.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentinputs-instrument">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      public Optional<PaymentCredentialInstrument> getInstrument() {
+        return Optional.ofNullable(instrument);
+      }
+
+      /**
+       * Describes a logo for a payment entity that is facilitating the current transaction.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-paymententitylogo-dictionary">§7.2
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @Value
+      public static class PaymentEntityLogo {
+
+        /**
+         * The URL of the logo.
+         *
+         * @see <a
+         *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-paymententitylogo-dictionary">§7.2
+         *     Secure Payment Confirmation extension (SPC)</a>
+         */
+        @JsonProperty @NonNull private final String url;
+
+        /**
+         * A label describing the logo.
+         *
+         * @see <a
+         *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-paymententitylogo-dictionary">§7.2
+         *     Secure Payment Confirmation extension (SPC)</a>
+         */
+        @JsonProperty @NonNull private final String label;
+      }
+
+      /**
+       * Represents a payment amount.
+       *
+       * @see <a href="https://www.w3.org/TR/payment-request/#paymentcurrencyamount-dictionary">§5.
+       *     Payment Request API</a>
+       */
+      @Value
+      public static class PaymentCurrencyAmount {
+
+        /**
+         * The 3-letter ISO 4217 currency code.
+         *
+         * @see <a
+         *     href="https://www.w3.org/TR/payment-request/#paymentcurrencyamount-dictionary">§5.
+         *     Payment Request API</a>
+         */
+        @JsonProperty @NonNull private final String currency;
+
+        /**
+         * A valid decimal monetary value containing a monetary amount.
+         *
+         * @see <a
+         *     href="https://www.w3.org/TR/payment-request/#paymentcurrencyamount-dictionary">§5.
+         *     Payment Request API</a>
+         */
+        @JsonProperty @NonNull private final String value;
+      }
+
+      /**
+       * Represents a payment instrument, containing the information to be displayed to the user and
+       * signed together with the transaction details.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-paymentcredentialinstrument-dictionary">§7.1.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @Value
+      public static class PaymentCredentialInstrument {
+
+        /**
+         * The display name for the payment instrument to be displayed for the user.
+         *
+         * @see <a
+         *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-paymentcredentialinstrument-dictionary">§7.1.
+         *     Secure Payment Confirmation extension (SPC)</a>
+         */
+        @JsonProperty @NonNull private final String displayName;
+
+        /**
+         * The URL of the icon of the payment instrument.
+         *
+         * @see <a
+         *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-paymentcredentialinstrument-dictionary">§7.1.
+         *     Secure Payment Confirmation extension (SPC)</a>
+         */
+        @JsonProperty @NonNull private final String icon;
+
+        /**
+         * If <code>true</code>, indicates that the specified icon must be successfully fetched and
+         * shown for the request to succeed.
+         *
+         * @see <a
+         *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-paymentcredentialinstrument-dictionary">§7.1.
+         *     Secure Payment Confirmation extension (SPC)</a>
+         */
+        @JsonProperty private final boolean iconMustBeShown = true;
+
+        /**
+         * Optional additional detail string for the payment instrument to be displayed to the user.
+         *
+         * @see <a
+         *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-paymentcredentialinstrument-dictionary">§7.1.
+         *     Secure Payment Confirmation extension (SPC)</a>
+         */
+        @JsonProperty private final String details;
+      }
+    }
+
+    /**
+     * Outputs of the browser bound signature procedure.
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+     *     Secure Payment Confirmation extension (SPC)</a>
+     */
+    @Value
+    public static class BrowserBoundSignature {
+      /**
+       * The output of the browser bound signing process.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty @NonNull private final ByteArray signature;
+    }
+
+    /**
+     * Extension outputs for the Secure Payment Confirmation extension (<code>SPC</code>) in
+     * registration ceremonies.
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+     *     Secure Payment Confirmation extension (SPC)</a>
+     */
+    @Value
+    public static class SpcRegistrationOutput {
+      /**
+       * Outputs of the browser bound signature procedure.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentoutputs-browserboundsignature">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final BrowserBoundSignature browserBoundSignature;
+
+      @JsonCreator
+      public SpcRegistrationOutput(
+          @JsonProperty("browserBoundSignature")
+              final BrowserBoundSignature browserBoundSignature) {
+        this.browserBoundSignature = browserBoundSignature;
+      }
+    }
+
+    /**
+     * Extension outputs for the Secure Payment Confirmation extension (<code>SPC</code>) in
+     * authentication ceremonies.
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+     *     Secure Payment Confirmation extension (SPC)</a>
+     */
+    @Value
+    public static class SpcAuthenticationOutput {
+      /**
+       * Outputs of the browser bound signature procedure.
+       *
+       * @see <a
+       *     href="https://www.w3.org/TR/secure-payment-confirmation/#dom-authenticationextensionspaymentoutputs-browserboundsignature">§5.
+       *     Secure Payment Confirmation extension (SPC)</a>
+       */
+      @JsonProperty private final BrowserBoundSignature browserBoundSignature;
+
+      @JsonCreator
+      public SpcAuthenticationOutput(
+          @JsonProperty("browserBoundSignature")
+              final BrowserBoundSignature browserBoundSignature) {
+        this.browserBoundSignature = browserBoundSignature;
+      }
+    }
+  }
+
+  /**
    * Definitions for the User Verification Method (<code>uvm</code>) Extension.
    *
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.

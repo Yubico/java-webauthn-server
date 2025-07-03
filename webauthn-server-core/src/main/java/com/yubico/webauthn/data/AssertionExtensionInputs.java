@@ -57,6 +57,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
   private final AppId appid;
   private final Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob;
   private final Extensions.Prf.PrfAuthenticationInput prf;
+  private final Extensions.Spc.SpcAuthenticationInput spc;
   private final Boolean uvm;
 
   @JsonCreator
@@ -64,10 +65,12 @@ public class AssertionExtensionInputs implements ExtensionInputs {
       @JsonProperty("appid") AppId appid,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobAuthenticationInput largeBlob,
       @JsonProperty("prf") Extensions.Prf.PrfAuthenticationInput prf,
+      @JsonProperty("spc") Extensions.Spc.SpcAuthenticationInput spc,
       @JsonProperty("uvm") Boolean uvm) {
     this.appid = appid;
     this.largeBlob = largeBlob;
     this.prf = prf;
+    this.spc = spc;
     this.uvm = (uvm != null && uvm) ? true : null;
   }
 
@@ -83,6 +86,7 @@ public class AssertionExtensionInputs implements ExtensionInputs {
         this.appid != null ? this.appid : other.appid,
         this.largeBlob != null ? this.largeBlob : other.largeBlob,
         this.prf != null ? this.prf : other.prf,
+        this.spc != null ? this.spc : other.spc,
         this.uvm != null ? this.uvm : other.uvm);
   }
 
@@ -102,6 +106,9 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     }
     if (prf != null) {
       ids.add(Extensions.Prf.EXTENSION_ID);
+    }
+    if (spc != null) {
+      ids.add(Extensions.Spc.EXTENSION_ID);
     }
     if (getUvm()) {
       ids.add(Extensions.Uvm.EXTENSION_ID);
@@ -213,6 +220,21 @@ public class AssertionExtensionInputs implements ExtensionInputs {
     }
 
     /**
+     * Enable the Secure Payment Confirmation extension (<code>spc</code>).
+     *
+     * <p>This extension indicates that a credential is either being created for or used for Secure
+     * Payment Confirmation, respectively.
+     *
+     * @see <a
+     *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+     *     Secure Payment Confirmation extension (SPC)</a>
+     */
+    public AssertionExtensionInputsBuilder spc(Extensions.Spc.SpcAuthenticationInput spc) {
+      this.spc = spc;
+      return this;
+    }
+
+    /**
      * Enable the User Verification Method Extension (<code>uvm</code>).
      *
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-uvm-extension">§10.3.
@@ -296,6 +318,37 @@ public class AssertionExtensionInputs implements ExtensionInputs {
   private Extensions.Prf.PrfAuthenticationInput getPrfJson() {
     return prf != null && (prf.getEval().isPresent() || prf.getEvalByCredential().isPresent())
         ? prf
+        : null;
+  }
+
+  /**
+   * The input to the Secure Payment Confirmation (<code>spc</code>) extension, if any.
+   *
+   * <p>This extension indicates that a credential is either being created for or used for Secure
+   * Payment Confirmation, respectively.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+   *     Secure Payment Confirmation extension (SPC)</a>
+   */
+  public Optional<Extensions.Spc.SpcAuthenticationInput> getSpc() {
+    return Optional.ofNullable(spc);
+  }
+
+  /** For JSON serialization, to omit false and null values. */
+  @JsonProperty("spc")
+  private Extensions.Spc.SpcAuthenticationInput getSpcJson() {
+    return spc != null
+            && (spc.getIsPayment()
+                || spc.getBrowserBoundPubKeyCredParams().isPresent()
+                || spc.getRpId().isPresent()
+                || spc.getTopOrigin().isPresent()
+                || spc.getPayeeName().isPresent()
+                || spc.getPayeeOrigin().isPresent()
+                || spc.getPaymentEntitiesLogos().isPresent()
+                || spc.getTotal().isPresent()
+                || spc.getInstrument().isPresent())
+        ? spc
         : null;
   }
 

@@ -59,6 +59,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
   private final Extensions.CredentialProtection.CredentialProtectionInput credProtect;
   private final Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob;
   private final Extensions.Prf.PrfRegistrationInput prf;
+  private final Extensions.Spc.SpcRegistrationInput spc;
   private final Boolean uvm;
 
   private RegistrationExtensionInputs(
@@ -67,12 +68,14 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
       Extensions.CredentialProtection.CredentialProtectionInput credProtect,
       Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
       Extensions.Prf.PrfRegistrationInput prf,
+      Extensions.Spc.SpcRegistrationInput spc,
       Boolean uvm) {
     this.appidExclude = appidExclude;
     this.credProps = credProps;
     this.credProtect = credProtect;
     this.largeBlob = largeBlob;
     this.prf = prf;
+    this.spc = spc;
     this.uvm = uvm;
   }
 
@@ -85,6 +88,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
       @JsonProperty("enforceCredentialProtectionPolicy") Boolean enforceCredProtectPolicy,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationInput largeBlob,
       @JsonProperty("prf") Extensions.Prf.PrfRegistrationInput prf,
+      @JsonProperty("spc") Extensions.Spc.SpcRegistrationInput spc,
       @JsonProperty("uvm") Boolean uvm) {
     this(
         appidExclude,
@@ -99,6 +103,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
             .orElse(null),
         largeBlob,
         prf,
+        spc,
         uvm);
   }
 
@@ -116,6 +121,7 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
         this.credProtect != null ? this.credProtect : other.credProtect,
         this.largeBlob != null ? this.largeBlob : other.largeBlob,
         this.prf != null ? this.prf : other.prf,
+        this.spc != null ? this.spc : other.spc,
         this.uvm != null ? this.uvm : other.uvm);
   }
 
@@ -217,6 +223,20 @@ public final class RegistrationExtensionInputs implements ExtensionInputs {
    */
   public Optional<Extensions.Prf.PrfRegistrationInput> getPrf() {
     return Optional.ofNullable(prf);
+  }
+
+  /**
+   * The input to the Secure Payment Confirmation (<code>spc</code>) extension, if any.
+   *
+   * <p>This extension indicates that a credential is either being created for or used for Secure
+   * Payment Confirmation, respectively.
+   *
+   * @see <a
+   *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+   *     Secure Payment Confirmation extension (SPC)</a>
+   */
+  public Optional<Extensions.Spc.SpcRegistrationInput> getSpc() {
+    return Optional.ofNullable(spc);
   }
 
   /**
