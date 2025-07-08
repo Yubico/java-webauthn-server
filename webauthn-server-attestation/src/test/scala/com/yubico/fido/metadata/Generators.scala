@@ -432,6 +432,7 @@ object Generators {
         authnrCfg <- arbitrary[Boolean]
         uvAcfg <- arbitrary[Boolean]
         credMgmt <- arbitrary[Boolean]
+        perCredMgmtRO <- arbitrary[Boolean]
         credentialMgmtPreview <- arbitrary[Boolean]
         setMinPINLength <- arbitrary[Boolean]
         makeCredUvNotRqd <- arbitrary[Boolean]
@@ -453,6 +454,7 @@ object Generators {
         .authnrCfg(authnrCfg)
         .uvAcfg(uvAcfg)
         .credMgmt(credMgmt)
+        .perCredMgmtRO(perCredMgmtRO)
         .credentialMgmtPreview(credentialMgmtPreview)
         .setMinPINLength(setMinPINLength)
         .makeCredUvNotRqd(makeCredUvNotRqd)
