@@ -1,5 +1,7 @@
 == Version 2.8.0 (unreleased) ==
 
+`webauthn-server-core`:
+
 New features:
 
 * Added JavaDoc to `COSEAlgorithmIdentifier` constants.
@@ -32,6 +34,13 @@ New features:
 * (Experimental) Added property `RegisteredCredential.transports`.
  ** NOTE: Experimental features may receive breaking changes without a major
     version increase.
+
+`webauthn-server-attestation`:
+
+Fixes:
+
+* Fixed parsing logic of tri-valued Boolean SupportedCtapOptions properties.
+  See: https://github.com/Yubico/java-webauthn-server/issues/382
 
 == Version 2.7.0 ==
 
