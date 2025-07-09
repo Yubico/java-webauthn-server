@@ -60,17 +60,21 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
 
   private final Extensions.Prf.PrfRegistrationOutput prf;
 
+  private final Extensions.Spc.SpcRegistrationOutput spc;
+
   @JsonCreator
   private ClientRegistrationExtensionOutputs(
       @JsonProperty("appidExclude") Boolean appidExclude,
       @JsonProperty("credProps")
           Extensions.CredentialProperties.CredentialPropertiesOutput credProps,
       @JsonProperty("largeBlob") Extensions.LargeBlob.LargeBlobRegistrationOutput largeBlob,
-      @JsonProperty("prf") Extensions.Prf.PrfRegistrationOutput prf) {
+      @JsonProperty("prf") Extensions.Prf.PrfRegistrationOutput prf,
+      @JsonProperty("spc") Extensions.Spc.SpcRegistrationOutput spc) {
     this.appidExclude = appidExclude;
     this.credProps = credProps;
     this.largeBlob = largeBlob;
     this.prf = prf;
+    this.spc = spc;
   }
 
   @Override
@@ -88,6 +92,9 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
     }
     if (prf != null) {
       ids.add(Extensions.Prf.EXTENSION_ID);
+    }
+    if (spc != null) {
+      ids.add(Extensions.Spc.EXTENSION_ID);
     }
     return ids;
   }
@@ -147,5 +154,19 @@ public class ClientRegistrationExtensionOutputs implements ClientExtensionOutput
    */
   public Optional<Extensions.Prf.PrfRegistrationOutput> getPrf() {
     return Optional.ofNullable(prf);
+  }
+
+  /**
+   * The extension output for the <a
+   * href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">Secure
+   * Payment Confirmation (<code>spc</code>) extension</a>, if any.
+   *
+   * @see com.yubico.webauthn.data.Extensions.Spc.SpcRegistrationOutput
+   * @see <a
+   *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
+   *     Secure Payment Confirmation extension (SPC)</a>
+   */
+  public Optional<Extensions.Spc.SpcRegistrationOutput> getSpc() {
+    return Optional.ofNullable(spc);
   }
 }
