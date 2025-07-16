@@ -152,8 +152,8 @@ public class ClientAssertionExtensionOutputs implements ClientExtensionOutputs {
    *     href="https://www.w3.org/TR/secure-payment-confirmation/#sctn-payment-extension-registration">§5.
    *     Secure Payment Confirmation extension (SPC)</a>
    */
-  public Optional<Extensions.Prf.PrfAuthenticationOutput> getSpc() {
-    return Optional.ofNullable(prf);
+  public Optional<Extensions.Spc.SpcAuthenticationOutput> getSpc() {
+    return Optional.ofNullable(spc);
   }
 
   public static class ClientAssertionExtensionOutputsBuilder {
