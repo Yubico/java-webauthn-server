@@ -50,6 +50,9 @@ import com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationInput
 import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Prf.PrfValues
+import com.yubico.webauthn.data.Extensions.Spc.BrowserBoundSignature
+import com.yubico.webauthn.data.Extensions.Spc.SpcRegistrationInput
+import com.yubico.webauthn.data.Extensions.Spc.SpcRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.extension.appid.AppId
 import com.yubico.webauthn.extension.appid.Generators._
@@ -412,9 +415,17 @@ object Generators {
 
   object Extensions {
     private val RegistrationExtensionIds: Set[String] =
-      Set("appidExclude", "credProps", "credProtect", "largeBlob", "prf", "uvm")
+      Set(
+        "appidExclude",
+        "credProps",
+        "credProtect",
+        "largeBlob",
+        "prf",
+        "spc",
+        "uvm",
+      )
     private val AuthenticationExtensionIds: Set[String] =
-      Set("appid", "largeBlob", "prf", "uvm")
+      Set("appid", "largeBlob", "prf", "spc", "uvm")
 
     private val ClientRegistrationExtensionOutputIds: Set[String] =
       RegistrationExtensionIds - "uvm"
@@ -425,6 +436,7 @@ object Generators {
         "credProtect",
         "largeBlob",
         "prf",
+        "spc",
       )
 
     private val ClientAuthenticationExtensionOutputIds: Set[String] =
@@ -435,6 +447,7 @@ object Generators {
         "credProps",
         "largeBlob",
         "prf",
+        "spc",
       )
 
     def registrationExtensionInputs(
@@ -634,6 +647,8 @@ object Generators {
             resultBuilder.largeBlob(inputs.getLargeBlob orElse null)
           case "prf" =>
             resultBuilder.prf(inputs.getPrf orElse null)
+          case "spc" =>
+            resultBuilder.spc(inputs.getSpc orElse null)
           case "uvm" =>
             if (inputs.getUvm) {
               resultBuilder.uvm()
@@ -655,6 +670,8 @@ object Generators {
             resultBuilder.largeBlob(inputs.getLargeBlob orElse null)
           case "prf" =>
             resultBuilder.prf(inputs.getPrf orElse null)
+          case "spc" =>
+            resultBuilder.spc(inputs.getSpc orElse null)
           case "uvm" =>
             if (inputs.getUvm) {
               resultBuilder.uvm()
@@ -680,6 +697,8 @@ object Generators {
             resultBuilder.largeBlob(clientOutputs.getLargeBlob orElse null)
           case "prf" =>
             resultBuilder.prf(clientOutputs.getPrf orElse null)
+          case "spc" =>
+            resultBuilder.spc(clientOutputs.getSpc orElse null)
           case "uvm" => // Skip
         }
       }
@@ -698,6 +717,8 @@ object Generators {
             resultBuilder.largeBlob(clientOutputs.getLargeBlob orElse null)
           case "prf" =>
             resultBuilder.prf(clientOutputs.getPrf orElse null)
+          case "spc" =>
+            resultBuilder.spc(clientOutputs.getSpc orElse null)
           case "uvm" => // Skip
         }
       }
@@ -1049,6 +1070,39 @@ object Generators {
 
       implicit val arbitraryPrfAuthenticationOutput
           : Arbitrary[PrfAuthenticationOutput] = Arbitrary(authenticationOutput)
+    }
+
+    object Spc {
+      def browserBoundPubKeyCredParams
+          : Gen[java.util.List[PublicKeyCredentialParameters]] =
+        Gen.listOf(arbitrary[PublicKeyCredentialParameters]).map(_.asJava)
+
+      def registrationInput: Gen[SpcRegistrationInput] =
+        for {
+          isPayment <- arbitrary[Option[java.lang.Boolean]]
+          browserBoundParams <- browserBoundPubKeyCredParams
+        } yield SpcRegistrationInput
+          .builder()
+          .isPayment(isPayment.orNull)
+          .browserBoundPubKeyCredParams(browserBoundParams)
+          .build()
+
+      implicit val arbitrarySpcRegistrationInput
+          : Arbitrary[SpcRegistrationInput] = Arbitrary(registrationInput)
+
+      def browserBoundSignature: Gen[BrowserBoundSignature] =
+        for {
+          signature <- arbitrary[ByteArray]
+        } yield new BrowserBoundSignature(signature)
+
+      def registrationOutput: Gen[SpcRegistrationOutput] =
+        for {
+          browserBoundSignature <- browserBoundSignature
+        } yield new SpcRegistrationOutput(browserBoundSignature)
+
+      implicit val arbitrarySpcRegistrationOutput
+          : Arbitrary[SpcRegistrationOutput] = Arbitrary(registrationOutput)
+
     }
 
     object Uvm {
