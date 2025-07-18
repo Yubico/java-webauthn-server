@@ -51,6 +51,11 @@ import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationInput
 import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Prf.PrfValues
 import com.yubico.webauthn.data.Extensions.Spc.BrowserBoundSignature
+import com.yubico.webauthn.data.Extensions.Spc.SpcAuthenticationInput
+import com.yubico.webauthn.data.Extensions.Spc.SpcAuthenticationInput.PaymentCredentialInstrument
+import com.yubico.webauthn.data.Extensions.Spc.SpcAuthenticationInput.PaymentCurrencyAmount
+import com.yubico.webauthn.data.Extensions.Spc.SpcAuthenticationInput.PaymentEntityLogo
+import com.yubico.webauthn.data.Extensions.Spc.SpcAuthenticationOutput
 import com.yubico.webauthn.data.Extensions.Spc.SpcRegistrationInput
 import com.yubico.webauthn.data.Extensions.Spc.SpcRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
@@ -1097,12 +1102,69 @@ object Generators {
 
       def registrationOutput: Gen[SpcRegistrationOutput] =
         for {
-          browserBoundSignature <- browserBoundSignature
-        } yield new SpcRegistrationOutput(browserBoundSignature)
+          browserBoundSignature <- Gen.option(browserBoundSignature)
+        } yield new SpcRegistrationOutput(browserBoundSignature.orNull)
 
       implicit val arbitrarySpcRegistrationOutput
           : Arbitrary[SpcRegistrationOutput] = Arbitrary(registrationOutput)
 
+      def paymentEntityLogo: Gen[PaymentEntityLogo] =
+        for {
+          url <- arbitrary[String]
+          label <- arbitrary[String]
+        } yield new PaymentEntityLogo(url, label)
+
+      def paymentCurrencyAmount: Gen[PaymentCurrencyAmount] =
+        for {
+          currency <- arbitrary[String]
+          value <- arbitrary[String]
+        } yield new PaymentCurrencyAmount(currency, value)
+
+      def paymentCredentialInstrument: Gen[PaymentCredentialInstrument] =
+        for {
+          displayName <- arbitrary[String]
+          icon <- arbitrary[String]
+          details <- arbitrary[Option[String]]
+        } yield new PaymentCredentialInstrument(
+          displayName,
+          icon,
+          details.orNull,
+        )
+
+      def authenticationInput: Gen[SpcAuthenticationInput] =
+        for {
+          isPayment <- arbitrary[Option[java.lang.Boolean]]
+          browserBoundPubKeyCredParams <- browserBoundPubKeyCredParams
+          rpId <- arbitrary[Option[String]]
+          topOrigin <- arbitrary[Option[String]]
+          payeeName <- arbitrary[Option[String]]
+          payeeOrigin <- arbitrary[Option[String]]
+          paymentEntitiesLogos <- Gen.listOf(paymentEntityLogo).map(_.asJava)
+          total <- Gen.option(paymentCurrencyAmount)
+          instrument <- Gen.option(paymentCredentialInstrument)
+        } yield SpcAuthenticationInput
+          .builder()
+          .isPayment(isPayment.orNull)
+          .browserBoundPubKeyCredParams(browserBoundPubKeyCredParams)
+          .rpId(rpId.orNull)
+          .topOrigin(topOrigin.orNull)
+          .payeeName(payeeName.orNull)
+          .payeeOrigin(payeeOrigin.orNull)
+          .paymentEntitiesLogos(paymentEntitiesLogos)
+          .total(total.orNull)
+          .instrument(instrument.orNull)
+          .build()
+
+      implicit val arbitrarySpcAuthenticationInput
+          : Arbitrary[SpcAuthenticationInput] = Arbitrary(authenticationInput)
+
+      def authenticationOutput: Gen[SpcAuthenticationOutput] =
+        for {
+          browserBoundSignature <- Gen.option(browserBoundSignature)
+        } yield new SpcAuthenticationOutput(browserBoundSignature.orNull)
+
+      implicit val arbitrarySpcAuthenticationOutput
+          : Arbitrary[SpcAuthenticationOutput] = Arbitrary(authenticationOutput)
     }
 
     object Uvm {
