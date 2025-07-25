@@ -36,8 +36,10 @@ import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtec
 import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtectionPolicy
 import com.yubico.webauthn.data.Extensions.Prf.PrfAuthenticationInput
 import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationInput
+import com.yubico.webauthn.data.Extensions.Spc.SpcRegistrationInput
 import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfAuthenticationInput
 import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfRegistrationInput
+import com.yubico.webauthn.data.Generators.Extensions.Spc.arbitrarySpcRegistrationInput
 import com.yubico.webauthn.data.Generators.Extensions.registrationExtensionInputs
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -612,6 +614,38 @@ class RelyingPartyStartOperationSpec
 
             result.getExtensions.getPrf.toScala should equal(
               Some(prf)
+            )
+        }
+      }
+
+      it("by default does not set the spc extension.") {
+        val rp = relyingParty(userId = userId)
+        val result = rp.startRegistration(
+          StartRegistrationOptions
+            .builder()
+            .user(userId)
+            .build()
+        )
+        result.getExtensions.getSpc.toScala should be(None)
+      }
+
+      it("sets the spc extension if enabled in StartRegistrationOptions.") {
+        forAll {
+          (
+              extensions: RegistrationExtensionInputs,
+              spc: SpcRegistrationInput,
+          ) =>
+            val rp = relyingParty(userId = userId)
+            val result = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(userId)
+                .extensions(extensions.toBuilder.spc(spc).build())
+                .build()
+            )
+
+            result.getExtensions.getSpc.toScala should equal(
+              Some(spc)
             )
         }
       }
