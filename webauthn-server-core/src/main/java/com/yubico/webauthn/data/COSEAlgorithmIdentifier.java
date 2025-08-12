@@ -63,6 +63,38 @@ public enum COSEAlgorithmIdentifier {
   EdDSA(-8),
 
   /**
+   * The signature scheme Ed25519 as defined in <a
+   * href="https://www.ietf.org/archive/id/draft-ietf-jose-fully-specified-algorithms-13.html#name-edwards-curve-digital-signa">Fully-Specified
+   * Algorithms for JOSE and COSE</a>
+   *
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a
+   *     href="https://www.ietf.org/archive/id/draft-ietf-jose-fully-specified-algorithms-13.html#name-edwards-curve-digital-signa">Fully-Specified
+   *     Algorithms for JOSE and COSE</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">WebAuthn
+   *     §5.8.5. Cryptographic Algorithm Identifier (typedef <code>COSEAlgorithmIdentifier</code>
+   *     )</a>
+   */
+  Ed25519(-19),
+
+  /**
+   * The signature scheme Ed448 as defined in <a
+   * href="https://www.ietf.org/archive/id/draft-ietf-jose-fully-specified-algorithms-13.html#name-edwards-curve-digital-signa">Fully-Specified
+   * Algorithms for JOSE and COSE</a>
+   *
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a
+   *     href="https://www.ietf.org/archive/id/draft-ietf-jose-fully-specified-algorithms-13.html#name-edwards-curve-digital-signa">Fully-Specified
+   *     Algorithms for JOSE and COSE</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">WebAuthn
+   *     §5.8.5. Cryptographic Algorithm Identifier (typedef <code>COSEAlgorithmIdentifier</code>
+   *     )</a>
+   */
+  Ed448(-53),
+
+  /**
    * ECDSA with SHA-256 on the NIST P-256 curve.
    *
    * <p>Note: This COSE identifier does not in general restrict the curve to P-256, but is
