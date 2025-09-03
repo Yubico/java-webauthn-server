@@ -63,9 +63,12 @@ public enum COSEAlgorithmIdentifier {
   EdDSA(-8),
 
   /**
-   * The signature scheme Ed25519 as defined in <a
-   * href="https://www.ietf.org/archive/id/draft-ietf-jose-fully-specified-algorithms-13.html#name-edwards-curve-digital-signa">Fully-Specified
-   * Algorithms for JOSE and COSE</a>
+   * The signature scheme Ed25519 as defined in <a href="https://www.rfc-editor.org/rfc/rfc8032">RFC
+   * 8032</a>.
+   *
+   * <p>This value is NOT RECOMMENDED, see the <a
+   * href="https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-pubkeycredparams">documentation
+   * of <code>pubKeyCredParams</code></a>. Use {@link EdDSA} instead or in addition.
    *
    * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
    *     registry</a>
@@ -79,9 +82,8 @@ public enum COSEAlgorithmIdentifier {
   Ed25519(-19),
 
   /**
-   * The signature scheme Ed448 as defined in <a
-   * href="https://www.ietf.org/archive/id/draft-ietf-jose-fully-specified-algorithms-13.html#name-edwards-curve-digital-signa">Fully-Specified
-   * Algorithms for JOSE and COSE</a>
+   * The signature scheme Ed448 as defined in <a href="https://www.rfc-editor.org/rfc/rfc8032">RFC
+   * 8032</a>.
    *
    * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
    *     registry</a>
