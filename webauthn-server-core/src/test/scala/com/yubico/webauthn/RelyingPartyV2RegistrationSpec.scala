@@ -4323,6 +4323,54 @@ class RelyingPartyV2RegistrationSpec
             }
           }
 
+          it("Ed448, when available.") {
+            // The RelyingParty constructor call needs to be here inside the `it` call in order to have the right JCA provider environment
+            val rp = RelyingParty
+              .builder()
+              .identity(
+                RelyingPartyIdentity
+                  .builder()
+                  .id("localhost")
+                  .name("Test party")
+                  .build()
+              )
+              .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
+              .build()
+
+            val pkcco = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(
+                  UserIdentity
+                    .builder()
+                    .name("foo")
+                    .displayName("Foo")
+                    .id(ByteArray.fromHex("aabbccdd"))
+                    .build()
+                )
+                .build()
+            )
+
+            val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
+
+            if (Try(KeyFactory.getInstance("EdDSA")).isSuccess) {
+              pubKeyCredParams should contain(
+                PublicKeyCredentialParameters.Ed448
+              )
+              pubKeyCredParams map (_.getAlg) should contain(
+                COSEAlgorithmIdentifier.Ed448
+              )
+            } else {
+              pubKeyCredParams should not contain (
+                PublicKeyCredentialParameters.Ed448
+              )
+              pubKeyCredParams map (_.getAlg) should not contain (
+                COSEAlgorithmIdentifier.Ed448
+              )
+            }
+
+          }
+
           it("RS256.") {
             pubKeyCredParams should contain(
               PublicKeyCredentialParameters.RS256
