@@ -238,6 +238,8 @@ final class WebAuthnCodecs {
     switch (alg) {
       case EdDSA:
         return "EDDSA";
+      case Ed448:
+        return "Ed448";
       case ES256:
         return "SHA256withECDSA";
       case ES384:
