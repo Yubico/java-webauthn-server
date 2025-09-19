@@ -911,7 +911,7 @@ case class RegistrationTestData(
       val newValue =
         RegistrationTestData.from(credential, keypair, attestationCertChain)
       newValue.copy(
-        assertion = newValue.assertion.map(_.regenerate(newValue))
+        assertion = assertion.map(_.regenerate(newValue))
       )
     })
 
