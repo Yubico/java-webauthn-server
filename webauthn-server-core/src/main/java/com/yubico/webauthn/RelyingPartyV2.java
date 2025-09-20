@@ -226,6 +226,7 @@ public class RelyingPartyV2<C extends CredentialRecord> {
    *   <li>{@link PublicKeyCredentialParameters#EdDSA EdDSA}
    *   <li>{@link PublicKeyCredentialParameters#ES384 ES384}
    *   <li>{@link PublicKeyCredentialParameters#ES512 ES512}
+   *   <li>{@link PublicKeyCredentialParameters#Ed448 Ed448}
    *   <li>{@link PublicKeyCredentialParameters#RS256 RS256}
    *   <li>{@link PublicKeyCredentialParameters#RS384 RS384}
    *   <li>{@link PublicKeyCredentialParameters#RS512 RS512}
@@ -243,6 +244,7 @@ public class RelyingPartyV2<C extends CredentialRecord> {
               PublicKeyCredentialParameters.EdDSA,
               PublicKeyCredentialParameters.ES384,
               PublicKeyCredentialParameters.ES512,
+              PublicKeyCredentialParameters.Ed448,
               PublicKeyCredentialParameters.RS256,
               PublicKeyCredentialParameters.RS384,
               PublicKeyCredentialParameters.RS512));
