@@ -139,6 +139,7 @@ object RegistrationTestDataGenerator extends App {
         td.NoneAttestation.Default,
         td.Packed.BasicAttestation,
         td.Packed.BasicAttestationEdDsa,
+        td.Packed.BasicAttestationEd448,
         td.Packed.BasicAttestationRsa,
         td.Packed.BasicAttestationRs384,
         td.Packed.BasicAttestationRs512,
@@ -181,6 +182,7 @@ object RegistrationTestData {
       NoneAttestation.Default,
       Packed.BasicAttestation,
       Packed.BasicAttestationEdDsa,
+      Packed.BasicAttestationEd448,
       Packed.BasicAttestationRsa,
       Packed.BasicAttestationRs384,
       Packed.BasicAttestationRs512,
@@ -426,6 +428,43 @@ object RegistrationTestData {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
           keyAlgorithm = COSEAlgorithmIdentifier.EdDSA,
+          attestationMaker = AttestationMaker.packed(
+            AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ES256)
+          ),
+        )
+    }
+
+    val BasicAttestationEd448: RegistrationTestData = new RegistrationTestData(
+      alg = COSEAlgorithmIdentifier.EdDSA,
+      attestationObject =
+        ByteArray.fromHex("a3686175746844617461588149960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97634100000539000102030405060708090a0b0c0d0e0f0020b9ad79ab995dde21321b6a04b7a71e2769e3c000dcc9f969c17cc719c7f49473a4010103272006215820c200f60e3bdb0fc3bf5e178cd68ff8e15b47716b03f7e67c08cf9ea989498b0063666d74667061636b65646761747453746d74a363616c67266373696758463044022051b2cf7b51bc6956d512a1974dd6eab35adab213d219ea06edf6261b86d97d3902202dcf7fc49968decce6fe4385d1850b0c83b16b6bfb5237e102bdeaaa3c3ee60a63783563815901bf308201bb30820162a00302010202022708300a06082a8648ce3d04030230673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b3009060355040613025345301e170d3138303930363137343230305a170d3138303931333137343230305a30673123302106035504030c1a59756269636f20576562417574686e20756e6974207465737473310f300d060355040a0c0659756269636f31223020060355040b0c1941757468656e74696361746f72204174746573746174696f6e310b30090603550406130253453059301306072a8648ce3d020106082a8648ce3d030107034200044ad6b73044981f8725951227fa9b3a78f5fab1a816b41a6f49a02628d3d570dee44207365177fa3c4660351c08bb29af686eb140fa4861cdb60b179c0a5c8e6f300a06082a8648ce3d0403020347003044022028a86c2820577920e1401086f16e6c4c6237e47b4ebd97ae519bbe7774ef64490220041ce97d4679269e7fde235786381e630a77b47e80ba9f60edfec7f0fd00c012"),
+      clientDataJson = """{"challenge":"AAEBAgMFCA0VIjdZEGl5Yls","origin":"https://localhost","type":"webauthn.create","tokenBinding":{"status":"supported"}}""",
+      privateKey = Some(
+        ByteArray.fromHex("308183020101300506032b6571043b04399d78cbed100b03f5abf6c6abed37f9c4a0a620f17b64b7e252b2287bc6c4a9d09d240fd3d1f17ce0a47f4757824a3fdedc3e48562edfe6d5dc813a00d659ca2d581ce4e64747654f3e57db0846721f8ab8936f04f5c200f60e3bdb0fc3bf5e178cd68ff8e15b47716b03f7e67c08cf9ea989498b00")
+      ),
+      attestationCertChain = List(
+        RegistrationTestDataGenerator.importAttestationCa(
+          "MIIBuzCCAWKgAwIBAgICJwgwCgYIKoZIzj0EAwIwZzEjMCEGA1UEAwwaWXViaWNvIFdlYkF1dGhuIHVuaXQgdGVzdHMxDzANBgNVBAoMBll1YmljbzEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjELMAkGA1UEBhMCU0UwHhcNMTgwOTA2MTc0MjAwWhcNMTgwOTEzMTc0MjAwWjBnMSMwIQYDVQQDDBpZdWJpY28gV2ViQXV0aG4gdW5pdCB0ZXN0czEPMA0GA1UECgwGWXViaWNvMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMQswCQYDVQQGEwJTRTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABErWtzBEmB+HJZUSJ/qbOnj1+rGoFrQab0mgJijT1XDe5EIHNlF3+jxGYDUcCLspr2husUD6SGHNtgsXnApcjm8wCgYIKoZIzj0EAwIDRwAwRAIgKKhsKCBXeSDhQBCG8W5sTGI35HtOvZeuUZu+d3TvZEkCIAQc6X1GeSaef94jV4Y4HmMKd7R+gLqfYO3+x/D9AMAS",
+          "EC",
+          "MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQg1KdUwnJnE3sFiWc/RC1UZv6JHL+hZSI5ro7MfFCzBROgCgYIKoZIzj0DAQehRANCAARK1rcwRJgfhyWVEif6mzp49fqxqBa0Gm9JoCYo09Vw3uRCBzZRd/o8RmA1HAi7Ka9obrFA+khhzbYLF5wKXI5v",
+        )
+      ),
+      assertion = Some(
+        AssertionTestData(
+          request = JacksonCodecs
+            .json()
+            .readValue(
+              """{"publicKeyCredentialRequestOptions":{"challenge":"N3LjI2J5ylyWe3ED5OT4XHLRqHwm_J48_D_hoJOFf30","hints":[],"userVerification":"preferred","extensions":{}},"username":"test@test.org"}""",
+              classOf[AssertionRequest],
+            ),
+          response =
+            PublicKeyCredential.parseAssertionResponseJson("""{"id":"ua15q5ld3iEyG2oEt6ceJ2njwADcyflpwXzHGcf0lHM","response":{"authenticatorData":"SZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2MBAAAFOQ","clientDataJSON":"eyJjaGFsbGVuZ2UiOiJOM0xqSTJKNXlseVdlM0VENU9UNFhITFJxSHdtX0o0OF9EX2hvSk9GZjMwIiwib3JpZ2luIjoiaHR0cHM6Ly9sb2NhbGhvc3QiLCJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwidG9rZW5CaW5kaW5nIjp7InN0YXR1cyI6InN1cHBvcnRlZCJ9fQ","signature":"1HIBzD_eMRlwSIgYwnmC7yvBBCQEJ1uA-Kmw5LPiQ8813XiMQK0h9ceB72rist0_80UCA7g-RpOAe4ZFTReT9VI0Ecr4hRGEKJQftpK334hFd-43aknPjMdv65baV14MZyO3dTHDOeyivN9yJMvkMyUA"},"clientExtensionResults":{},"type":"public-key"}"""),
+        )
+      ),
+    ) {
+      override def regenerate() =
+        TestAuthenticator.createBasicAttestedCredential(
+          keyAlgorithm = COSEAlgorithmIdentifier.Ed448,
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ES256)
           ),
@@ -1212,6 +1251,7 @@ case class RegistrationTestData(
           PublicKeyCredentialParameters.EdDSA,
           PublicKeyCredentialParameters.ES384,
           PublicKeyCredentialParameters.ES512,
+          PublicKeyCredentialParameters.Ed448,
           PublicKeyCredentialParameters.RS256,
           PublicKeyCredentialParameters.RS384,
           PublicKeyCredentialParameters.RS512,
