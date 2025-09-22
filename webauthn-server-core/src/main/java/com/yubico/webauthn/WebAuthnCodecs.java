@@ -77,16 +77,16 @@ final class WebAuthnCodecs {
   private static final ByteArray ED448_ALG_ID =
       new ByteArray(
           new byte[] {
-              // SEQUENCE (5 bytes)
-              0x30,
-              5,
-              // OID (3 bytes)
-              0x06,
-              3,
-              // OID 1.3.101.113
-              0x2B,
-              101,
-              113
+            // SEQUENCE (5 bytes)
+            0x30,
+            5,
+            // OID (3 bytes)
+            0x06,
+            3,
+            // OID 1.3.101.113
+            0x2B,
+            101,
+            113
           });
 
   static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
