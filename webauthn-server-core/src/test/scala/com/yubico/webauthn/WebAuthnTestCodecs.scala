@@ -69,9 +69,21 @@ object WebAuthnTestCodecs {
     coseKey.put(1L, 1L) // Key type: octet key pair
 
     coseKey.put(3L, COSEAlgorithmIdentifier.EdDSA.getId)
-    coseKey.put(-1L, 6L) // crv: Ed25519
 
-    coseKey.put(-2L, key.getEncoded.takeRight(32)) // Strip ASN.1 prefix
+    val encoded = key.getEncoded
+    val keyBytesEd25519 = 32
+    val keyBytesEd448 = 57
+
+    val ed25519Oid = Array[Byte](0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70) // OID for Ed25519 1.3.101.112
+    val ed448Oid   = Array[Byte](0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x71) // OID for Ed448 1.3.101.113
+
+    val (crv, keyBytes) =
+      if (encoded.length > 9 && encoded.slice(2, 9).sameElements(ed25519Oid)) (6L, keyBytesEd25519) // crv: Ed25519
+      else if (encoded.length > 9 && encoded.slice(2, 9).sameElements(ed448Oid)) (7L, keyBytesEd448) // crv: Ed448
+      else throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
+
+    coseKey.put(-1L, crv)
+    coseKey.put(-2L, encoded.takeRight(keyBytes)) // Strip ASN.1 prefix
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
