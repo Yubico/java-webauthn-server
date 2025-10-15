@@ -2362,6 +2362,52 @@ class RelyingPartyAssertionSpec
         )
       }
 
+      it("a generated Ed448 key.") {
+        val registrationTestData =
+          RegistrationTestData.Packed.BasicAttestationEd448
+        val testData = registrationTestData.assertion.get
+
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity.builder().id("localhost").name("Test RP").build()
+          )
+          .credentialRepository(
+            Helpers.CredentialRepository.withUser(
+              registrationTestData.userId,
+              RegisteredCredential
+                .builder()
+                .credentialId(registrationTestData.response.getId)
+                .userHandle(registrationTestData.userId.getId)
+                .publicKeyCose(
+                  registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+                )
+                .signatureCount(0)
+                .build(),
+            )
+          )
+          .build()
+
+        val result = rp.finishAssertion(
+          FinishAssertionOptions
+            .builder()
+            .request(testData.request)
+            .response(testData.response)
+            .build()
+        )
+
+        result.isSuccess should be(true)
+        result.getCredential.getUserHandle should equal(
+          registrationTestData.userId.getId
+        )
+        result.getCredential.getCredentialId should equal(
+          registrationTestData.response.getId
+        )
+        result.getCredential.getCredentialId should equal(
+          testData.response.getId
+        )
+      }
+
       describe("an RS1 key") {
         def test(registrationTestData: RegistrationTestData): Unit = {
           val testData = registrationTestData.assertion.get
