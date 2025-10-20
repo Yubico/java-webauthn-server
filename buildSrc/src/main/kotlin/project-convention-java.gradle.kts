@@ -14,3 +14,38 @@ tasks.withType(JavaCompile::class) {
         sourceCompatibility = "1.8"
     }
 }
+
+tasks.register<Test>("testJava8") {
+  javaLauncher.set(javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(8))
+  })
+  tasks["check"].dependsOn(this)
+}
+
+tasks.register<Test>("testJava11") {
+  javaLauncher.set(javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(11))
+  })
+  tasks["check"].dependsOn(this)
+}
+
+tasks.register<Test>("testJava17") {
+  javaLauncher.set(javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(17))
+  })
+  tasks["check"].dependsOn(this)
+}
+
+tasks.register<Test>("testJava21") {
+  javaLauncher.set(javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(21))
+  })
+  tasks["check"].dependsOn(this)
+}
+
+tasks.register<Test>("testJava25") {
+  javaLauncher.set(javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(25))
+  })
+  tasks["check"].dependsOn(this)
+}
