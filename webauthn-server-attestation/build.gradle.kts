@@ -54,7 +54,7 @@ dependencies {
   testRuntimeOnly("uk.org.lidalia:slf4j-test")
 }
 
-val integrationTest = task<Test>("integrationTest") {
+val integrationTest = tasks.register<Test>("integrationTest") {
   description = "Runs integration tests."
   group = "verification"
 
