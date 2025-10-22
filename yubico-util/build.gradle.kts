@@ -10,8 +10,6 @@ plugins {
   `project-convention-pitest`
 }
 
-description = "Yubico internal utilities"
-
 dependencies {
   api(platform(rootProject))
 

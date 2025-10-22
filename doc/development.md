@@ -55,6 +55,16 @@ ossrhUsername=8pnmjKQP
 ossrhPassword=bmjuyWSIik8P3Nq/ZM2G0Xs0sHEKBg+4q4zTZ8JDDRCr
 ```
 
+Generate a Sonatype user token: https://central.sonatype.com/usertoken
+Please set an expiration date rather than unlimited validity.
+Set this and `yubicoPublish=true` in `$HOME/.gradle/gradle.properties`:
+
+```properties
+yubicoPublish=true
+sonatypeUsername=NaXB0g
+sonatypePassword=wBbCPg2ThHhV2WpQPxt5kdTUaVQwOdnAS
+```
+
 
 Publishing a release
 ---

@@ -10,8 +10,6 @@ plugins {
   `project-convention-pitest`
 }
 
-description = "Yubico WebAuthn server core API"
-
 dependencies {
   api(platform(rootProject))
 

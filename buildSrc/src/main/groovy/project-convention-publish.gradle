@@ -1,6 +1,5 @@
 plugins {
     id "maven-publish"
-    id "signing"
 }
 
 project.group = "com.yubico"
@@ -9,50 +8,49 @@ project.tasks.withType(Sign.class) {
     it.dependsOn(check)
 }
 
-// afterEvaluate needed for project.description to be set when this evaluates
-project.afterEvaluate {
-    publishing {
-        publications {
-            jars(MavenPublication.class) {
-                project.components.forEach {
-                    from(it)
-                }
+publishing {
+  publications {
+    maven(MavenPublication) {
+      groupId = project.group
+      artifactId = project.name
+      project.components.forEach {
+        from(it)
+      }
 
-                pom {
-                    name = project.name
-                    description = project.description
-                    url = "https://developers.yubico.com/java-webauthn-server/"
+      pom {
+        name = project.name
+        description = project.description
+        url = "https://developers.yubico.com/java-webauthn-server/"
 
-                    developers {
-                        developer {
-                            id = "emil"
-                            name = "Emil Lundberg"
-                            email = "emil@yubico.com"
-                        }
-                    }
-
-                    licenses {
-                        license {
-                            name = "BSD-license"
-                            comments = "Revised 2-clause BSD license"
-                        }
-                    }
-
-                    scm {
-                        url = "scm:git:git://github.com/Yubico/java-webauthn-server.git"
-                        connection = "scm:git:git://github.com/Yubico/java-webauthn-server.git"
-                        developerConnection = "scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git"
-                        tag = "HEAD"
-                    }
-                }
-            }
+        developers {
+          developer {
+            id = "emil"
+            name = "Emil Lundberg"
+            email = "emil@yubico.com"
+          }
         }
-    }
 
-    if (project.findProperty("yubicoPublish") == "true") {
-        signing {
-            useGpgCmd()
-            sign(publishing.publications.jars)
+        licenses {
+          license {
+            name = "BSD-license"
+            comments = "Revised 2-clause BSD license"
+          }
         }
+
+        scm {
+          url = "scm:git:git://github.com/Yubico/java-webauthn-server.git"
+          connection = "scm:git:git://github.com/Yubico/java-webauthn-server.git"
+          developerConnection = "scm:git:ssh://git@github.com/Yubico/java-webauthn-server.git"
+          tag = "HEAD"
+        }
+      }
     }
+  }
+
+  repositories {
+    maven {
+      url = rootProject.layout.buildDirectory.dir('staging-deploy')
+    }
+  }
+
 }

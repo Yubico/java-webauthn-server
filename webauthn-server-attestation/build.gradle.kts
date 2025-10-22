@@ -9,8 +9,6 @@ plugins {
   `project-convention-pitest`
 }
 
-description = "Yubico WebAuthn attestation subsystem"
-
 sourceSets {
   create("integrationTest") {
     compileClasspath += sourceSets.main.get().output
