@@ -70,9 +70,6 @@ object WebAuthnTestCodecs {
   }
 
   def eddsaPublicKeyToCose(key: BCEdDSAPublicKey): ByteArray = {
-    val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
-    coseKey.put(1L, 1L) // Key type: octet key pair
-
     val encoded = key.getEncoded
     val keyBytesEd25519 = 32
     val keyBytesEd448 = 57
@@ -91,6 +88,8 @@ object WebAuthnTestCodecs {
         (7L, COSEAlgorithmIdentifier.Ed448, keyBytesEd448) // crv: Ed448
       else throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
 
+    val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
+    coseKey.put(1L, 1L) // Key type: octet key pair
     coseKey.put(3L, alg.getId)
     coseKey.put(-1L, crv)
     coseKey.put(-2L, encoded.takeRight(keyBytes)) // Strip ASN.1 prefix
