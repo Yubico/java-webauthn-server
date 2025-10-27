@@ -230,36 +230,25 @@ final class WebAuthnCodecs {
   private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final int curveId = cose.get(CBORObject.FromObject(-1)).AsInt32();
+    final ByteArray algorithmOid = coseCurveToEddsaAlgorithmOid(curveId);
+    final byte[] rawKey = cose.get(CBORObject.FromObject(-2)).GetByteString();
+    final byte[] x509Key =
+        BinaryUtil.encodeDerSequence(
+            algorithmOid.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
+
+    KeyFactory kFact = KeyFactory.getInstance("EdDSA");
+    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
+  }
+
+  private static ByteArray coseCurveToEddsaAlgorithmOid(int curveId) {
     switch (curveId) {
       case 6:
-        return importCoseEd25519PublicKey(cose);
+        return ED25519_ALG_ID;
       case 7:
-        return importCoseEd448PublicKey(cose);
+        return ED448_ALG_ID;
       default:
         throw new IllegalArgumentException("Unsupported EdDSA curve: " + curveId);
     }
-  }
-
-  private static PublicKey importCoseEd25519PublicKey(CBORObject cose)
-      throws InvalidKeySpecException, NoSuchAlgorithmException {
-    final byte[] rawKey = cose.get(CBORObject.FromObject(-2)).GetByteString();
-    final byte[] x509Key =
-        BinaryUtil.encodeDerSequence(
-            ED25519_ALG_ID.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
-
-    KeyFactory kFact = KeyFactory.getInstance("EdDSA");
-    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
-  }
-
-  private static PublicKey importCoseEd448PublicKey(CBORObject cose)
-      throws InvalidKeySpecException, NoSuchAlgorithmException {
-    final byte[] rawKey = cose.get(CBORObject.FromObject(-2)).GetByteString();
-    final byte[] x509Key =
-        BinaryUtil.encodeDerSequence(
-            ED448_ALG_ID.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
-
-    KeyFactory kFact = KeyFactory.getInstance("EdDSA");
-    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
   }
 
   static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
