@@ -39,14 +39,14 @@ jobs:
 
     - name: Archive HTML test report
       if: ${{ always() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-html
         path: "*/build/reports/**"
 
     - name: Archive JUnit test report
       if: ${{ always() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-xml
         path: "*/build/test-results/**/*.xml"
