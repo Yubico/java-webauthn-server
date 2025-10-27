@@ -58,8 +58,10 @@ import com.yubico.webauthn.data.Extensions.CredentialProtection.CredentialProtec
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationInput.LargeBlobSupport
 import com.yubico.webauthn.data.Extensions.LargeBlob.LargeBlobRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Prf.PrfRegistrationOutput
+import com.yubico.webauthn.data.Extensions.Spc.SpcRegistrationOutput
 import com.yubico.webauthn.data.Extensions.Uvm.UvmEntry
 import com.yubico.webauthn.data.Generators.Extensions.Prf.arbitraryPrfRegistrationOutput
+import com.yubico.webauthn.data.Generators.Extensions.Spc.arbitrarySpcRegistrationOutput
 import com.yubico.webauthn.data.Generators._
 import com.yubico.webauthn.data.PublicKeyCredential
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions
@@ -4621,6 +4623,31 @@ class RelyingPartyRegistrationSpec
           )
           result.getClientExtensionOutputs.get().getPrf.toScala should equal(
             Some(prfOutput)
+          )
+        }
+      }
+
+      it("pass through spc extension outputs when present.") {
+        forAll(minSuccessful(3)) { spcOutput: SpcRegistrationOutput =>
+          val testData = RegistrationTestData.Packed.BasicAttestation
+          val result = rp.finishRegistration(
+            FinishRegistrationOptions
+              .builder()
+              .request(testData.request)
+              .response(
+                testData.response.toBuilder
+                  .clientExtensionResults(
+                    ClientRegistrationExtensionOutputs
+                      .builder()
+                      .spc(spcOutput)
+                      .build()
+                  )
+                  .build()
+              )
+              .build()
+          )
+          result.getClientExtensionOutputs.get().getSpc.toScala should equal(
+            Some(spcOutput)
           )
         }
       }
