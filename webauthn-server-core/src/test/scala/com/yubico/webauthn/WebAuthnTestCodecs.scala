@@ -74,17 +74,18 @@ object WebAuthnTestCodecs {
     val keyBytesEd25519 = 32
     val keyBytesEd448 = 57
 
-    val ed25519Oid =
-      Array[Byte](0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
-        0x70) // OID for Ed25519 1.3.101.112
-    val ed448Oid =
-      Array[Byte](0x30, 0x05, 0x06, 0x03, 0x2b, 0x65,
-        0x71) // OID for Ed448 1.3.101.113
-
     val (crv, alg, keyBytes) =
-      if (encoded.length > 9 && encoded.slice(2, 9).sameElements(ed25519Oid))
+      if (
+        encoded.length > 9 && encoded
+          .slice(2, 9)
+          .sameElements(WebAuthnCodecs.ED25519_ALG_ID.getBytes)
+      )
         (6L, COSEAlgorithmIdentifier.EdDSA, keyBytesEd25519) // crv: Ed25519
-      else if (encoded.length > 9 && encoded.slice(2, 9).sameElements(ed448Oid))
+      else if (
+        encoded.length > 9 && encoded
+          .slice(2, 9)
+          .sameElements(WebAuthnCodecs.ED448_ALG_ID.getBytes)
+      )
         (7L, COSEAlgorithmIdentifier.Ed448, keyBytesEd448) // crv: Ed448
       else throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
 

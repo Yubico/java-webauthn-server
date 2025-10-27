@@ -59,7 +59,7 @@ final class WebAuthnCodecs {
   private static final ByteArray P512_CURVE_OID =
       new ByteArray(new byte[] {0x2B, (byte) 0x81, 0x04, 0, 35}); // OID 1.3.132.0.35
 
-  private static final ByteArray ED25519_ALG_ID =
+  static final ByteArray ED25519_ALG_ID =
       new ByteArray(
           new byte[] {
             // SEQUENCE (5 bytes)
@@ -74,7 +74,7 @@ final class WebAuthnCodecs {
             112
           });
 
-  private static final ByteArray ED448_ALG_ID =
+  static final ByteArray ED448_ALG_ID =
       new ByteArray(
           new byte[] {
             // SEQUENCE (5 bytes)
