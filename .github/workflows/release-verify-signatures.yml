@@ -68,7 +68,7 @@ jobs:
         done
 
     - name: Retrieve keyring and signatures
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: keyring-and-signatures
 
@@ -87,7 +87,7 @@ jobs:
 
     steps:
     - name: Retrieve signatures
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: keyring-and-signatures
 
