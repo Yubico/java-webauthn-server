@@ -1104,8 +1104,8 @@ object TestAuthenticator {
 
   def generateKeypair(algorithm: COSEAlgorithmIdentifier): KeyPair =
     algorithm match {
-      case COSEAlgorithmIdentifier.EdDSA => generateEddsaKeypair()
-      case COSEAlgorithmIdentifier.Ed448 => generateEd448Keypair()
+      case COSEAlgorithmIdentifier.EdDSA => generateEddsaKeypair("Ed25519")
+      case COSEAlgorithmIdentifier.Ed448 => generateEddsaKeypair("Ed448")
       case COSEAlgorithmIdentifier.ES256 => generateEcKeypair("secp256r1")
       case COSEAlgorithmIdentifier.ES384 => generateEcKeypair("secp384r1")
       case COSEAlgorithmIdentifier.ES512 => generateEcKeypair("secp521r1")
@@ -1126,16 +1126,7 @@ object TestAuthenticator {
     g.generateKeyPair()
   }
 
-  def generateEddsaKeypair(): KeyPair = {
-    val alg = "Ed25519"
-    // Need to use BouncyCastle provider here because JDK before 14 does not support EdDSA
-    val keyPairGenerator =
-      KeyPairGenerator.getInstance(alg, new BouncyCastleProvider())
-    keyPairGenerator.generateKeyPair()
-  }
-
-  def generateEd448Keypair(): KeyPair = {
-    val alg = "Ed448"
+  def generateEddsaKeypair(alg: String): KeyPair = {
     // Need to use BouncyCastle provider here because JDK before 14 does not support EdDSA
     val keyPairGenerator =
       KeyPairGenerator.getInstance(alg, new BouncyCastleProvider())
