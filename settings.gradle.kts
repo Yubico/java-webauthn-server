@@ -11,6 +11,13 @@ include(":test-dependent-projects:java-dep-webauthn-server-core-and-bouncycastle
 include(":test-dependent-projects:java-dep-yubico-util")
 include(":test-platform")
 
+pluginManagement {
+  repositories {
+    mavenLocal()
+    gradlePluginPortal()
+    mavenCentral()
+  }
+}
 dependencyResolutionManagement {
     versionCatalogs {
         create("constraintLibs") {
