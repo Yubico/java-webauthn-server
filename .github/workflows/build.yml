@@ -107,7 +107,7 @@ jobs:
 
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: test-reports-java${{ needs.test.outputs.report-java }}-${{ needs.test.outputs.report-dist }}-xml
 
