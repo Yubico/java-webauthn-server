@@ -24,7 +24,7 @@ jobs:
         until wget https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/${{ github.ref_name }}/webauthn-server-core-${{ github.ref_name }}.jar.asc; do sleep 180; done
 
     - name: Store keyring and signatures as artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: keyring-and-signatures
         retention-days: 1
