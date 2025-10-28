@@ -94,9 +94,6 @@ jreleaser {
     mode = 'COMMAND'
     armored = true
     verify = false
-    command {
-      executable = './gpg-with-pinentry-ask.py'
-    }
   }
   deploy {
     maven {
