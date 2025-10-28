@@ -428,6 +428,7 @@ public class RelyingParty {
                     switch (param.getAlg()) {
                       case Ed448:
                       case EdDSA:
+                      case Ed25519:
                         KeyFactory.getInstance("EdDSA");
                         break;
 

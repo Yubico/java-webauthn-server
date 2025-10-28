@@ -521,6 +521,7 @@ public class PublicKeyCredentialCreationOptions {
                 param -> {
                   try {
                     switch (param.getAlg()) {
+                      case Ed25519:
                       case Ed448:
                       case EdDSA:
                         KeyFactory.getInstance("EdDSA");
@@ -553,6 +554,8 @@ public class PublicKeyCredentialCreationOptions {
                   try {
                     switch (param.getAlg()) {
                       case EdDSA:
+                      case Ed25519:
+                      case Ed448:
                         Signature.getInstance("EDDSA");
                         break;
 
