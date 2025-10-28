@@ -47,7 +47,7 @@ object WebAuthnTestCodecs {
         keyFactory.generatePrivate(spec)
 
       case COSEAlgorithmIdentifier.EdDSA =>
-        val keyFactory: KeyFactory = KeyFactory.getInstance("EdDSA")
+        val keyFactory: KeyFactory = KeyFactory.getInstance("Ed25519")
         val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
         keyFactory.generatePrivate(spec)
 

@@ -229,6 +229,7 @@ final class WebAuthnCodecs {
 
   private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
       throws InvalidKeySpecException, NoSuchAlgorithmException {
+    final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
     final int curveId = cose.get(CBORObject.FromObject(-1)).AsInt32();
     final ByteArray algorithmOid = coseCurveToEddsaAlgorithmOid(curveId);
     final byte[] rawKey = cose.get(CBORObject.FromObject(-2)).GetByteString();
@@ -236,7 +237,11 @@ final class WebAuthnCodecs {
         BinaryUtil.encodeDerSequence(
             algorithmOid.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
 
-    KeyFactory kFact = KeyFactory.getInstance("EdDSA");
+    KeyFactory kFact =
+        KeyFactory.getInstance(
+            getJavaAlgorithmName(
+                COSEAlgorithmIdentifier.fromId(alg)
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown algorithm: " + alg))));
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
   }
 
@@ -255,7 +260,7 @@ final class WebAuthnCodecs {
     switch (alg) {
       case EdDSA:
       case Ed25519:
-        return "EDDSA";
+        return "Ed25519";
       case Ed448:
         return "Ed448";
       case ES256:
