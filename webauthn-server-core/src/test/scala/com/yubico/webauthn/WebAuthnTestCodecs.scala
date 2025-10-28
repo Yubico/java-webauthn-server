@@ -74,7 +74,7 @@ object WebAuthnTestCodecs {
     val keyBytesEd25519 = 32
     val keyBytesEd448 = 57
 
-    val (crv, alg, keyBytes) =
+    val (crv, alg, keyBytesLength) =
       if (
         encoded.length > 9 && encoded
           .slice(2, 9)
@@ -93,7 +93,7 @@ object WebAuthnTestCodecs {
     coseKey.put(1L, 1L) // Key type: octet key pair
     coseKey.put(3L, alg.getId)
     coseKey.put(-1L, crv)
-    coseKey.put(-2L, encoded.takeRight(keyBytes)) // Strip ASN.1 prefix
+    coseKey.put(-2L, encoded.takeRight(keyBytesLength)) // Strip ASN.1 prefix
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
