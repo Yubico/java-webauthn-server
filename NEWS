@@ -5,6 +5,9 @@
 New features:
 
 * Added JavaDoc to `COSEAlgorithmIdentifier` constants.
+* Added support for Ed448 signatures.
+* New constants `COSEAlgorithmIdentifier.Ed25519`,
+  `COSEAlgorithmIdentifier.Ed448` and `PublicKeyCredentialParameters.Ed448`
 * (Experimental) Added a new suite of interfaces, starting with
   `CredentialRepositoryV2`. `RelyingParty` can now be configured with a
   `CredentialRepositoryV2` instance instead of a `CredentialRepository`
