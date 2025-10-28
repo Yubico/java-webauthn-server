@@ -68,7 +68,7 @@ public enum COSEAlgorithmIdentifier {
    *
    * <p>This value is NOT RECOMMENDED, see the <a
    * href="https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-pubkeycredparams">documentation
-   * of <code>pubKeyCredParams</code></a>. Use {@link EdDSA} instead or in addition.
+   * of <code>pubKeyCredParams</code></a>. Use {@link #EdDSA} instead or in addition.
    *
    * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
    *     registry</a>
