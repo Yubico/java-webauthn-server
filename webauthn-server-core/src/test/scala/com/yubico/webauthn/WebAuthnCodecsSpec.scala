@@ -25,6 +25,7 @@
 package com.yubico.webauthn
 
 import com.yubico.webauthn.data.ByteArray
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.test.Util
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary
@@ -124,6 +125,16 @@ class WebAuthnCodecsSpec
         }
       }
 
+    }
+
+    describe("The getJavaAlgorithmName method") {
+      describe("accepts every defined COSEAlgorithmIdentifier value:") {
+        for (alg <- COSEAlgorithmIdentifier.values()) {
+          it(alg.name()) {
+            WebAuthnCodecs.getJavaAlgorithmName(alg) should not be null
+          }
+        }
+      }
     }
 
   }

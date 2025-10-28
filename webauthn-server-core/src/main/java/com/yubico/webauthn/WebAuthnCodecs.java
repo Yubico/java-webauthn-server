@@ -265,6 +265,7 @@ final class WebAuthnCodecs {
   static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
     switch (alg) {
       case EdDSA:
+      case Ed25519:
         return "EDDSA";
       case Ed448:
         return "Ed448";
