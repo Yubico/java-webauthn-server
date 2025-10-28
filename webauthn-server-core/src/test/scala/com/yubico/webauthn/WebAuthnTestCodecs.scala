@@ -1,6 +1,8 @@
 package com.yubico.webauthn
 
 import com.upokecenter.cbor.CBORObject
+import com.yubico.webauthn.WebAuthnCodecs.COSE_CRV_ED25519
+import com.yubico.webauthn.WebAuthnCodecs.COSE_CRV_ED448
 import com.yubico.webauthn.WebAuthnCodecs.rawEcKeyToCose
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
@@ -77,13 +79,13 @@ object WebAuthnTestCodecs {
           .slice(2, 9)
           .sameElements(WebAuthnCodecs.ED25519_ALG_ID.getBytes)
       )
-        (COSEAlgorithmIdentifier.EdDSA, 6L, 32) // crv: Ed25519
+        (COSEAlgorithmIdentifier.EdDSA, COSE_CRV_ED25519, 32)
       else if (
         encoded.length > 9 && encoded
           .slice(2, 9)
           .sameElements(WebAuthnCodecs.ED448_ALG_ID.getBytes)
       )
-        (COSEAlgorithmIdentifier.Ed448, 7L, 57) // crv: Ed448
+        (COSEAlgorithmIdentifier.Ed448, COSE_CRV_ED448, 57)
       else throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
 
     val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]

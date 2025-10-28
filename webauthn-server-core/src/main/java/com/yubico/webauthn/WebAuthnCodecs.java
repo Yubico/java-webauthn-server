@@ -89,6 +89,13 @@ final class WebAuthnCodecs {
             113
           });
 
+  // See: https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+  static final int COSE_CRV_P256 = 1;
+  static final int COSE_CRV_P384 = 2;
+  static final int COSE_CRV_P521 = 3;
+  static final int COSE_CRV_ED25519 = 6;
+  static final int COSE_CRV_ED448 = 7;
+
   static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
 
     final int fieldSizeBytes =
@@ -135,15 +142,15 @@ final class WebAuthnCodecs {
     switch (len - start) {
       case 64:
         coseAlg = COSEAlgorithmIdentifier.ES256;
-        coseCrv = 1;
+        coseCrv = COSE_CRV_P256;
         break;
       case 96:
         coseAlg = COSEAlgorithmIdentifier.ES384;
-        coseCrv = 2;
+        coseCrv = COSE_CRV_P384;
         break;
       case 132:
         coseAlg = COSEAlgorithmIdentifier.ES512;
-        coseCrv = 3;
+        coseCrv = COSE_CRV_P521;
         break;
       default:
         throw new RuntimeException(
@@ -193,15 +200,15 @@ final class WebAuthnCodecs {
 
     final byte[] curveOid;
     switch (crv) {
-      case 1:
+      case COSE_CRV_P256:
         curveOid = P256_CURVE_OID.getBytes();
         break;
 
-      case 2:
+      case COSE_CRV_P384:
         curveOid = P384_CURVE_OID.getBytes();
         break;
 
-      case 3:
+      case COSE_CRV_P521:
         curveOid = P512_CURVE_OID.getBytes();
         break;
 
@@ -247,9 +254,9 @@ final class WebAuthnCodecs {
 
   private static ByteArray coseCurveToEddsaAlgorithmOid(int curveId) {
     switch (curveId) {
-      case 6:
+      case COSE_CRV_ED25519:
         return ED25519_ALG_ID;
-      case 7:
+      case COSE_CRV_ED448:
         return ED448_ALG_ID;
       default:
         throw new IllegalArgumentException("Unsupported EdDSA curve: " + curveId);
