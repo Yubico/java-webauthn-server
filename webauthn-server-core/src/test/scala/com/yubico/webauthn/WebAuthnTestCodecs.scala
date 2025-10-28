@@ -14,6 +14,7 @@ import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
+import scala.util.Try
 
 /** Re-exports from [[WebAuthnCodecs]] and [[Crypto]] so tests can use it
   */
@@ -73,18 +74,15 @@ object WebAuthnTestCodecs {
 
   def eddsaPublicKeyToCose(key: BCEdDSAPublicKey): ByteArray = {
     val encoded = key.getEncoded
+    val algOid: Array[Byte] =
+      Try(encoded.slice(2, 9)).getOrElse(
+        throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
+      )
+
     val (alg, crv, keyBytesLength) =
-      if (
-        encoded.length > 9 && encoded
-          .slice(2, 9)
-          .sameElements(WebAuthnCodecs.ED25519_ALG_ID.getBytes)
-      )
+      if (algOid.sameElements(WebAuthnCodecs.ED25519_ALG_ID.getBytes))
         (COSEAlgorithmIdentifier.EdDSA, COSE_CRV_ED25519, 32)
-      else if (
-        encoded.length > 9 && encoded
-          .slice(2, 9)
-          .sameElements(WebAuthnCodecs.ED448_ALG_ID.getBytes)
-      )
+      else if (algOid.sameElements(WebAuthnCodecs.ED448_ALG_ID.getBytes))
         (COSEAlgorithmIdentifier.Ed448, COSE_CRV_ED448, 57)
       else throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
 
