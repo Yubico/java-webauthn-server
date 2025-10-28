@@ -71,19 +71,19 @@ object WebAuthnTestCodecs {
 
   def eddsaPublicKeyToCose(key: BCEdDSAPublicKey): ByteArray = {
     val encoded = key.getEncoded
-    val (crv, alg, keyBytesLength) =
+    val (alg, crv, keyBytesLength) =
       if (
         encoded.length > 9 && encoded
           .slice(2, 9)
           .sameElements(WebAuthnCodecs.ED25519_ALG_ID.getBytes)
       )
-        (6L, COSEAlgorithmIdentifier.EdDSA, 32) // crv: Ed25519
+        (COSEAlgorithmIdentifier.EdDSA, 6L, 32) // crv: Ed25519
       else if (
         encoded.length > 9 && encoded
           .slice(2, 9)
           .sameElements(WebAuthnCodecs.ED448_ALG_ID.getBytes)
       )
-        (7L, COSEAlgorithmIdentifier.Ed448, 57) // crv: Ed448
+        (COSEAlgorithmIdentifier.Ed448, 7L, 57) // crv: Ed448
       else throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
 
     val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
