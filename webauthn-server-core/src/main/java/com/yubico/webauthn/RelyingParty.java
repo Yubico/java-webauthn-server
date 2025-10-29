@@ -212,6 +212,7 @@ public class RelyingParty {
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#EdDSA EdDSA}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES384 ES384}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES512 ES512}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#Ed448 Ed448}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS384 RS384}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS512 RS512}
@@ -230,6 +231,7 @@ public class RelyingParty {
               PublicKeyCredentialParameters.EdDSA,
               PublicKeyCredentialParameters.ES384,
               PublicKeyCredentialParameters.ES512,
+              PublicKeyCredentialParameters.Ed448,
               PublicKeyCredentialParameters.RS256,
               PublicKeyCredentialParameters.RS384,
               PublicKeyCredentialParameters.RS512));
@@ -425,7 +427,12 @@ public class RelyingParty {
                   try {
                     switch (param.getAlg()) {
                       case EdDSA:
-                        KeyFactory.getInstance("EdDSA");
+                      case Ed25519:
+                        KeyFactory.getInstance("Ed25519");
+                        break;
+
+                      case Ed448:
+                        KeyFactory.getInstance("Ed448");
                         break;
 
                       case ES256:

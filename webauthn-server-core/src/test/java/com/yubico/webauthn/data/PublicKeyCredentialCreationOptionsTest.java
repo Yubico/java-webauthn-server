@@ -2,10 +2,12 @@ package com.yubico.webauthn.data;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.yubico.webauthn.data.exception.HexException;
 import java.security.Provider;
 import java.security.Security;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +17,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import uk.org.lidalia.slf4jext.Level;
+import uk.org.lidalia.slf4jtest.LoggingEvent;
 import uk.org.lidalia.slf4jtest.TestLogger;
 import uk.org.lidalia.slf4jtest.TestLoggerFactory;
 
@@ -155,5 +158,34 @@ public class PublicKeyCredentialCreationOptionsTest {
         .build();
 
     assertEquals(0, testLog.getAllLoggingEvents().size());
+  }
+
+  @Test
+  public void doesNotLogUnknownAlgorithmWarningForDefinedAlgorithms() throws HexException {
+    PublicKeyCredentialCreationOptions.builder()
+        .rp(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+        .user(
+            UserIdentity.builder()
+                .name("foo")
+                .displayName("Foo User")
+                .id(ByteArray.fromHex("00010203"))
+                .build())
+        .challenge(ByteArray.fromHex("04050607"))
+        .pubKeyCredParams(
+            Arrays.stream(COSEAlgorithmIdentifier.values())
+                .map(alg -> PublicKeyCredentialParameters.builder().alg(alg).build())
+                .collect(Collectors.toList()))
+        .build();
+
+    for (LoggingEvent event : testLog.getLoggingEvents()) {
+      final String msg = event.getMessage().toLowerCase();
+      if (msg.contains("bug") || msg.contains("unknown")) {
+        fail(
+            String.format(
+                "Expected no log messages mentioning \"bug\" or \"unknown\", found: %s [arguments: %s]",
+                event.getMessage(), event.getArguments()));
+      }
+    }
+    ;
   }
 }

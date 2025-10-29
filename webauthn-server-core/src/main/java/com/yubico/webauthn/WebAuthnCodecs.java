@@ -59,7 +59,7 @@ final class WebAuthnCodecs {
   private static final ByteArray P512_CURVE_OID =
       new ByteArray(new byte[] {0x2B, (byte) 0x81, 0x04, 0, 35}); // OID 1.3.132.0.35
 
-  private static final ByteArray ED25519_ALG_ID =
+  static final ByteArray ED25519_ALG_ID =
       new ByteArray(
           new byte[] {
             // SEQUENCE (5 bytes)
@@ -73,6 +73,28 @@ final class WebAuthnCodecs {
             101,
             112
           });
+
+  static final ByteArray ED448_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (5 bytes)
+            0x30,
+            5,
+            // OID (3 bytes)
+            0x06,
+            3,
+            // OID 1.3.101.113
+            0x2B,
+            101,
+            113
+          });
+
+  // See: https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
+  static final int COSE_CRV_P256 = 1;
+  static final int COSE_CRV_P384 = 2;
+  static final int COSE_CRV_P521 = 3;
+  static final int COSE_CRV_ED25519 = 6;
+  static final int COSE_CRV_ED448 = 7;
 
   static ByteArray ecPublicKeyToRaw(ECPublicKey key) {
 
@@ -120,15 +142,15 @@ final class WebAuthnCodecs {
     switch (len - start) {
       case 64:
         coseAlg = COSEAlgorithmIdentifier.ES256;
-        coseCrv = 1;
+        coseCrv = COSE_CRV_P256;
         break;
       case 96:
         coseAlg = COSEAlgorithmIdentifier.ES384;
-        coseCrv = 2;
+        coseCrv = COSE_CRV_P384;
         break;
       case 132:
         coseAlg = COSEAlgorithmIdentifier.ES512;
-        coseCrv = 3;
+        coseCrv = COSE_CRV_P521;
         break;
       default:
         throw new RuntimeException(
@@ -178,15 +200,15 @@ final class WebAuthnCodecs {
 
     final byte[] curveOid;
     switch (crv) {
-      case 1:
+      case COSE_CRV_P256:
         curveOid = P256_CURVE_OID.getBytes();
         break;
 
-      case 2:
+      case COSE_CRV_P384:
         curveOid = P384_CURVE_OID.getBytes();
         break;
 
-      case 3:
+      case COSE_CRV_P521:
         curveOid = P512_CURVE_OID.getBytes();
         break;
 
@@ -214,30 +236,40 @@ final class WebAuthnCodecs {
 
   private static PublicKey importCoseEdDsaPublicKey(CBORObject cose)
       throws InvalidKeySpecException, NoSuchAlgorithmException {
+    final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
     final int curveId = cose.get(CBORObject.FromObject(-1)).AsInt32();
+    final ByteArray algorithmOid = coseCurveToEddsaAlgorithmOid(curveId);
+    final byte[] rawKey = cose.get(CBORObject.FromObject(-2)).GetByteString();
+    final byte[] x509Key =
+        BinaryUtil.encodeDerSequence(
+            algorithmOid.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
+
+    KeyFactory kFact =
+        KeyFactory.getInstance(
+            getJavaAlgorithmName(
+                COSEAlgorithmIdentifier.fromId(alg)
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown algorithm: " + alg))));
+    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
+  }
+
+  private static ByteArray coseCurveToEddsaAlgorithmOid(int curveId) {
     switch (curveId) {
-      case 6:
-        return importCoseEd25519PublicKey(cose);
+      case COSE_CRV_ED25519:
+        return ED25519_ALG_ID;
+      case COSE_CRV_ED448:
+        return ED448_ALG_ID;
       default:
         throw new IllegalArgumentException("Unsupported EdDSA curve: " + curveId);
     }
   }
 
-  private static PublicKey importCoseEd25519PublicKey(CBORObject cose)
-      throws InvalidKeySpecException, NoSuchAlgorithmException {
-    final byte[] rawKey = cose.get(CBORObject.FromObject(-2)).GetByteString();
-    final byte[] x509Key =
-        BinaryUtil.encodeDerSequence(
-            ED25519_ALG_ID.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
-
-    KeyFactory kFact = KeyFactory.getInstance("EdDSA");
-    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
-  }
-
   static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
     switch (alg) {
       case EdDSA:
-        return "EDDSA";
+      case Ed25519:
+        return "Ed25519";
+      case Ed448:
+        return "Ed448";
       case ES256:
         return "SHA256withECDSA";
       case ES384:

@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import com.yubico.webauthn.attestation.AttestationTrustSource;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.ByteArray;
+import com.yubico.webauthn.data.COSEAlgorithmIdentifier;
 import com.yubico.webauthn.data.PublicKeyCredentialCreationOptions;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
 import com.yubico.webauthn.data.PublicKeyCredentialParameters;
@@ -18,6 +19,7 @@ import com.yubico.webauthn.extension.appid.InvalidAppIdException;
 import java.security.Provider;
 import java.security.Security;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import uk.org.lidalia.slf4jext.Level;
+import uk.org.lidalia.slf4jtest.LoggingEvent;
 import uk.org.lidalia.slf4jtest.TestLogger;
 import uk.org.lidalia.slf4jtest.TestLoggerFactory;
 
@@ -304,6 +307,29 @@ public class RelyingPartyTest {
         .build();
 
     assertEquals(0, testLog.getAllLoggingEvents().size());
+  }
+
+  @Test
+  public void doesNotLogUnknownAlgorithmWarningForDefinedAlgorithms() {
+    RelyingParty.builder()
+        .identity(RelyingPartyIdentity.builder().id("localhost").name("Test").build())
+        .credentialRepository(unimplementedCredentialRepository())
+        .preferredPubkeyParams(
+            Arrays.stream(COSEAlgorithmIdentifier.values())
+                .map(alg -> PublicKeyCredentialParameters.builder().alg(alg).build())
+                .collect(Collectors.toList()))
+        .build();
+
+    for (LoggingEvent event : testLog.getLoggingEvents()) {
+      final String msg = event.getMessage().toLowerCase();
+      if (msg.contains("bug") || msg.contains("unknown")) {
+        fail(
+            String.format(
+                "Expected no log messages mentioning \"bug\" or \"unknown\", found: %s [arguments: %s]",
+                event.getMessage(), event.getArguments()));
+      }
+    }
+    ;
   }
 
   private static CredentialRepository unimplementedCredentialRepository() {
