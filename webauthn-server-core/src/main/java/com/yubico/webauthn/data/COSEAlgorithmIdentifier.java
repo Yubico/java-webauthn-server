@@ -85,6 +85,7 @@ public enum COSEAlgorithmIdentifier {
    * The signature scheme Ed448 as defined in <a href="https://www.rfc-editor.org/rfc/rfc8032">RFC
    * 8032</a>.
    *
+   * @since 2.8.0
    * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
    *     registry</a>
    * @see <a

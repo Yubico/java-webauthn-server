@@ -77,6 +77,8 @@ public class PublicKeyCredentialParameters {
   /**
    * Algorithm {@link COSEAlgorithmIdentifier#Ed448} and type {@link
    * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * @since 2.8.0
    */
   public static final PublicKeyCredentialParameters Ed448 =
       builder().alg(COSEAlgorithmIdentifier.Ed448).build();
