@@ -49,6 +49,7 @@ Please set an expiration date rather than unlimited validity.
 
 Set this token username and password in `$HOME/.jreleaser/config.properties`,
 along with the fingerprint of the GPG key to use for signing artifacts.
+Create the file if it does not exist.
 Example:
 
 
