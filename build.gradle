@@ -19,7 +19,6 @@ plugins {
 import com.yubico.gradle.GitUtils
 
 project.ext.isCiBuild = System.env.CI == 'true'
-project.ext.publishEnabled = !isCiBuild && project.findProperty('yubicoPublish') == 'true'
 
 wrapper {
   gradleVersion = '8.14.3'

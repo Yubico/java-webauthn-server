@@ -44,26 +44,21 @@ In case of disagreement on code style, defer to the style guide.
 Setup for publishing
 ---
 
-To enable publishing to Maven Central via Sonatype Nexus,
-[generate a user token](https://central.sonatype.org/publish/generate-token/).
-Set `yubicoPublish=true` in `$HOME/.gradle/gradle.properties` and add your token
-username and password. Example:
-
-```properties
-yubicoPublish=true
-ossrhUsername=8pnmjKQP
-ossrhPassword=bmjuyWSIik8P3Nq/ZM2G0Xs0sHEKBg+4q4zTZ8JDDRCr
-```
-
 Generate a Sonatype user token: https://central.sonatype.com/usertoken
 Please set an expiration date rather than unlimited validity.
-Set this and `yubicoPublish=true` in `$HOME/.gradle/gradle.properties`:
+Set this token username and password in `$HOME/.jreleaser/config.properties`,
+along with the fingerprint of the GPG key to use for signing artifacts.
+Example:
 
 ```properties
-yubicoPublish=true
-sonatypeUsername=NaXB0g
-sonatypePassword=wBbCPg2ThHhV2WpQPxt5kdTUaVQwOdnAS
+JRELEASER_MAVENCENTRAL_USERNAME=PYgw7b
+JRELEASER_MAVENCENTRAL_PASSWORD=QxExuJ0wwfBzbXVOsaSTUTBkXH8Fa2dFo
+JRELEASER_GPG_KEYNAME=2D6753CFF0B0FB32F9EEBA485B9688125FF0B636
+JRELEASER_MAVENCENTRAL_STAGE=UPLOAD
+JRELEASER_GITHUB_TOKEN=nope
 ```
+
+JReleaser requires `JRELEASER_GITHUB_TOKEN` to be set, but the value doesn't need to be valid.
 
 
 Publishing a release
