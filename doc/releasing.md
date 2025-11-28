@@ -81,10 +81,10 @@ Release candidate versions
 
     No tag body needed.
 
- 8. Publish to Sonatype Nexus:
+ 8. Publish to Sonatype Maven Central Portal:
 
     ```
-    $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+    $ ./gradlew publish jreleaserDeploy
     ```
 
  9. Push the tag to GitHub:
@@ -208,10 +208,10 @@ Release versions
 
     No tag body needed since that's included in the commit.
 
-12. Publish to Sonatype Nexus:
+ 8. Publish to Sonatype Maven Central Portal:
 
     ```
-    $ ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+    $ ./gradlew publish jreleaserDeploy
     ```
 
 13. Push the tag to GitHub:
