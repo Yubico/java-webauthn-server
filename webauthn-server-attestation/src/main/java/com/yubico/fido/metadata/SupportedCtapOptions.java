@@ -11,6 +11,7 @@ import lombok.Value;
  * A fixed-keys map of CTAP2 option names to Boolean values representing whether an authenticator
  * supports the respective option.
  *
+ * @since 2.0.0
  * @see <a
  *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
  *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -20,6 +21,7 @@ import lombok.Value;
 public class SupportedCtapOptions {
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -27,6 +29,7 @@ public class SupportedCtapOptions {
   boolean plat;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -36,6 +39,7 @@ public class SupportedCtapOptions {
   /**
    * If set to <code>true</code> the device is capable of accepting PIN.
    *
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -44,6 +48,7 @@ public class SupportedCtapOptions {
   boolean clientPin;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -53,6 +58,7 @@ public class SupportedCtapOptions {
   /**
    * If set to <code>true</code> the device is capable of built-in user verification.
    *
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -61,6 +67,7 @@ public class SupportedCtapOptions {
   boolean uv;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -68,6 +75,7 @@ public class SupportedCtapOptions {
   boolean pinUvAuthToken;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -75,6 +83,7 @@ public class SupportedCtapOptions {
   boolean noMcGaPermissionsWithClientPin;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -84,6 +93,7 @@ public class SupportedCtapOptions {
   /**
    * If set to <code>true</code> the authenticator is enterprise attestation capable.
    *
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -94,6 +104,7 @@ public class SupportedCtapOptions {
   /**
    * If set to <code>true</code> the authenticator supports the authenticatorBioEnrollment commands.
    *
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -105,6 +116,7 @@ public class SupportedCtapOptions {
    * If set to <code>true</code> the authenticator supports the Prototype authenticatorBioEnrollment
    * (0x40) commands.
    *
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -113,6 +125,7 @@ public class SupportedCtapOptions {
   boolean userVerificationMgmtPreview;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -120,6 +133,7 @@ public class SupportedCtapOptions {
   boolean uvBioEnroll;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -127,6 +141,7 @@ public class SupportedCtapOptions {
   boolean authnrCfg;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -134,6 +149,7 @@ public class SupportedCtapOptions {
   boolean uvAcfg;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -141,6 +157,7 @@ public class SupportedCtapOptions {
   boolean credMgmt;
 
   /**
+   * @since 2.8.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -148,6 +165,7 @@ public class SupportedCtapOptions {
   boolean perCredMgmtRO;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -156,6 +174,7 @@ public class SupportedCtapOptions {
   boolean credentialMgmtPreview;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -163,6 +182,7 @@ public class SupportedCtapOptions {
   boolean setMinPINLength;
 
   /**
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
@@ -173,6 +193,7 @@ public class SupportedCtapOptions {
    * If set to <code>true</code> the authenticator supports the Always Require User Verification
    * feature.
    *
+   * @since 2.0.0
    * @see <a
    *     href="https://fidoalliance.org/specs/fido-v2.2-ps-20250714/fido-client-to-authenticator-protocol-v2.2-ps-20250714.html#authenticatorGetInfo">Client
    *     to Authenticator Protocol (CTAP) §6.4. authenticatorGetInfo (0x04)</a>
