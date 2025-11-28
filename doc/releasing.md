@@ -87,6 +87,9 @@ Release candidate versions
     $ ./gradlew publish jreleaserDeploy
     ```
 
+    If this fails, check if your user token has expired and needs to be replaced.
+    See [Setup for publishing](./development.md#setup-for-publishing).
+
  9. Push the tag to GitHub:
 
     ```
@@ -213,6 +216,9 @@ Release versions
     ```
     $ ./gradlew publish jreleaserDeploy
     ```
+
+    If this fails, check if your user token has expired and needs to be replaced.
+    See [Setup for publishing](./development.md#setup-for-publishing).
 
 13. Push the tag to GitHub:
 

@@ -44,12 +44,15 @@ In case of disagreement on code style, defer to the style guide.
 Setup for publishing
 ---
 
-Generate a Sonatype user token: https://central.sonatype.com/usertoken
+Generate a Sonatype user token: https://central.sonatype.com/usertoken .
 Please set an expiration date rather than unlimited validity.
+
 Set this token username and password in `$HOME/.jreleaser/config.properties`,
 along with the fingerprint of the GPG key to use for signing artifacts.
 Example:
 
+
+<!-- These username and password values are meaningless random data, not real secrets -->
 ```properties
 JRELEASER_MAVENCENTRAL_USERNAME=PYgw7b
 JRELEASER_MAVENCENTRAL_PASSWORD=QxExuJ0wwfBzbXVOsaSTUTBkXH8Fa2dFo
