@@ -13,7 +13,7 @@ plugins {
   // See https://docs.gradle.org/current/userguide/java_platform_plugin.html
   // See https://github.com/Yubico/java-webauthn-server/issues/93#issuecomment-822806951
   id 'project-convention-publish'
-  id 'org.jreleaser' version '1.21.0-SNAPSHOT'  // Regression in JReleaser 1.20.0: https://github.com/jreleaser/jreleaser/issues/1981
+  id 'org.jreleaser' version '1.21.0'
 }
 
 import com.yubico.gradle.GitUtils
