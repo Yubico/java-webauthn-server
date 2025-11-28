@@ -40,6 +40,11 @@ New features:
 
 `webauthn-server-attestation`:
 
+New features:
+
+* Updated SupportedCtapOptions to version 2.2 of CTAP spec.
+ ** New field `perCredMgmtRO`
+
 Fixes:
 
 * Fixed parsing logic of tri-valued Boolean SupportedCtapOptions properties.
