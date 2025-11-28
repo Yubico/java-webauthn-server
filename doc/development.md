@@ -69,3 +69,8 @@ Publishing a release
 ---
 
 See the [release checklist](./releasing.md).
+
+The first time you publish a release, request to have your PGP key added to the trusted keyring in the [`release-verify-signatures` workflow][workflow-release-src].
+
+
+[workflow-release-src]: https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml
