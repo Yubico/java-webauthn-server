@@ -19,16 +19,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [8, 11, 17, 18]
+        java: [8, 11, 17, 21, 25]
         distribution: [temurin]
         include:
-          - java: 17
+          - java: 25
             distribution: zulu
-          - java: 17
+          - java: 25
             distribution: microsoft
 
     outputs:
-        report-java: 17
+        report-java: 25
         report-dist: temurin
 
     steps:
