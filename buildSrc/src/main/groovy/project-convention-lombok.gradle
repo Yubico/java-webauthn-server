@@ -6,8 +6,8 @@ plugins {
 }
 
 lombok {
-    version = "1.18.38"
-    sha256 = "1e1e427c36ff63c44fd30ef292d9e773ea3154460ab6265d3fed7e6f5bc50fb9"
+    version = "1.18.42"
+    sha256 = "3488a4e9994c26596baaceebee58cad36a50e3bdaec5be72b5834d3c3b560306"
 }
 
 tasks.withType(AbstractCompile.class) {
