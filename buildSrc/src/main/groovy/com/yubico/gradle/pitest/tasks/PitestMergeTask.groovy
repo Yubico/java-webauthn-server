@@ -1,6 +1,7 @@
 package com.yubico.gradle.pitest.tasks
 
 import groovy.xml.XmlUtil
+import groovy.xml.XmlParser
 
 import info.solidsoft.gradle.pitest.PitestTask
 import org.gradle.api.DefaultTask

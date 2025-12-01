@@ -21,7 +21,7 @@ import com.yubico.gradle.GitUtils
 project.ext.isCiBuild = System.env.CI == 'true'
 
 wrapper {
-  gradleVersion = '8.14.3'
+  gradleVersion = '9.0.0'
 }
 
 dependencies {
