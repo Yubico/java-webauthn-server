@@ -2,8 +2,8 @@ import io.franzbecker.gradle.lombok.task.DelombokTask
 
 plugins {
     id "java"
-    id "io.franzbecker.gradle-lombok"
 }
+project.apply(plugin: "io.franzbecker.gradle-lombok")
 
 lombok {
     version = "1.18.42"
