@@ -1,6 +1,6 @@
 plugins {
   `java-library`
-  id("me.champeau.jmh") version "0.6.8"
+  //id("me.champeau.jmh") version "0.6.8"
   `project-convention-java`
   `project-convention-scala`
   `project-convention-lombok`
@@ -30,13 +30,13 @@ dependencies {
   testImplementation("org.scalatestplus:junit-4-13_2.13")
   testImplementation("org.scalatestplus:scalacheck-1-16_2.13")
 
-  jmhImplementation(platform(project(":test-platform")))
-  jmhRuntimeOnly("org.slf4j:slf4j-nop")
+  //jmhImplementation(platform(project(":test-platform")))
+  //jmhRuntimeOnly("org.slf4j:slf4j-nop")
 }
 
-configurations.jmhRuntimeClasspath {
-  exclude(module = "slf4j-test")
-}
+//configurations.jmhRuntimeClasspath {
+  //exclude(module = "slf4j-test")
+//}
 
 tasks.jar {
   manifest {
