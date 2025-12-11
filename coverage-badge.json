@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "label": "mutation coverage",
+  "message": "79 %",
+  "color": "hsl(95, 100%, 40%)",
+  "cacheSeconds": 3600
+}
