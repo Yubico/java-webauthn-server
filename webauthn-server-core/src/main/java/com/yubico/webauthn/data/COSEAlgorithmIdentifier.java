@@ -38,18 +38,144 @@ import lombok.NonNull;
  * registered in the IANA COSE Algorithms registry, for instance, -7 for "ES256" and -257 for
  * "RS256".
  *
+ * @since 0.3.0
  * @see <a
  *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#typedefdef-cosealgorithmidentifier">§5.10.5.
  *     Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
  */
 public enum COSEAlgorithmIdentifier {
+
+  /**
+   * The signature scheme Ed25519 as defined in <a href="https://www.rfc-editor.org/rfc/rfc8032">RFC
+   * 8032</a>.
+   *
+   * <p>Note: This COSE identifier does not in general identify the full Ed25519 parameter suite,
+   * but is specialized to that meaning within the WebAuthn API.
+   *
+   * @since 1.4.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc8032">RFC 8032</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">WebAuthn
+   *     §5.8.5. Cryptographic Algorithm Identifier (typedef <code>COSEAlgorithmIdentifier</code>
+   *     )</a>
+   */
   EdDSA(-8),
+
+  /**
+   * The signature scheme Ed25519 as defined in <a href="https://www.rfc-editor.org/rfc/rfc8032">RFC
+   * 8032</a>.
+   *
+   * <p>This value is NOT RECOMMENDED, see the <a
+   * href="https://w3c.github.io/webauthn/#dom-publickeycredentialcreationoptions-pubkeycredparams">documentation
+   * of <code>pubKeyCredParams</code></a>. Use {@link #EdDSA} instead or in addition.
+   *
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a
+   *     href="https://www.ietf.org/archive/id/draft-ietf-jose-fully-specified-algorithms-13.html#name-edwards-curve-digital-signa">Fully-Specified
+   *     Algorithms for JOSE and COSE</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">WebAuthn
+   *     §5.8.5. Cryptographic Algorithm Identifier (typedef <code>COSEAlgorithmIdentifier</code>
+   *     )</a>
+   */
+  Ed25519(-19),
+
+  /**
+   * The signature scheme Ed448 as defined in <a href="https://www.rfc-editor.org/rfc/rfc8032">RFC
+   * 8032</a>.
+   *
+   * @since 2.8.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a
+   *     href="https://www.ietf.org/archive/id/draft-ietf-jose-fully-specified-algorithms-13.html#name-edwards-curve-digital-signa">Fully-Specified
+   *     Algorithms for JOSE and COSE</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">WebAuthn
+   *     §5.8.5. Cryptographic Algorithm Identifier (typedef <code>COSEAlgorithmIdentifier</code>
+   *     )</a>
+   */
+  Ed448(-53),
+
+  /**
+   * ECDSA with SHA-256 on the NIST P-256 curve.
+   *
+   * <p>Note: This COSE identifier does not in general restrict the curve to P-256, but is
+   * specialized to that meaning within the WebAuthn API.
+   *
+   * @since 0.3.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">WebAuthn
+   *     §5.8.5. Cryptographic Algorithm Identifier (typedef <code>COSEAlgorithmIdentifier</code>
+   *     )</a>
+   */
   ES256(-7),
+
+  /**
+   * ECDSA with SHA-384 on the NIST P-384 curve.
+   *
+   * <p>Note: This COSE identifier does not in general restrict the curve to P-384, but is
+   * specialized to that meaning within the WebAuthn API.
+   *
+   * @since 2.1.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">WebAuthn
+   *     §5.8.5. Cryptographic Algorithm Identifier (typedef <code>COSEAlgorithmIdentifier</code>
+   *     )</a>
+   */
   ES384(-35),
+
+  /**
+   * ECDSA with SHA-512 on the NIST P-521 curve.
+   *
+   * <p>Note: This COSE identifier does not in general restrict the curve to P-521, but is
+   * specialized to that meaning within the WebAuthn API.
+   *
+   * @since 2.1.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">WebAuthn
+   *     §5.8.5. Cryptographic Algorithm Identifier (typedef <code>COSEAlgorithmIdentifier</code>
+   *     )</a>
+   */
   ES512(-36),
+
+  /**
+   * RSASSA-PKCS1-v1_5 using SHA-256.
+   *
+   * @since 0.3.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   */
   RS256(-257),
+
+  /**
+   * RSASSA-PKCS1-v1_5 using SHA-384.
+   *
+   * @since 2.4.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   */
   RS384(-258),
+
+  /**
+   * RSASSA-PKCS1-v1_5 using SHA-512.
+   *
+   * @since 2.4.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   */
   RS512(-259),
+
+  /**
+   * RSASSA-PKCS1-v1_5 using SHA-1.
+   *
+   * @since 1.5.0
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   */
   RS1(-65535);
 
   @JsonValue @Getter private final long id;
@@ -65,6 +191,7 @@ public enum COSEAlgorithmIdentifier {
    *     COSEAlgorithmIdentifier}
    * @return The {@link COSEAlgorithmIdentifier} instance whose {@link #getId() id} equals <code>id
    *     </code>, if any.
+   * @since 0.3.0
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-alg-identifier">§5.8.5.
    *     Cryptographic Algorithm Identifier (typedef COSEAlgorithmIdentifier)</a>
    */
@@ -80,6 +207,7 @@ public enum COSEAlgorithmIdentifier {
    *     COSEAlgorithmIdentifier}, if possible. Returns empty if the {@link COSEAlgorithmIdentifier}
    *     enum has no constant matching the <code>alg</code> value.
    * @throws IllegalArgumentException if <code>publicKeyCose</code> is not a well-formed COSE_Key.
+   * @since 2.1.0
    */
   public static Optional<COSEAlgorithmIdentifier> fromPublicKey(@NonNull ByteArray publicKeyCose) {
     final CBORObject ALG = CBORObject.FromObject(3);

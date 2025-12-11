@@ -913,8 +913,10 @@ object TestAuthenticator {
         (TpmAlgHash.SHA384, TpmAlgAsym.RSA)
       case COSEAlgorithmIdentifier.RS512 =>
         (TpmAlgHash.SHA512, TpmAlgAsym.RSA)
-      case COSEAlgorithmIdentifier.RS1   => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
-      case COSEAlgorithmIdentifier.EdDSA => ???
+      case COSEAlgorithmIdentifier.RS1 => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
+      case COSEAlgorithmIdentifier.EdDSA | COSEAlgorithmIdentifier.Ed25519 |
+          COSEAlgorithmIdentifier.Ed448 =>
+        ???
     }
     val hashFunc = hashId match {
       case TpmAlgHash.SHA256 => Crypto.sha256(_: ByteArray)
@@ -962,7 +964,9 @@ object TestAuthenticator {
               case COSEAlgorithmIdentifier.RS1 | COSEAlgorithmIdentifier.RS256 |
                   COSEAlgorithmIdentifier.RS384 |
                   COSEAlgorithmIdentifier.RS512 |
-                  COSEAlgorithmIdentifier.EdDSA =>
+                  COSEAlgorithmIdentifier.EdDSA |
+                  COSEAlgorithmIdentifier.Ed25519 |
+                  COSEAlgorithmIdentifier.Ed448 =>
                 ???
             }),
             // kdf_scheme: ??? (unused?)
@@ -1104,7 +1108,9 @@ object TestAuthenticator {
 
   def generateKeypair(algorithm: COSEAlgorithmIdentifier): KeyPair =
     algorithm match {
-      case COSEAlgorithmIdentifier.EdDSA => generateEddsaKeypair()
+      case COSEAlgorithmIdentifier.EdDSA | COSEAlgorithmIdentifier.Ed25519 =>
+        generateEddsaKeypair("Ed25519")
+      case COSEAlgorithmIdentifier.Ed448 => generateEddsaKeypair("Ed448")
       case COSEAlgorithmIdentifier.ES256 => generateEcKeypair("secp256r1")
       case COSEAlgorithmIdentifier.ES384 => generateEcKeypair("secp384r1")
       case COSEAlgorithmIdentifier.ES512 => generateEcKeypair("secp521r1")
@@ -1125,8 +1131,7 @@ object TestAuthenticator {
     g.generateKeyPair()
   }
 
-  def generateEddsaKeypair(): KeyPair = {
-    val alg = "Ed25519"
+  def generateEddsaKeypair(alg: String): KeyPair = {
     // Need to use BouncyCastle provider here because JDK before 14 does not support EdDSA
     val keyPairGenerator =
       KeyPairGenerator.getInstance(alg, new BouncyCastleProvider())

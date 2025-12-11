@@ -1,6 +1,8 @@
 package com.yubico.webauthn
 
 import com.upokecenter.cbor.CBORObject
+import com.yubico.webauthn.WebAuthnCodecs.COSE_CRV_ED25519
+import com.yubico.webauthn.WebAuthnCodecs.COSE_CRV_ED448
 import com.yubico.webauthn.WebAuthnCodecs.rawEcKeyToCose
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
@@ -12,6 +14,7 @@ import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
 import java.security.spec.PKCS8EncodedKeySpec
+import scala.util.Try
 
 /** Re-exports from [[WebAuthnCodecs]] and [[Crypto]] so tests can use it
   */
@@ -46,8 +49,13 @@ object WebAuthnTestCodecs {
         val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
         keyFactory.generatePrivate(spec)
 
-      case COSEAlgorithmIdentifier.EdDSA =>
-        val keyFactory: KeyFactory = KeyFactory.getInstance("EdDSA")
+      case COSEAlgorithmIdentifier.EdDSA | COSEAlgorithmIdentifier.Ed25519 =>
+        val keyFactory: KeyFactory = KeyFactory.getInstance("Ed25519")
+        val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+        keyFactory.generatePrivate(spec)
+
+      case COSEAlgorithmIdentifier.Ed448 =>
+        val keyFactory: KeyFactory = KeyFactory.getInstance("Ed448")
         val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
         keyFactory.generatePrivate(spec)
 
@@ -65,13 +73,24 @@ object WebAuthnTestCodecs {
   }
 
   def eddsaPublicKeyToCose(key: BCEdDSAPublicKey): ByteArray = {
+    val encoded = key.getEncoded
+    val algOid: Array[Byte] =
+      Try(encoded.slice(2, 9)).getOrElse(
+        throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
+      )
+
+    val (alg, crv, keyBytesLength) =
+      if (algOid.sameElements(WebAuthnCodecs.ED25519_ALG_ID.getBytes))
+        (COSEAlgorithmIdentifier.EdDSA, COSE_CRV_ED25519, 32)
+      else if (algOid.sameElements(WebAuthnCodecs.ED448_ALG_ID.getBytes))
+        (COSEAlgorithmIdentifier.Ed448, COSE_CRV_ED448, 57)
+      else throw new IllegalArgumentException("Unknown EdDSA ASN.1 OID prefix")
+
     val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
     coseKey.put(1L, 1L) // Key type: octet key pair
-
-    coseKey.put(3L, COSEAlgorithmIdentifier.EdDSA.getId)
-    coseKey.put(-1L, 6L) // crv: Ed25519
-
-    coseKey.put(-2L, key.getEncoded.takeRight(32)) // Strip ASN.1 prefix
+    coseKey.put(3L, alg.getId)
+    coseKey.put(-1L, crv)
+    coseKey.put(-2L, encoded.takeRight(keyBytesLength)) // Strip ASN.1 prefix
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 

@@ -46,11 +46,9 @@ import com.yubico.webauthn.extension.appid.AppId;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.time.Clock;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -73,7 +71,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Builder(toBuilder = true)
 @Value
-public class RelyingParty {
+public class RelyingPartyV2<C extends CredentialRecord> {
 
   private static final SecureRandom random = new SecureRandom();
 
@@ -99,16 +97,17 @@ public class RelyingParty {
    * <p>The default is the set containing only the string <code>
    * "https://" + {@link #getIdentity()}.getId()</code>.
    *
-   * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} and {@link
-   * RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>false
+   * <p>If {@link RelyingPartyV2Builder#allowOriginPort(boolean) allowOriginPort} and {@link
+   * RelyingPartyV2Builder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>false
    * </code> (the default), then a successful registration or authentication operation requires
    * {@link CollectedClientData#getOrigin()} to exactly equal one of these values.
    *
-   * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} is <code>true</code>
-   * , then the above rule is relaxed to allow any port number in {@link
+   * <p>If {@link RelyingPartyV2Builder#allowOriginPort(boolean) allowOriginPort} is <code>true
+   * </code> , then the above rule is relaxed to allow any port number in {@link
    * CollectedClientData#getOrigin()}, regardless of any port specified.
    *
-   * <p>If {@link RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} is <code>
+   * <p>If {@link RelyingPartyV2Builder#allowOriginSubdomain(boolean) allowOriginSubdomain} is
+   * <code>
    * true</code>, then the above rule is relaxed to allow any subdomain, of any depth, of any of
    * these values.
    *
@@ -138,7 +137,21 @@ public class RelyingParty {
    *   <li>the stored signature counter when verifying an assertion
    * </ul>
    */
-  @NonNull private final CredentialRepository credentialRepository;
+  @NonNull private final CredentialRepositoryV2<C> credentialRepository;
+
+  /**
+   * Enable support for identifying users by username.
+   *
+   * <p>If set, then {@link #startAssertion(StartAssertionOptions)} allows setting the {@link
+   * StartAssertionOptions.StartAssertionOptionsBuilder#username(String) username} parameter when
+   * starting an assertion.
+   *
+   * <p>By default, this is not set.
+   *
+   * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be deleted
+   *     before reaching a mature release.
+   */
+  @Deprecated private final UsernameRepository usernameRepository;
 
   /**
    * The extension input to set for the <code>appid</code> and <code>appidExclude</code> extensions.
@@ -174,8 +187,9 @@ public class RelyingParty {
    * recommended to leave this parameter undefined.
    *
    * <p>If you set this, you may want to explicitly set {@link
-   * RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and {@link
-   * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource} too.
+   * RelyingPartyV2Builder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and {@link
+   * RelyingPartyV2Builder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
+   * too.
    *
    * <p>By default, this is not set.
    *
@@ -208,17 +222,16 @@ public class RelyingParty {
    * <p>The default is the following list, in order:
    *
    * <ol>
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES256 ES256}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#EdDSA EdDSA}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES384 ES384}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ES512 ES512}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#Ed448 Ed448}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS384 RS384}
-   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS512 RS512}
+   *   <li>{@link PublicKeyCredentialParameters#ES256 ES256}
+   *   <li>{@link PublicKeyCredentialParameters#EdDSA EdDSA}
+   *   <li>{@link PublicKeyCredentialParameters#ES384 ES384}
+   *   <li>{@link PublicKeyCredentialParameters#ES512 ES512}
+   *   <li>{@link PublicKeyCredentialParameters#Ed448 Ed448}
+   *   <li>{@link PublicKeyCredentialParameters#RS256 RS256}
+   *   <li>{@link PublicKeyCredentialParameters#RS384 RS384}
+   *   <li>{@link PublicKeyCredentialParameters#RS512 RS512}
    * </ol>
    *
-   * @since 0.2.0
    * @see PublicKeyCredentialCreationOptions#getAttestation()
    * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
    *     Attestation</a>
@@ -282,12 +295,7 @@ public class RelyingParty {
 
   /**
    * If <code>true</code>, the origin matching rule is relaxed to allow any subdomain, of any depth,
-   * of the values of {@link RelyingPartyBuilder#origins(Set) origins}.
-   *
-   * <p>Please see <a
-   * href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#sctn-code-injection">Security
-   * Considerations: Code injection attacks</a> for discussion of the risks in setting this to
-   * <code>true</code>.
+   * of the values of {@link RelyingPartyV2Builder#origins(Set) origins}.
    *
    * <p>The default is <code>false</code>.
    *
@@ -323,9 +331,6 @@ public class RelyingParty {
    *         <li><code>https://acme.com</code>
    *       </ul>
    * </ul>
-   *
-   * @see <a href="https://www.w3.org/TR/2023/WD-webauthn-3-20230927/#sctn-code-injection">§13.4.8.
-   *     Code injection attacks</a>
    */
   @Builder.Default private final boolean allowOriginSubdomain = false;
 
@@ -358,17 +363,18 @@ public class RelyingParty {
    * certificate chains.
    *
    * <p>This is intended primarily for testing, and relevant only if {@link
-   * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource)} is set.
+   * RelyingPartyV2Builder#attestationTrustSource(AttestationTrustSource)} is set.
    *
    * <p>The default is <code>Clock.systemUTC()</code>.
    */
   @Builder.Default @NonNull private final Clock clock = Clock.systemUTC();
 
   @Builder
-  private RelyingParty(
+  private RelyingPartyV2(
       @NonNull RelyingPartyIdentity identity,
       Set<String> origins,
-      @NonNull CredentialRepository credentialRepository,
+      @NonNull CredentialRepositoryV2<C> credentialRepository,
+      UsernameRepository usernameRepository,
       @NonNull Optional<AppId> appId,
       @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference,
       @NonNull Optional<AttestationTrustSource> attestationTrustSource,
@@ -395,6 +401,7 @@ public class RelyingParty {
     }
 
     this.credentialRepository = credentialRepository;
+    this.usernameRepository = usernameRepository;
     this.appId = appId;
     this.attestationConveyancePreference = attestationConveyancePreference;
     this.attestationTrustSource = attestationTrustSource;
@@ -418,67 +425,9 @@ public class RelyingParty {
    *
    * @return a new {@link List} containing only the algorithms supported in the current JCA context.
    */
-  static List<PublicKeyCredentialParameters> filterAvailableAlgorithms(
+  private static List<PublicKeyCredentialParameters> filterAvailableAlgorithms(
       List<PublicKeyCredentialParameters> pubKeyCredParams) {
-    return Collections.unmodifiableList(
-        pubKeyCredParams.stream()
-            .filter(
-                param -> {
-                  try {
-                    switch (param.getAlg()) {
-                      case EdDSA:
-                      case Ed25519:
-                        KeyFactory.getInstance("Ed25519");
-                        break;
-
-                      case Ed448:
-                        KeyFactory.getInstance("Ed448");
-                        break;
-
-                      case ES256:
-                      case ES384:
-                      case ES512:
-                        KeyFactory.getInstance("EC");
-                        break;
-
-                      case RS256:
-                      case RS384:
-                      case RS512:
-                      case RS1:
-                        KeyFactory.getInstance("RSA");
-                        break;
-
-                      default:
-                        log.warn(
-                            "Unknown algorithm: {}. Please file a bug report.", param.getAlg());
-                    }
-                  } catch (NoSuchAlgorithmException e) {
-                    log.warn(
-                        "Unsupported algorithm in RelyingParty.preferredPubkeyParams: {}. No KeyFactory available; registrations with this key algorithm will fail. You may need to add a dependency and load a provider using java.security.Security.addProvider().",
-                        param.getAlg());
-                    return false;
-                  }
-
-                  final String signatureAlgName;
-                  try {
-                    signatureAlgName = WebAuthnCodecs.getJavaAlgorithmName(param.getAlg());
-                  } catch (IllegalArgumentException e) {
-                    log.warn("Unknown algorithm: {}. Please file a bug report.", param.getAlg());
-                    return false;
-                  }
-
-                  try {
-                    Signature.getInstance(signatureAlgName);
-                  } catch (NoSuchAlgorithmException e) {
-                    log.warn(
-                        "Unsupported algorithm in RelyingParty.preferredPubkeyParams: {}. No Signature available; registrations with this key algorithm will fail. You may need to add a dependency and load a provider using java.security.Security.addProvider().",
-                        param.getAlg());
-                    return false;
-                  }
-
-                  return true;
-                })
-            .collect(Collectors.toList()));
+    return RelyingParty.filterAvailableAlgorithms(pubKeyCredParams);
   }
 
   public PublicKeyCredentialCreationOptions startRegistration(
@@ -490,8 +439,12 @@ public class RelyingParty {
             .challenge(generateChallenge())
             .pubKeyCredParams(preferredPubkeyParams)
             .excludeCredentials(
-                credentialRepository.getCredentialIdsForUsername(
-                    startRegistrationOptions.getUser().getName()))
+                credentialRepository
+                    .getCredentialDescriptorsForUserHandle(
+                        startRegistrationOptions.getUser().getId())
+                    .stream()
+                    .map(ToPublicKeyCredentialDescriptor::toPublicKeyCredentialDescriptor)
+                    .collect(Collectors.toSet()))
             .authenticatorSelection(startRegistrationOptions.getAuthenticatorSelection())
             .extensions(
                 startRegistrationOptions
@@ -524,24 +477,37 @@ public class RelyingParty {
    * #finishRegistration(FinishRegistrationOptions)} instead of this method.
    */
   FinishRegistrationSteps _finishRegistration(FinishRegistrationOptions options) {
-    return FinishRegistrationSteps.fromV1(this, options);
+    return new FinishRegistrationSteps(this, options);
   }
 
   public AssertionRequest startAssertion(StartAssertionOptions startAssertionOptions) {
+    if (startAssertionOptions.getUsername().isPresent() && usernameRepository == null) {
+      throw new IllegalArgumentException(
+          "StartAssertionOptions.username must not be set when usernameRepository is not configured.");
+    }
+
     PublicKeyCredentialRequestOptionsBuilder pkcro =
         PublicKeyCredentialRequestOptions.builder()
             .challenge(generateChallenge())
             .rpId(identity.getId())
             .allowCredentials(
                 OptionalUtil.orElseOptional(
-                        startAssertionOptions.getUsername(),
+                        startAssertionOptions.getUserHandle(),
                         () ->
-                            startAssertionOptions
-                                .getUserHandle()
-                                .flatMap(credentialRepository::getUsernameForUserHandle))
+                            Optional.ofNullable(usernameRepository)
+                                .flatMap(
+                                    unr ->
+                                        startAssertionOptions
+                                            .getUsername()
+                                            .flatMap(unr::getUserHandleForUsername)))
+                    .map(credentialRepository::getCredentialDescriptorsForUserHandle)
                     .map(
-                        un ->
-                            new ArrayList<>(credentialRepository.getCredentialIdsForUsername(un))))
+                        descriptors ->
+                            descriptors.stream()
+                                .map(
+                                    ToPublicKeyCredentialDescriptor
+                                        ::toPublicKeyCredentialDescriptor)
+                                .collect(Collectors.toList())))
             .extensions(
                 startAssertionOptions
                     .getExtensions()
@@ -560,16 +526,16 @@ public class RelyingParty {
 
   /**
    * @throws InvalidSignatureCountException if {@link
-   *     RelyingPartyBuilder#validateSignatureCounter(boolean) validateSignatureCounter} is <code>
+   *     RelyingPartyV2Builder#validateSignatureCounter(boolean) validateSignatureCounter} is <code>
    *     true</code>, the {@link AuthenticatorData#getSignatureCounter() signature count} in the
    *     response is less than or equal to the {@link RegisteredCredential#getSignatureCount()
    *     stored signature count}, and at least one of the signature count values is nonzero.
    * @throws AssertionFailedException if validation fails for any other reason.
    */
-  public AssertionResult finishAssertion(FinishAssertionOptions finishAssertionOptions)
+  public AssertionResultV2<C> finishAssertion(FinishAssertionOptions finishAssertionOptions)
       throws AssertionFailedException {
     try {
-      return _finishAssertion(finishAssertionOptions).run();
+      return _finishAssertion(finishAssertionOptions).runV2();
     } catch (IllegalArgumentException e) {
       throw new AssertionFailedException(e);
     }
@@ -582,15 +548,18 @@ public class RelyingParty {
    * a separate method to facilitate testing; users should call {@link
    * #finishAssertion(FinishAssertionOptions)} instead of this method.
    */
-  FinishAssertionSteps<RegisteredCredential> _finishAssertion(FinishAssertionOptions options) {
-    return FinishAssertionSteps.fromV1(this, options);
+  FinishAssertionSteps<C> _finishAssertion(FinishAssertionOptions options) {
+    return new FinishAssertionSteps<C>(this, options);
   }
 
-  public static RelyingPartyBuilder.MandatoryStages builder() {
-    return new RelyingPartyBuilder.MandatoryStages();
+  static <C extends CredentialRecord> RelyingPartyV2Builder<C> builder(
+      RelyingPartyIdentity identity, CredentialRepositoryV2<C> credentialRepository) {
+    return new RelyingPartyV2Builder<C>()
+        .identity(identity)
+        .credentialRepository(credentialRepository);
   }
 
-  public static class RelyingPartyBuilder {
+  public static class RelyingPartyV2Builder<C extends CredentialRecord> {
     private @NonNull Optional<AppId> appId = Optional.empty();
     private @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference =
         Optional.empty();
@@ -602,16 +571,16 @@ public class RelyingParty {
      * <p>The default is the set containing only the string <code>
      * "https://" + {@link #getIdentity()}.getId()</code>.
      *
-     * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} and {@link
-     * RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>false
-     * </code> (the default), then a successful registration or authentication operation requires
-     * {@link CollectedClientData#getOrigin()} to exactly equal one of these values.
+     * <p>If {@link RelyingPartyV2Builder#allowOriginPort(boolean) allowOriginPort} and {@link
+     * RelyingPartyV2Builder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>
+     * false</code> (the default), then a successful registration or authentication operation
+     * requires {@link CollectedClientData#getOrigin()} to exactly equal one of these values.
      *
-     * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} is <code>true
+     * <p>If {@link RelyingPartyV2Builder#allowOriginPort(boolean) allowOriginPort} is <code>true
      * </code> , then the above rule is relaxed to allow any port number in {@link
      * CollectedClientData#getOrigin()}, regardless of any port specified.
      *
-     * <p>If {@link RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} is
+     * <p>If {@link RelyingPartyV2Builder#allowOriginSubdomain(boolean) allowOriginSubdomain} is
      * <code>true</code>, then the above rule is relaxed to allow any subdomain, of any depth, of
      * any of these values.
      *
@@ -619,11 +588,11 @@ public class RelyingParty {
      * data origin must be valid URLs. Origins that are not valid URLs are matched only by exact
      * string equality.
      *
-     * @since 0.6.0
+     * @since 2.7.0
      * @see #getIdentity()
      * @see #origins(Optional)
      */
-    public RelyingPartyBuilder origins(@NonNull Set<String> origins) {
+    public RelyingPartyV2Builder<C> origins(@NonNull Set<String> origins) {
       this.origins = origins;
       return this;
     }
@@ -636,16 +605,16 @@ public class RelyingParty {
      * <p>The default is the set containing only the string <code>
      * "https://" + {@link #getIdentity()}.getId()</code>.
      *
-     * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} and {@link
-     * RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>false
-     * </code> (the default), then a successful registration or authentication operation requires
-     * {@link CollectedClientData#getOrigin()} to exactly equal one of these values.
+     * <p>If {@link RelyingPartyV2Builder#allowOriginPort(boolean) allowOriginPort} and {@link
+     * RelyingPartyV2Builder#allowOriginSubdomain(boolean) allowOriginSubdomain} are both <code>
+     * false</code> (the default), then a successful registration or authentication operation
+     * requires {@link CollectedClientData#getOrigin()} to exactly equal one of these values.
      *
-     * <p>If {@link RelyingPartyBuilder#allowOriginPort(boolean) allowOriginPort} is <code>true
+     * <p>If {@link RelyingPartyV2Builder#allowOriginPort(boolean) allowOriginPort} is <code>true
      * </code> , then the above rule is relaxed to allow any port number in {@link
      * CollectedClientData#getOrigin()}, regardless of any port specified.
      *
-     * <p>If {@link RelyingPartyBuilder#allowOriginSubdomain(boolean) allowOriginSubdomain} is
+     * <p>If {@link RelyingPartyV2Builder#allowOriginSubdomain(boolean) allowOriginSubdomain} is
      * <code>true</code>, then the above rule is relaxed to allow any subdomain, of any depth, of
      * any of these values.
      *
@@ -657,57 +626,9 @@ public class RelyingParty {
      * @see #getIdentity()
      * @see #origins(Set)
      */
-    public RelyingPartyBuilder origins(@NonNull Optional<Set<String>> origins) {
+    public RelyingPartyV2Builder<C> origins(@NonNull Optional<Set<String>> origins) {
       this.origins = origins.orElse(null);
       return this;
-    }
-
-    public static class MandatoryStages {
-      private final RelyingPartyBuilder builder = new RelyingPartyBuilder();
-
-      /**
-       * {@link RelyingPartyBuilder#identity(RelyingPartyIdentity) identity} is a required
-       * parameter.
-       *
-       * @see RelyingPartyBuilder#identity(RelyingPartyIdentity)
-       */
-      public Step2 identity(RelyingPartyIdentity identity) {
-        builder.identity(identity);
-        return new Step2();
-      }
-
-      public class Step2 {
-        /**
-         * {@link RelyingPartyBuilder#credentialRepository(CredentialRepository)
-         * credentialRepository} is a required parameter.
-         *
-         * @see RelyingPartyBuilder#credentialRepository(CredentialRepository)
-         * @see #credentialRepositoryV2(CredentialRepositoryV2)
-         */
-        public RelyingPartyBuilder credentialRepository(CredentialRepository credentialRepository) {
-          return builder.credentialRepository(credentialRepository);
-        }
-
-        /**
-         * {@link RelyingPartyBuilder#credentialRepository(CredentialRepository)
-         * credentialRepository} is a required parameter. This setter differs from {@link
-         * #credentialRepository(CredentialRepository)} in that it takes an instance of {@link
-         * CredentialRepositoryV2} and converts the builder's return type to {@link RelyingPartyV2}.
-         * {@link CredentialRepositoryV2} does not require the application to support usernames,
-         * unless {@link RelyingPartyV2.RelyingPartyV2Builder#usernameRepository(UsernameRepository)
-         * usernameRepository} is also set in a subsequent builder step.
-         *
-         * @see #credentialRepository(CredentialRepository)
-         * @deprecated EXPERIMENTAL: This is an experimental feature. It is likely to change or be
-         *     deleted before reaching a mature release.
-         */
-        @Deprecated
-        public <C extends CredentialRecord>
-            RelyingPartyV2.RelyingPartyV2Builder<C> credentialRepositoryV2(
-                CredentialRepositoryV2<C> credentialRepository) {
-          return RelyingPartyV2.builder(builder.identity, credentialRepository);
-        }
-      }
     }
 
     /**
@@ -736,7 +657,7 @@ public class RelyingParty {
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
      *     FIDO AppID Exclusion Extension (appidExclude)</a>
      */
-    public RelyingPartyBuilder appId(@NonNull Optional<AppId> appId) {
+    public RelyingPartyV2Builder<C> appId(@NonNull Optional<AppId> appId) {
       this.appId = appId;
       return this;
     }
@@ -767,7 +688,7 @@ public class RelyingParty {
      *     href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-appid-exclude-extension">§10.2.
      *     FIDO AppID Exclusion Extension (appidExclude)</a>
      */
-    public RelyingPartyBuilder appId(@NonNull AppId appId) {
+    public RelyingPartyV2Builder<C> appId(@NonNull AppId appId) {
       return this.appId(Optional.of(appId));
     }
 
@@ -779,9 +700,9 @@ public class RelyingParty {
      * recommended to leave this parameter undefined.
      *
      * <p>If you set this, you may want to explicitly set {@link
-     * RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and {@link
-     * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
-     * too.
+     * RelyingPartyV2Builder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and
+     * {@link RelyingPartyV2Builder#attestationTrustSource(AttestationTrustSource)
+     * attestationTrustSource} too.
      *
      * <p>By default, this is not set.
      *
@@ -789,7 +710,7 @@ public class RelyingParty {
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
-    public RelyingPartyBuilder attestationConveyancePreference(
+    public RelyingPartyV2Builder<C> attestationConveyancePreference(
         @NonNull Optional<AttestationConveyancePreference> attestationConveyancePreference) {
       this.attestationConveyancePreference = attestationConveyancePreference;
       return this;
@@ -803,9 +724,9 @@ public class RelyingParty {
      * recommended to leave this parameter undefined.
      *
      * <p>If you set this, you may want to explicitly set {@link
-     * RelyingPartyBuilder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and {@link
-     * RelyingPartyBuilder#attestationTrustSource(AttestationTrustSource) attestationTrustSource}
-     * too.
+     * RelyingPartyV2Builder#allowUntrustedAttestation(boolean) allowUntrustedAttestation} and
+     * {@link RelyingPartyV2Builder#attestationTrustSource(AttestationTrustSource)
+     * attestationTrustSource} too.
      *
      * <p>By default, this is not set.
      *
@@ -813,7 +734,7 @@ public class RelyingParty {
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
-    public RelyingPartyBuilder attestationConveyancePreference(
+    public RelyingPartyV2Builder<C> attestationConveyancePreference(
         @NonNull AttestationConveyancePreference attestationConveyancePreference) {
       return this.attestationConveyancePreference(Optional.of(attestationConveyancePreference));
     }
@@ -829,7 +750,7 @@ public class RelyingParty {
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
-    public RelyingPartyBuilder attestationTrustSource(
+    public RelyingPartyV2Builder<C> attestationTrustSource(
         @NonNull Optional<AttestationTrustSource> attestationTrustSource) {
       this.attestationTrustSource = attestationTrustSource;
       return this;
@@ -846,7 +767,7 @@ public class RelyingParty {
      * @see <a href="https://www.w3.org/TR/2021/REC-webauthn-2-20210408/#sctn-attestation">§6.4.
      *     Attestation</a>
      */
-    public RelyingPartyBuilder attestationTrustSource(
+    public RelyingPartyV2Builder<C> attestationTrustSource(
         @NonNull AttestationTrustSource attestationTrustSource) {
       return this.attestationTrustSource(Optional.of(attestationTrustSource));
     }
