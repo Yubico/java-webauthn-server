@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - name: Fetch keys
-      run: gpg --no-default-keyring --keyring ./yubico.keyring --keyserver hkps://keys.openpgp.org --recv-keys 57A9DEED4C6D962A923BB691816F3ED99921835E
+      run: gpg --no-default-keyring --keyring ./yubico.keyring --keyserver hkps://keys.openpgp.org --recv-keys 57A9DEED4C6D962A923BB691816F3ED99921835E 9E885C0302F9BB9167529C2D5CBA11E6ADC7BCD1
 
     - name: Download signatures from Maven Central
       timeout-minutes: 60
