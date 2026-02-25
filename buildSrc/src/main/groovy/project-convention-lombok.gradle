@@ -1,36 +1,4 @@
-import io.franzbecker.gradle.lombok.task.DelombokTask
-
 plugins {
     id "java"
-}
-project.apply(plugin: "io.franzbecker.gradle-lombok")
-
-lombok {
-    version = "1.18.42"
-    sha256 = "3488a4e9994c26596baaceebee58cad36a50e3bdaec5be72b5834d3c3b560306"
-}
-
-tasks.withType(AbstractCompile.class) {
-    dependsOn(tasks.verifyLombok)
-}
-
-task delombok(type: DelombokTask.class, dependsOn: tasks.classes) {
-    ext.outputDir = file("${buildDir}/delombok")
-    outputs.dir(outputDir)
-    project.sourceSets.main.java.srcDirs.forEach {
-        if (!it.exists()) {
-            it.mkdirs()
-        }
-        inputs.dir(it)
-        args(it, "-d", outputDir)
-    }
-    doFirst {
-        outputDir.deleteDir()
-    }
-}
-
-javadoc {
-    dependsOn(delombok)
-    source = tasks.delombok.outputDir
-    inputs.dir(tasks.delombok.outputDir)
+    id "io.freefair.lombok"
 }
