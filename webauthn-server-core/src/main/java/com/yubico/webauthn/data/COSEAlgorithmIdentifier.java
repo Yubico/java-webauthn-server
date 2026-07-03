@@ -176,7 +176,40 @@ public enum COSEAlgorithmIdentifier {
    * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
    *     registry</a>
    */
-  RS1(-65535);
+  RS1(-65535),
+
+  /**
+   * ML-DSA-44 as defined in <a href="https://csrc.nist.gov/pubs/fips/204/final">NIST FIPS 204</a>.
+   *
+   * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   *
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9964">RFC 9964</a>
+   */
+  ML_DSA_44(-48),
+
+  /**
+   * ML-DSA-65 as defined in <a href="https://csrc.nist.gov/pubs/fips/204/final">NIST FIPS 204</a>.
+   *
+   * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   *
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9964">RFC 9964</a>
+   */
+  ML_DSA_65(-49),
+
+  /**
+   * ML-DSA-87 as defined in <a href="https://csrc.nist.gov/pubs/fips/204/final">NIST FIPS 204</a>.
+   *
+   * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   *
+   * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
+   *     registry</a>
+   * @see <a href="https://www.rfc-editor.org/rfc/rfc9964">RFC 9964</a>
+   */
+  ML_DSA_87(-50);
 
   @JsonValue @Getter private final long id;
 

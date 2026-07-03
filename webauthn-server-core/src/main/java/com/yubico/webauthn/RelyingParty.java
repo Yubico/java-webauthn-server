@@ -216,6 +216,9 @@ public class RelyingParty {
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS256 RS256}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS384 RS384}
    *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#RS512 RS512}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ML_DSA_44 ML_DSA_44}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ML_DSA_65 ML_DSA_65}
+   *   <li>{@link com.yubico.webauthn.data.PublicKeyCredentialParameters#ML_DSA_87 ML_DSA_87}
    * </ol>
    *
    * @since 0.2.0
@@ -234,7 +237,10 @@ public class RelyingParty {
               PublicKeyCredentialParameters.Ed448,
               PublicKeyCredentialParameters.RS256,
               PublicKeyCredentialParameters.RS384,
-              PublicKeyCredentialParameters.RS512));
+              PublicKeyCredentialParameters.RS512,
+              PublicKeyCredentialParameters.ML_DSA_44,
+              PublicKeyCredentialParameters.ML_DSA_65,
+              PublicKeyCredentialParameters.ML_DSA_87));
 
   /**
    * If <code>true</code>, the origin matching rule is relaxed to allow any port number.
@@ -446,6 +452,18 @@ public class RelyingParty {
                       case RS512:
                       case RS1:
                         KeyFactory.getInstance("RSA");
+                        break;
+
+                      case ML_DSA_44:
+                        KeyFactory.getInstance("ML-DSA-44");
+                        break;
+
+                      case ML_DSA_65:
+                        KeyFactory.getInstance("ML-DSA-65");
+                        break;
+
+                      case ML_DSA_87:
+                        KeyFactory.getInstance("ML-DSA-87");
                         break;
 
                       default:

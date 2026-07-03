@@ -543,6 +543,18 @@ public class PublicKeyCredentialCreationOptions {
                         KeyFactory.getInstance("RSA");
                         break;
 
+                      case ML_DSA_44:
+                        KeyFactory.getInstance("ML-DSA-44");
+                        break;
+
+                      case ML_DSA_65:
+                        KeyFactory.getInstance("ML-DSA-65");
+                        break;
+
+                      case ML_DSA_87:
+                        KeyFactory.getInstance("ML-DSA-87");
+                        break;
+
                       default:
                         log.warn(
                             "Unknown algorithm: {}. Please file a bug report.", param.getAlg());
@@ -591,6 +603,18 @@ public class PublicKeyCredentialCreationOptions {
 
                       case RS1:
                         Signature.getInstance("SHA1withRSA");
+                        break;
+
+                      case ML_DSA_44:
+                        Signature.getInstance("ML-DSA-44");
+                        break;
+
+                      case ML_DSA_65:
+                        Signature.getInstance("ML-DSA-65");
+                        break;
+
+                      case ML_DSA_87:
+                        Signature.getInstance("ML-DSA-87");
                         break;
 
                       default:
