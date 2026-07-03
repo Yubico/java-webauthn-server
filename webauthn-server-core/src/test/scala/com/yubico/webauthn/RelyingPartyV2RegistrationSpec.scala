@@ -4397,6 +4397,62 @@ class RelyingPartyV2RegistrationSpec
               COSEAlgorithmIdentifier.RS512
             )
           }
+
+          for {
+            (param, alg, javaAlgName) <- List(
+              (
+                PublicKeyCredentialParameters.ML_DSA_44,
+                COSEAlgorithmIdentifier.ML_DSA_44,
+                "ML-DSA-44",
+              ),
+              (
+                PublicKeyCredentialParameters.ML_DSA_65,
+                COSEAlgorithmIdentifier.ML_DSA_65,
+                "ML-DSA-65",
+              ),
+              (
+                PublicKeyCredentialParameters.ML_DSA_87,
+                COSEAlgorithmIdentifier.ML_DSA_87,
+                "ML-DSA-87",
+              ),
+            )
+          } it(s"${alg}, when available.") {
+            // The RelyingParty constructor call needs to be here inside the `it` call in order to have the right JCA provider environment
+            val rp = RelyingParty
+              .builder()
+              .identity(
+                RelyingPartyIdentity
+                  .builder()
+                  .id("localhost")
+                  .name("Test party")
+                  .build()
+              )
+              .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
+              .build()
+
+            val pkcco = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(
+                  UserIdentity
+                    .builder()
+                    .name("foo")
+                    .displayName("Foo")
+                    .id(ByteArray.fromHex("aabbccdd"))
+                    .build()
+                )
+                .build()
+            )
+            val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
+
+            if (Try(KeyFactory.getInstance(javaAlgName)).isSuccess) {
+              pubKeyCredParams should contain(param)
+              pubKeyCredParams map (_.getAlg) should contain(alg)
+            } else {
+              pubKeyCredParams should not contain (param)
+              pubKeyCredParams map (_.getAlg) should not contain (alg)
+            }
+          }
         }
 
         describe("do not include") {
