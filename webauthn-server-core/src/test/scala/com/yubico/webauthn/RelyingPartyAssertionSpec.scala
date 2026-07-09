@@ -72,6 +72,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.io.IOException
 import java.nio.charset.Charset
+import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.interfaces.ECPublicKey
@@ -2882,6 +2883,62 @@ class RelyingPartyAssertionSpec
       it("a generated Ed448 key.") {
         val registrationTestData =
           RegistrationTestData.Packed.BasicAttestationEd448
+        val testData = registrationTestData.assertion.get
+
+        val rp = RelyingParty
+          .builder()
+          .identity(
+            RelyingPartyIdentity.builder().id("localhost").name("Test RP").build()
+          )
+          .credentialRepository(
+            Helpers.CredentialRepository.withUser(
+              registrationTestData.userId,
+              RegisteredCredential
+                .builder()
+                .credentialId(registrationTestData.response.getId)
+                .userHandle(registrationTestData.userId.getId)
+                .publicKeyCose(
+                  registrationTestData.response.getResponse.getParsedAuthenticatorData.getAttestedCredentialData.get.getCredentialPublicKey
+                )
+                .signatureCount(0)
+                .build(),
+            )
+          )
+          .build()
+
+        val result = rp.finishAssertion(
+          FinishAssertionOptions
+            .builder()
+            .request(testData.request)
+            .response(testData.response)
+            .build()
+        )
+
+        result.isSuccess should be(true)
+        result.getCredential.getUserHandle should equal(
+          registrationTestData.userId.getId
+        )
+        result.getCredential.getCredentialId should equal(
+          registrationTestData.response.getId
+        )
+        result.getCredential.getCredentialId should equal(
+          testData.response.getId
+        )
+      }
+
+      for { algName <- List("ML-DSA-44", "ML-DSA-65", "ML-DSA-87") } it(
+        s"a generated ${algName} key, when available."
+      ) {
+        assume(Try(KeyFactory.getInstance(algName)).isSuccess)
+
+        val registrationTestData = algName match {
+          case "ML-DSA-44" =>
+            RegistrationTestData.Packed.BasicAttestationMlDsa44
+          case "ML-DSA-65" =>
+            RegistrationTestData.Packed.BasicAttestationMlDsa65
+          case "ML-DSA-87" =>
+            RegistrationTestData.Packed.BasicAttestationMlDsa87
+        }
         val testData = registrationTestData.assertion.get
 
         val rp = RelyingParty
