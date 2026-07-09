@@ -85,6 +85,7 @@ import java.security.interfaces.RSAPublicKey
 import java.security.spec.ECGenParameterSpec
 import java.security.spec.ECPoint
 import java.security.spec.ECPublicKeySpec
+import java.security.spec.NamedParameterSpec
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
@@ -416,6 +417,8 @@ object TestAuthenticator {
       case pub: BCEdDSAPublicKey => WebAuthnTestCodecs.eddsaPublicKeyToCose(pub)
       case pub: RSAPublicKey =>
         WebAuthnTestCodecs.rsaPublicKeyToCose(pub, keyAlgorithm)
+      case pub if pub.getAlgorithm == "ML-DSA" =>
+        WebAuthnTestCodecs.mlDsaPublicKeyToCose(pub, keyAlgorithm)
     }
 
     val authDataBytes: ByteArray = makeAuthDataBytes(
@@ -1098,8 +1101,15 @@ object TestAuthenticator {
   ): ByteArray = {
     val jAlg = WebAuthnCodecs.getJavaAlgorithmName(alg)
 
-    // Need to use BouncyCastle provider here because JDK15 standard providers do not support secp256k1
-    val sig = Signature.getInstance(jAlg, new BouncyCastleProvider())
+    val sig = alg match {
+      case COSEAlgorithmIdentifier.ML_DSA_44 |
+          COSEAlgorithmIdentifier.ML_DSA_65 |
+          COSEAlgorithmIdentifier.ML_DSA_87 =>
+        Signature.getInstance(jAlg)
+      case _ =>
+        // Need to use BouncyCastle provider here because JDK15 standard providers do not support secp256k1
+        Signature.getInstance(jAlg, new BouncyCastleProvider())
+    }
 
     sig.initSign(key)
     sig.update(data.getBytes)
@@ -1117,6 +1127,10 @@ object TestAuthenticator {
       case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS384 |
           COSEAlgorithmIdentifier.RS512 | COSEAlgorithmIdentifier.RS1 =>
         generateRsaKeypair()
+      case COSEAlgorithmIdentifier.ML_DSA_44 |
+          COSEAlgorithmIdentifier.ML_DSA_65 |
+          COSEAlgorithmIdentifier.ML_DSA_87 =>
+        generateMlDsaKeypair(algorithm)
     }
 
   def generateEcKeypair(curve: String = "secp256r1"): KeyPair = {
@@ -1135,6 +1149,15 @@ object TestAuthenticator {
     // Need to use BouncyCastle provider here because JDK before 14 does not support EdDSA
     val keyPairGenerator =
       KeyPairGenerator.getInstance(alg, new BouncyCastleProvider())
+    keyPairGenerator.generateKeyPair()
+  }
+
+  def generateMlDsaKeypair(
+      algorithm: COSEAlgorithmIdentifier
+  ): KeyPair = {
+    val alg = WebAuthnCodecs.getJavaAlgorithmName(algorithm)
+    val keyPairGenerator = KeyPairGenerator.getInstance("ML-DSA")
+    keyPairGenerator.initialize(new NamedParameterSpec(alg))
     keyPairGenerator.generateKeyPair()
   }
 
@@ -1312,9 +1335,15 @@ object TestAuthenticator {
       val signerBuilder = new JcaContentSignerBuilder(
         WebAuthnCodecs.getJavaAlgorithmName(signingAlg)
       )
-        .setProvider(
-          new BouncyCastleProvider()
-        ) // Needed because JDK15 standard providers do not support secp256k1
+      signingAlg match {
+        case COSEAlgorithmIdentifier.ML_DSA_44 |
+            COSEAlgorithmIdentifier.ML_DSA_65 |
+            COSEAlgorithmIdentifier.ML_DSA_87 =>
+        case _ =>
+          signerBuilder.setProvider(
+            new BouncyCastleProvider()
+          ) // Needed because JDK15 standard providers do not support secp256k1
+      }
 
       builder.build(signerBuilder.build(signingKey)).getEncoded
     })
