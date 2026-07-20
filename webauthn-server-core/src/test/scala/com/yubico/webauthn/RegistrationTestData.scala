@@ -1379,6 +1379,8 @@ case class RegistrationTestData(
           PublicKeyCredentialParameters.ES512,
           PublicKeyCredentialParameters.Ed448,
           PublicKeyCredentialParameters.ML_DSA_44,
+          PublicKeyCredentialParameters.ML_DSA_65,
+          PublicKeyCredentialParameters.ML_DSA_87,
           PublicKeyCredentialParameters.RS256,
           PublicKeyCredentialParameters.RS384,
           PublicKeyCredentialParameters.RS512,
