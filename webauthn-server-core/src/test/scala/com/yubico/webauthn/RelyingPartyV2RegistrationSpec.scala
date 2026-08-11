@@ -75,6 +75,7 @@ import com.yubico.webauthn.extension.uvm.MatcherProtectionType
 import com.yubico.webauthn.extension.uvm.UserVerificationMethod
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
+import com.yubico.webauthn.test.Util
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
@@ -102,7 +103,6 @@ import java.io.IOException
 import java.math.BigInteger
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PrivateKey
@@ -4306,7 +4306,7 @@ class RelyingPartyV2RegistrationSpec
             )
             val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
 
-            if (Try(KeyFactory.getInstance("EdDSA")).isSuccess) {
+            if (Util.eddsaAvailable) {
               pubKeyCredParams should contain(
                 PublicKeyCredentialParameters.EdDSA
               )
@@ -4353,7 +4353,7 @@ class RelyingPartyV2RegistrationSpec
 
             val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
 
-            if (Try(KeyFactory.getInstance("EdDSA")).isSuccess) {
+            if (Util.eddsaAvailable) {
               pubKeyCredParams should contain(
                 PublicKeyCredentialParameters.Ed448
               )
@@ -4445,7 +4445,7 @@ class RelyingPartyV2RegistrationSpec
             )
             val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
 
-            if (Try(KeyFactory.getInstance(javaAlgName)).isSuccess) {
+            if (Util.algorithmAvailable(javaAlgName)) {
               pubKeyCredParams should contain(param)
               pubKeyCredParams map (_.getAlg) should contain(alg)
             } else {

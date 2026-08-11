@@ -49,6 +49,7 @@ import com.yubico.webauthn.data.RegistrationExtensionInputs
 import com.yubico.webauthn.data.RelyingPartyIdentity
 import com.yubico.webauthn.data.UserIdentity
 import com.yubico.webauthn.test.RealExamples
+import com.yubico.webauthn.test.Util
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.DERSequence
 import org.bouncycastle.asn1.DERUTF8String
@@ -202,7 +203,7 @@ object RegistrationTestData {
       RealExamples.ThinkpadTpm.asRegistrationTestData,
     ) ++ (
       // ML-DSA is only available on JDK 24+
-      if (Try(KeyFactory.getInstance("ML-DSA")).isSuccess)
+      if (Util.mldsaAvailable)
         List(
           Packed.BasicAttestationMlDsa44,
           Packed.BasicAttestationMlDsa65,

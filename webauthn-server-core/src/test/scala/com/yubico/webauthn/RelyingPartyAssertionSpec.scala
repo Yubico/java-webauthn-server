@@ -60,6 +60,7 @@ import com.yubico.webauthn.extension.uvm.MatcherProtectionType
 import com.yubico.webauthn.extension.uvm.UserVerificationMethod
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
+import com.yubico.webauthn.test.Util
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.junit.runner.RunWith
 import org.scalacheck.Arbitrary.arbitrary
@@ -72,7 +73,6 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.io.IOException
 import java.nio.charset.Charset
-import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.interfaces.ECPublicKey
@@ -2929,7 +2929,7 @@ class RelyingPartyAssertionSpec
       for { algName <- List("ML-DSA-44", "ML-DSA-65", "ML-DSA-87") } it(
         s"a generated ${algName} key, when available."
       ) {
-        assume(Try(KeyFactory.getInstance(algName)).isSuccess)
+        assume(Util.algorithmAvailable(algName))
 
         val registrationTestData = algName match {
           case "ML-DSA-44" =>
