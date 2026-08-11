@@ -2314,7 +2314,7 @@ class RelyingPartyV2RegistrationSpec
                           credKeyAlgorithm
                         )
                       ),
-                      keyAlgorithm = credKeyAlgorithm,
+                      keyAlgorithm = Some(credKeyAlgorithm),
                     )
                   )
 
@@ -2488,7 +2488,7 @@ class RelyingPartyV2RegistrationSpec
                 it("Fails when EC key has an inverted Y coordinate.") {
                   val (authData, keypair) =
                     TestAuthenticator.createAuthenticatorData(keyAlgorithm =
-                      COSEAlgorithmIdentifier.ES256
+                      Some(COSEAlgorithmIdentifier.ES256)
                     )
 
                   val cose = CBORObject.DecodeFromBytes(
@@ -2527,7 +2527,7 @@ class RelyingPartyV2RegistrationSpec
                 it("Fails when RSA key is unrelated.") {
                   val (authData, keypair) =
                     TestAuthenticator.createAuthenticatorData(keyAlgorithm =
-                      COSEAlgorithmIdentifier.RS256
+                      Some(COSEAlgorithmIdentifier.RS256)
                     )
                   val testData = (RegistrationTestData.from _).tupled(
                     makeCred(
@@ -2807,7 +2807,7 @@ class RelyingPartyV2RegistrationSpec
                   ) {
                     val testData = (RegistrationTestData.from _).tupled(
                       TestAuthenticator.createBasicAttestedCredential(
-                        keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                        keyAlgorithm = Some(COSEAlgorithmIdentifier.ES256),
                         attestationMaker = AttestationMaker.tpm(
                           AttestationSigner.selfsigned(
                             alg = COSEAlgorithmIdentifier.ES256,
