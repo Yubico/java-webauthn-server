@@ -28,6 +28,7 @@ import com.yubico.webauthn.data.PublicKeyCredentialDescriptor
 import com.yubico.webauthn.data.PublicKeyCredentialRequestOptions
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
+import com.yubico.webauthn.test.Util
 import org.junit.runner.RunWith
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
@@ -172,6 +173,13 @@ class RelyingPartyCeremoniesSpec
           check(RealExamples.YubikeyBio_5_5_4)
           check(RealExamples.YubikeyBio_5_5_5)
           check(RealExamples.YubikeyBio_5_5_6)
+        }
+
+        it("an ML-DSA credential, when available.") {
+          assume(Util.mldsaAvailable)
+          check(RealExamples.Mldsa44)
+          check(RealExamples.Mldsa65)
+          check(RealExamples.Mldsa87)
         }
 
         it("an Apple iOS device.") {
