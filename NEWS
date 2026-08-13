@@ -1,3 +1,13 @@
+== Version 2.10.0 (unreleased) ==
+
+New features:
+
+* Added support for ML-DSA-44, ML-DSA-65 and ML-DSA-87. This requires JRE 24 or
+  later, or a third-party JCA provider. ML-DSA is enabled by default as the
+  least preferred credential key algorithms; see
+  `RelyingPartyBuilder.preferredPubkeyParams`.
+
+
 == Version 2.9.0 ==
 
 `webauthn-server-core`:
