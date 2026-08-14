@@ -59,6 +59,9 @@ import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.GeneralNamesBuilder
+import org.junit.runner.RunWith
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatestplus.junit.JUnitRunner
 
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
@@ -168,7 +171,7 @@ object RegistrationTestDataGenerator extends App {
           printTestDataCode(newTestData)
         case Failure(e) =>
           println("Failed to regenerate")
-          e.printStackTrace()
+          throw e;
       }
     }
   }
@@ -1441,5 +1444,16 @@ case class AssertionTestData(
         request.getPublicKeyCredentialRequestOptions,
       )
     )
+  }
+}
+
+@RunWith(classOf[JUnitRunner])
+class RegistrationTestDataSpec extends AnyFunSpec {
+  describe("RegistrationTestDataGenerator") {
+    it("successfully regenerates all test cases.") {
+      assume(Util.eddsaAvailable)
+      assume(Util.mldsaAvailable)
+      RegistrationTestDataGenerator.regenerateTestData()
+    }
   }
 }
