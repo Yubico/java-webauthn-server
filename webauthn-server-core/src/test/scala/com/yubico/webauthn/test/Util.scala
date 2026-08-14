@@ -77,4 +77,10 @@ object Util {
   }
   implicit def toStepWithUtilities[A](a: Stepish[A]): StepWithUtilities[A] =
     StepWithUtilities(a)
+
+  def algorithmAvailable(javaAlgName: String): Boolean =
+    Try(KeyFactory.getInstance(javaAlgName)).isSuccess
+  def eddsaAvailable: Boolean = algorithmAvailable("EdDSA")
+  def mldsaAvailable: Boolean = algorithmAvailable("ML-DSA")
+
 }

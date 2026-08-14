@@ -64,6 +64,21 @@ object WebAuthnTestCodecs {
         val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
         val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
         keyFactory.generatePrivate(spec)
+
+      case COSEAlgorithmIdentifier.ML_DSA_44 =>
+        val keyFactory: KeyFactory = KeyFactory.getInstance("ML-DSA-44")
+        val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+        keyFactory.generatePrivate(spec)
+
+      case COSEAlgorithmIdentifier.ML_DSA_65 =>
+        val keyFactory: KeyFactory = KeyFactory.getInstance("ML-DSA-65")
+        val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+        keyFactory.generatePrivate(spec)
+
+      case COSEAlgorithmIdentifier.ML_DSA_87 =>
+        val keyFactory: KeyFactory = KeyFactory.getInstance("ML-DSA-87")
+        val spec = new PKCS8EncodedKeySpec(encodedKey.getBytes)
+        keyFactory.generatePrivate(spec)
     }
 
   def importEcdsaPrivateKey(encodedKey: ByteArray): PrivateKey = {
@@ -91,6 +106,33 @@ object WebAuthnTestCodecs {
     coseKey.put(3L, alg.getId)
     coseKey.put(-1L, crv)
     coseKey.put(-2L, encoded.takeRight(keyBytesLength)) // Strip ASN.1 prefix
+    new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
+  }
+
+  def mlDsaPublicKeyToCose(
+      key: PublicKey,
+      alg: COSEAlgorithmIdentifier,
+  ): ByteArray = {
+    val encoded = key.getEncoded
+    val algId: Array[Byte] =
+      Try(encoded.slice(4, 17)).getOrElse(
+        throw new IllegalArgumentException("Unknown ML-DSA ASN.1 OID prefix")
+      )
+
+    val keyBytesLength =
+      if (algId.sameElements(WebAuthnCodecs.ML_DSA_44_ALG_ID.getBytes))
+        1312
+      else if (algId.sameElements(WebAuthnCodecs.ML_DSA_65_ALG_ID.getBytes))
+        1952
+      else if (algId.sameElements(WebAuthnCodecs.ML_DSA_87_ALG_ID.getBytes))
+        2592
+      else
+        throw new IllegalArgumentException("Unknown ML-DSA ASN.1 OID prefix")
+
+    val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
+    coseKey.put(1L, 7L) // Key type: AKP
+    coseKey.put(3L, alg.getId)
+    coseKey.put(-1L, encoded.takeRight(keyBytesLength))
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 

@@ -146,6 +146,33 @@ public class PublicKeyCredentialParameters {
   public static final PublicKeyCredentialParameters RS512 =
       builder().alg(COSEAlgorithmIdentifier.RS512).build();
 
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#ML_DSA_44} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   */
+  public static final PublicKeyCredentialParameters ML_DSA_44 =
+      builder().alg(COSEAlgorithmIdentifier.ML_DSA_44).build();
+
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#ML_DSA_65} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   */
+  public static final PublicKeyCredentialParameters ML_DSA_65 =
+      builder().alg(COSEAlgorithmIdentifier.ML_DSA_65).build();
+
+  /**
+   * Algorithm {@link COSEAlgorithmIdentifier#ML_DSA_87} and type {@link
+   * PublicKeyCredentialType#PUBLIC_KEY}.
+   *
+   * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   */
+  public static final PublicKeyCredentialParameters ML_DSA_87 =
+      builder().alg(COSEAlgorithmIdentifier.ML_DSA_87).build();
+
   public static PublicKeyCredentialParametersBuilder.MandatoryStages builder() {
     return new PublicKeyCredentialParametersBuilder.MandatoryStages();
   }

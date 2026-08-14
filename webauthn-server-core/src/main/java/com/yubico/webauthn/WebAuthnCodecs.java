@@ -89,6 +89,69 @@ final class WebAuthnCodecs {
             113
           });
 
+  static final ByteArray ML_DSA_44_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (11 bytes)
+            0x30,
+            0x0B,
+            // OID (9 bytes)
+            0x06,
+            0x09,
+            // OID 2.16.840.1.101.3.4.3.17
+            0x60,
+            (byte) 0x86,
+            0x48,
+            0x01,
+            0x65,
+            0x03,
+            0x04,
+            0x03,
+            0x11
+          });
+
+  static final ByteArray ML_DSA_65_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (11 bytes)
+            0x30,
+            0x0B,
+            // OID (9 bytes)
+            0x06,
+            0x09,
+            // OID 2.16.840.1.101.3.4.3.18
+            0x60,
+            (byte) 0x86,
+            0x48,
+            0x01,
+            0x65,
+            0x03,
+            0x04,
+            0x03,
+            0x12
+          });
+
+  static final ByteArray ML_DSA_87_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (11 bytes)
+            0x30,
+            0x0B,
+            // OID (9 bytes)
+            0x06,
+            0x09,
+            // OID 2.16.840.1.101.3.4.3.19
+            0x60,
+            (byte) 0x86,
+            0x48,
+            0x01,
+            0x65,
+            0x03,
+            0x04,
+            0x03,
+            0x13
+          });
+
   // See: https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
   static final int COSE_CRV_P256 = 1;
   static final int COSE_CRV_P384 = 2;
@@ -178,6 +241,8 @@ final class WebAuthnCodecs {
         return importCoseEcdsaPublicKey(cose);
       case 3:
         return importCoseRsaPublicKey(cose);
+      case 7:
+        return importCoseMlDsaPublicKey(cose);
       default:
         throw new IllegalArgumentException("Unsupported key type: " + kty);
     }
@@ -263,6 +328,36 @@ final class WebAuthnCodecs {
     }
   }
 
+  private static PublicKey importCoseMlDsaPublicKey(CBORObject cose)
+      throws InvalidKeySpecException, NoSuchAlgorithmException {
+    final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
+    final ByteArray algorithmId = mlDsaAlgorithmId(alg);
+    final byte[] rawKey = cose.get(CBORObject.FromObject(-1)).GetByteString();
+    final byte[] x509Key =
+        BinaryUtil.encodeDerSequence(
+            algorithmId.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
+
+    KeyFactory kFact =
+        KeyFactory.getInstance(
+            getJavaAlgorithmName(
+                COSEAlgorithmIdentifier.fromId(alg)
+                    .orElseThrow(() -> new IllegalArgumentException("Unknown algorithm: " + alg))));
+    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
+  }
+
+  private static ByteArray mlDsaAlgorithmId(int alg) {
+    switch (alg) {
+      case -48:
+        return ML_DSA_44_ALG_ID;
+      case -49:
+        return ML_DSA_65_ALG_ID;
+      case -50:
+        return ML_DSA_87_ALG_ID;
+      default:
+        throw new IllegalArgumentException("Unsupported ML-DSA algorithm: " + alg);
+    }
+  }
+
   static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
     switch (alg) {
       case EdDSA:
@@ -284,6 +379,12 @@ final class WebAuthnCodecs {
         return "SHA512withRSA";
       case RS1:
         return "SHA1withRSA";
+      case ML_DSA_44:
+        return "ML-DSA-44";
+      case ML_DSA_65:
+        return "ML-DSA-65";
+      case ML_DSA_87:
+        return "ML-DSA-87";
       default:
         throw new IllegalArgumentException("Unknown algorithm: " + alg);
     }
