@@ -71,9 +71,6 @@ import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters.RichOption
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 
 object RegistrationTestDataGenerator extends App {
   regenerateTestData()
@@ -165,14 +162,8 @@ object RegistrationTestDataGenerator extends App {
         td.Tpm.ValidRs1,
       ).zipWithIndex
     } {
-      testData.regenerateFull() match {
-        case Success(newTestData) =>
-          println(i)
-          printTestDataCode(newTestData)
-        case Failure(e) =>
-          println("Failed to regenerate")
-          throw e;
-      }
+      println(i)
+      printTestDataCode(testData.regenerateFull())
     }
   }
 }
@@ -1255,15 +1246,14 @@ case class RegistrationTestData(
       KeyPair,
       List[(X509Certificate, PrivateKey)],
   ) = ???
-  def regenerateFull(): Try[RegistrationTestData] =
-    Try({
-      val (credential, keypair, attestationCertChain) = regenerate()
-      val newValue =
-        RegistrationTestData.from(credential, keypair, attestationCertChain)
-      newValue.copy(
-        assertion = assertion.map(_.regenerate(newValue))
-      )
-    })
+  def regenerateFull(): RegistrationTestData = {
+    val (credential, keypair, attestationCertChain) = regenerate()
+    val newValue =
+      RegistrationTestData.from(credential, keypair, attestationCertChain)
+    newValue.copy(
+      assertion = assertion.map(_.regenerate(newValue))
+    )
+  }
 
   protected def validate(): Unit = {
     val alg = COSEAlgorithmIdentifier
