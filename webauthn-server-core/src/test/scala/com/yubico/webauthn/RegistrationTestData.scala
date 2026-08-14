@@ -72,6 +72,7 @@ import java.security.spec.PKCS8EncodedKeySpec
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters.RichOption
 
+/** Run using IDE or `./gradlew regenerateTestData` */
 object RegistrationTestDataGenerator extends App {
   regenerateTestData()
 

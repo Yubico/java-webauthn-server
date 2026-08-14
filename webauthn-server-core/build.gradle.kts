@@ -66,3 +66,13 @@ tasks.withType(Jar::class) {
     ))
   }
 }
+
+tasks.register<JavaExec>("regenerateTestData") {
+  classpath = sourceSets.test.get().runtimeClasspath
+  mainClass = "com.yubico.webauthn.RegistrationTestDataGenerator"
+  description = "Generate code to paste into RegistrationTestData.scala"
+  group = "development"
+  javaLauncher.set(javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(25))
+  })
+}
