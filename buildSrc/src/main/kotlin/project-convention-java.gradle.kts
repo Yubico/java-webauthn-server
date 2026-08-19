@@ -15,13 +15,17 @@ tasks.withType(JavaCompile::class) {
     }
 }
 
+tasks.register("testJavaAll") {
+  tasks["check"].dependsOn(this)
+}
+
 tasks.register<Test>("testJava8") {
   testClassesDirs = tasks.named<Test>("test").get().testClassesDirs
   classpath = tasks.named<Test>("test").get().classpath
   javaLauncher.set(javaToolchains.launcherFor {
     languageVersion.set(JavaLanguageVersion.of(8))
   })
-  tasks["check"].dependsOn(this)
+  tasks["testJavaAll"].dependsOn(this)
 }
 
 tasks.register<Test>("testJava11") {
@@ -30,7 +34,7 @@ tasks.register<Test>("testJava11") {
   javaLauncher.set(javaToolchains.launcherFor {
     languageVersion.set(JavaLanguageVersion.of(11))
   })
-  tasks["check"].dependsOn(this)
+  tasks["testJavaAll"].dependsOn(this)
 }
 
 tasks.register<Test>("testJava17") {
@@ -39,7 +43,7 @@ tasks.register<Test>("testJava17") {
   javaLauncher.set(javaToolchains.launcherFor {
     languageVersion.set(JavaLanguageVersion.of(17))
   })
-  tasks["check"].dependsOn(this)
+  tasks["testJavaAll"].dependsOn(this)
 }
 
 tasks.register<Test>("testJava21") {
@@ -48,7 +52,7 @@ tasks.register<Test>("testJava21") {
   javaLauncher.set(javaToolchains.launcherFor {
     languageVersion.set(JavaLanguageVersion.of(21))
   })
-  tasks["check"].dependsOn(this)
+  tasks["testJavaAll"].dependsOn(this)
 }
 
 tasks.register<Test>("testJava25") {
@@ -57,5 +61,5 @@ tasks.register<Test>("testJava25") {
   javaLauncher.set(javaToolchains.launcherFor {
     languageVersion.set(JavaLanguageVersion.of(25))
   })
-  tasks["check"].dependsOn(this)
+  tasks["testJavaAll"].dependsOn(this)
 }
