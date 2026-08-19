@@ -404,21 +404,25 @@ object TestAuthenticator {
       aaguid: ByteArray = Defaults.aaguid,
       authenticatorExtensions: Option[JsonNode] = None,
       credentialKeypair: Option[KeyPair] = None,
-      keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
+      keyAlgorithm: Option[COSEAlgorithmIdentifier] = None,
       flags: Option[AuthenticatorDataFlags] = None,
   ): (
       ByteArray,
       KeyPair,
   ) = {
     val keypair =
-      credentialKeypair.getOrElse(generateKeypair(algorithm = keyAlgorithm))
+      credentialKeypair.getOrElse(
+        generateKeypair(algorithm =
+          keyAlgorithm.getOrElse(Defaults.keyAlgorithm)
+        )
+      )
     val publicKeyCose = keypair.getPublic match {
       case pub: ECPublicKey      => WebAuthnTestCodecs.ecPublicKeyToCose(pub)
       case pub: BCEdDSAPublicKey => WebAuthnTestCodecs.eddsaPublicKeyToCose(pub)
       case pub: RSAPublicKey =>
-        WebAuthnTestCodecs.rsaPublicKeyToCose(pub, keyAlgorithm)
+        WebAuthnTestCodecs.rsaPublicKeyToCose(pub, keyAlgorithm.get)
       case pub if pub.getAlgorithm == "ML-DSA" =>
-        WebAuthnTestCodecs.mlDsaPublicKeyToCose(pub, keyAlgorithm)
+        WebAuthnTestCodecs.mlDsaPublicKeyToCose(pub, keyAlgorithm.get)
     }
 
     val authDataBytes: ByteArray = makeAuthDataBytes(
@@ -516,7 +520,7 @@ object TestAuthenticator {
   def createBasicAttestedCredential(
       aaguid: ByteArray = Defaults.aaguid,
       attestationMaker: AttestationMaker,
-      keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
+      keyAlgorithm: Option[COSEAlgorithmIdentifier] = None,
   ): (
       data.PublicKeyCredential[
         data.AuthenticatorAttestationResponse,
@@ -548,8 +552,9 @@ object TestAuthenticator {
       KeyPair,
       List[(X509Certificate, PrivateKey)],
   ) = {
-    val (authData, keypair) = createAuthenticatorData(credentialKeypair =
-      Some(generateKeypair(keyAlgorithm))
+    val (authData, keypair) = createAuthenticatorData(
+      credentialKeypair = Some(generateKeypair(keyAlgorithm)),
+      keyAlgorithm = Some(keyAlgorithm),
     )
     val signer = SelfAttestation(keypair, keyAlgorithm)
     createCredential(

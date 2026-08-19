@@ -59,6 +59,9 @@ import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.asn1.x509.Extension
 import org.bouncycastle.asn1.x509.GeneralName
 import org.bouncycastle.asn1.x509.GeneralNamesBuilder
+import org.junit.runner.RunWith
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatestplus.junit.JUnitRunner
 
 import java.nio.charset.StandardCharsets
 import java.security.KeyFactory
@@ -68,10 +71,8 @@ import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import scala.jdk.CollectionConverters._
 import scala.jdk.OptionConverters.RichOption
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 
+/** Run using IDE or `./gradlew regenerateTestData` */
 object RegistrationTestDataGenerator extends App {
   regenerateTestData()
 
@@ -162,14 +163,8 @@ object RegistrationTestDataGenerator extends App {
         td.Tpm.ValidRs1,
       ).zipWithIndex
     } {
-      testData.regenerateFull() match {
-        case Success(newTestData) =>
-          println(i)
-          printTestDataCode(newTestData)
-        case Failure(e) =>
-          println("Failed to regenerate")
-          e.printStackTrace()
-      }
+      println(i)
+      printTestDataCode(testData.regenerateFull())
     }
   }
 }
@@ -440,7 +435,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.EdDSA,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.EdDSA),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ES256)
           ),
@@ -477,7 +472,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.Ed448,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.Ed448),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ES256)
           ),
@@ -515,7 +510,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.ML_DSA_44,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.ML_DSA_44),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ML_DSA_44)
           ),
@@ -553,7 +548,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.ML_DSA_65,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.ML_DSA_65),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ML_DSA_65)
           ),
@@ -591,7 +586,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.ML_DSA_87,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.ML_DSA_87),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.ML_DSA_87)
           ),
@@ -616,7 +611,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.RS256,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.RS256),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.RS256)
           ),
@@ -641,7 +636,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.RS384,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.RS384),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.RS384)
           ),
@@ -666,7 +661,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.RS512,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.RS512),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.RS512)
           ),
@@ -703,7 +698,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.RS1,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.RS1),
           attestationMaker = AttestationMaker.packed(
             AttestationSigner.selfsigned(COSEAlgorithmIdentifier.RS1)
           ),
@@ -947,7 +942,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.ES256),
           attestationMaker = AttestationMaker.tpm(
             AttestationSigner.ca(
               alg = COSEAlgorithmIdentifier.ES256,
@@ -980,7 +975,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.ES256),
           attestationMaker = AttestationMaker.tpm(
             AttestationSigner.ca(
               alg = COSEAlgorithmIdentifier.ES256,
@@ -1013,7 +1008,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.ES384,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.ES384),
           attestationMaker = AttestationMaker.tpm(
             AttestationSigner.ca(
               alg = COSEAlgorithmIdentifier.ES384,
@@ -1046,7 +1041,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.ES512,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.ES512),
           attestationMaker = AttestationMaker.tpm(
             AttestationSigner.ca(
               alg = COSEAlgorithmIdentifier.ES512,
@@ -1080,7 +1075,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.RS256,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.RS256),
           attestationMaker = AttestationMaker.tpm(
             AttestationSigner.ca(
               alg = COSEAlgorithmIdentifier.RS256,
@@ -1114,7 +1109,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.RS384,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.RS384),
           attestationMaker = AttestationMaker.tpm(
             AttestationSigner.ca(
               alg = COSEAlgorithmIdentifier.RS384,
@@ -1148,7 +1143,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.RS512,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.RS512),
           attestationMaker = AttestationMaker.tpm(
             AttestationSigner.ca(
               alg = COSEAlgorithmIdentifier.RS512,
@@ -1182,7 +1177,7 @@ object RegistrationTestData {
     ) {
       override def regenerate() =
         TestAuthenticator.createBasicAttestedCredential(
-          keyAlgorithm = COSEAlgorithmIdentifier.RS1,
+          keyAlgorithm = Some(COSEAlgorithmIdentifier.RS1),
           attestationMaker = AttestationMaker.tpm(
             AttestationSigner.ca(
               alg = COSEAlgorithmIdentifier.RS1,
@@ -1252,15 +1247,14 @@ case class RegistrationTestData(
       KeyPair,
       List[(X509Certificate, PrivateKey)],
   ) = ???
-  def regenerateFull(): Try[RegistrationTestData] =
-    Try({
-      val (credential, keypair, attestationCertChain) = regenerate()
-      val newValue =
-        RegistrationTestData.from(credential, keypair, attestationCertChain)
-      newValue.copy(
-        assertion = assertion.map(_.regenerate(newValue))
-      )
-    })
+  def regenerateFull(): RegistrationTestData = {
+    val (credential, keypair, attestationCertChain) = regenerate()
+    val newValue =
+      RegistrationTestData.from(credential, keypair, attestationCertChain)
+    newValue.copy(
+      assertion = assertion.map(_.regenerate(newValue))
+    )
+  }
 
   protected def validate(): Unit = {
     val alg = COSEAlgorithmIdentifier
@@ -1441,5 +1435,16 @@ case class AssertionTestData(
         request.getPublicKeyCredentialRequestOptions,
       )
     )
+  }
+}
+
+@RunWith(classOf[JUnitRunner])
+class RegistrationTestDataSpec extends AnyFunSpec {
+  describe("RegistrationTestDataGenerator") {
+    it("successfully regenerates all test cases.") {
+      assume(Util.eddsaAvailable)
+      assume(Util.mldsaAvailable)
+      RegistrationTestDataGenerator.regenerateTestData()
+    }
   }
 }
