@@ -64,14 +64,14 @@ jobs:
 
     - name: Archive HTML test reports
       if: ${{ always() }}
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-html
         path: "*/build/reports/**"
 
     - name: Archive JUnit test reports
       if: ${{ always() }}
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-xml
         path: "*/build/test-results/**/*.xml"
@@ -79,15 +79,15 @@ jobs:
     - name: Check binary reproducibility
       run: |
         ./gradlew clean primaryPublishJar
-        find . -name '*.jar' | grep -v buildSrc | grep -v gradle-wrapper | xargs sha256sum | tee java-webauthn-server-artifacts.sha256sum
-        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts.sha256sum
-        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts.sha256sum
+        find . -name '*.jar' | grep -v buildSrc | grep -v gradle-wrapper | xargs sha256sum | tee java-webauthn-server-artifacts-${{ matrix.java }}-${{ matrix.distribution }}.sha256sum
+        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts-${{ matrix.java }}-${{ matrix.distribution }}.sha256sum
+        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts-${{ matrix.java }}-${{ matrix.distribution }}.sha256sum
 
     - name: Archive artifact checksums
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
-        name: artifact-checksums-java${{ matrix.java }}-${{ matrix.distribution }}
-        path: java-webauthn-server-artifacts.sha256sum
+        path: java-webauthn-server-artifacts-${{ matrix.java }}-${{ matrix.distribution }}.sha256sum
+        archive: false
 
   publish-test-results:
     name: Publish test results

@@ -23,29 +23,7 @@ Release candidate versions
     $ ./gradlew clean check
     ```
 
- 4. Update the Java version in the [`release-verify-signatures` workflow][workflow-release-src].
-
-    See the `openjdk version` line of output from `java -version`:
-
-    ```
-    $ java -version  # (example output below)
-    openjdk version "17.0.7" 2023-04-18
-    OpenJDK Runtime Environment (build 17.0.7+7)
-    OpenJDK 64-Bit Server VM (build 17.0.7+7, mixed mode)
-    ```
-
-    Given the above output as an example, update the workflow like so:
-
-    ```yaml
-    strategy:
-      matrix:
-        java: ["17.0.7"]
-    ```
-
-    Check that this version is available in GitHub Actions. Commit this change,
-    if any.
-
- 5. Push the branch to GitHub.
+ 4. Push the branch to GitHub.
 
     If the pre-release makes significant changes to the project README, such
     that the README does not accurately reflect the latest non-pre-release
@@ -63,15 +41,43 @@ Release candidate versions
     $ git push origin main
     ```
 
- 6. Wait for the ["build" workflow][workflow-build] to finish.
-    Download the `artifact-checksums-java17-temurin` artifact,
-    unpack it and verify that the artifact checksums match artifacts built locally:
+ 5. Wait for the ["build" workflow][workflow-build] to finish.
+    Download the `java-webauthn-server-artifacts-17-temurin.sha256sum` artifact
+    and verify that the artifact checksums match artifacts built locally:
 
     ```
-    $ unzip artifact-checksums-java17-temurin.zip
     $ VERSION=0.1.0-SNAPSHOT ./gradlew primaryPublishJar
-    $ sha256sum -c java-webauthn-server-artifacts.sha256sum
+    $ sha256sum -c java-webauthn-server-artifacts-17-temurin.sha256sum
     ```
+
+ 6. Update the Java version in the [`release-verify-signatures`
+    workflow](https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml#L42)
+    if necessary.
+
+    Expand the logs from the "Set up JDK" step of the "build" workflow and expand the "Installed distributions" item:
+
+    ```
+    Installed distributions
+      Resolved Java 17.0.20+8 from tool-cache
+      Setting Java 17.0.20+8 as the default
+      Creating toolchains.xml for JDK version 17 from temurin
+      Writing to /home/runner/.m2/toolchains.xml
+
+      Java configuration:
+        Distribution: temurin
+        Version: 17.0.20+8
+        Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-8/x64
+    ```
+
+    Given the above output as an example, update the `release-verify-signatures` workflow like so:
+
+    ```yaml
+    strategy:
+      matrix:
+        java: ["17.0.20"]
+    ```
+
+    Commit this change, if any.
 
  7. Tag the head commit with an `X.Y.Z-RCN` tag:
 
@@ -153,47 +159,65 @@ Release versions
 
  6. Update the version in JavaDoc links in the READMEs.
 
- 7. Update the Java version in the [`release-verify-signatures` workflow][workflow-release-src].
-
-    See the `openjdk version` line of output from `java -version`:
-
-    ```
-    $ java -version  # (example output below)
-    openjdk version "17.0.7" 2023-04-18
-    OpenJDK Runtime Environment (build 17.0.7+7)
-    OpenJDK 64-Bit Server VM (build 17.0.7+7, mixed mode)
-    ```
-
-    Given the above output as an example, update the workflow like so:
-
-    ```yaml
-    strategy:
-      matrix:
-        java: ["17.0.7"]
-    ```
-
-    Check that this version is available in GitHub Actions.
-
- 8. Amend these changes into the merge commit:
+ 7. Amend these changes into the merge commit:
 
     ```
     $ git add NEWS README */README .github/workflows/release-verify-signatures.yml
     $ git commit --amend --reset-author
     ```
 
- 9. Run the tests one more time:
+ 8. Open the latest relevant run of the ["build" workflow][workflow-build],
+    or push a temporary branch and wait for this workflow to finish.
+    Download the `java-webauthn-server-artifacts-17-temurin.sha256sum` artifact
+    and verify that the artifact checksums match artifacts built locally:
+
+    ```
+    $ VERSION=0.1.0-SNAPSHOT ./gradlew primaryPublishJar
+    $ sha256sum -c java-webauthn-server-artifacts-17-temurin.sha256sum
+    ```
+
+ 9. Update the Java version in the [`release-verify-signatures`
+    workflow](https://github.com/Yubico/java-webauthn-server/blob/main/.github/workflows/release-verify-signatures.yml#L42)
+    if necessary.
+
+    Expand the logs from the "Set up JDK" step of the "build" workflow and expand the "Installed distributions" item:
+
+    ```
+    Installed distributions
+      Resolved Java 17.0.20+8 from tool-cache
+      Setting Java 17.0.20+8 as the default
+      Creating toolchains.xml for JDK version 17 from temurin
+      Writing to /home/runner/.m2/toolchains.xml
+
+      Java configuration:
+        Distribution: temurin
+        Version: 17.0.20+8
+        Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-8/x64
+    ```
+
+    Given the above output as an example, update the `release-verify-signatures` workflow like so:
+
+    ```yaml
+    strategy:
+      matrix:
+        java: ["17.0.20"]
+    ```
+
+    Amend this change, if any, into the merge commit.
+
+10. Run the tests one more time:
 
     ```
     $ ./gradlew clean check
     ```
 
-10. Push the branch to GitHub:
+11. Push the branch to GitHub:
 
     ```
     $ git push origin main
     ```
 
-11. Wait for the ["build" workflow][workflow-build] to finish.
+12. Wait for the ["build" workflow][workflow-build] to finish.
     Download the `artifact-checksums-java17-temurin` artifact,
     unpack it and verify that the artifact checksums match artifacts built locally:
 
@@ -203,7 +227,7 @@ Release versions
     $ sha256sum -c java-webauthn-server-artifacts.sha256sum
     ```
 
-12. Tag the merge commit with an `X.Y.Z` tag:
+13. Tag the merge commit with an `X.Y.Z` tag:
 
     ```
     $ git tag -a -s 1.4.0 -m "Release 1.4.0"
@@ -211,7 +235,7 @@ Release versions
 
     No tag body needed since that's included in the commit.
 
- 8. Publish to Sonatype Maven Central Portal:
+14. Publish to Sonatype Maven Central Portal:
 
     ```
     $ ./gradlew publish jreleaserDeploy
@@ -220,13 +244,13 @@ Release versions
     If this fails, check if your user token has expired and needs to be replaced.
     See [Setup for publishing](./development.md#setup-for-publishing).
 
-13. Push the tag to GitHub:
+15. Push the tag to GitHub:
 
     ```
     $ git push origin 1.4.0
     ```
 
-14. Make GitHub release.
+16. Make GitHub release.
 
     - Use the new tag as the release tag.
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
@@ -235,7 +259,7 @@ Release versions
     - Note the JDK version shown by `java -version` in step 6.
       For example: `openjdk version "17.0.7" 2023-04-18`.
 
-15. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
+17. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
 
 
 [workflow-build]: https://github.com/Yubico/java-webauthn-server/actions/workflows/build.yml
