@@ -58,15 +58,15 @@ Release candidate versions
 
     ```
     Installed distributions
-      Resolved Java 17.0.20+8 from tool-cache
-      Setting Java 17.0.20+8 as the default
-      Creating toolchains.xml for JDK version 17 from temurin
+      Resolved Java 25.0.4+7 from tool-cache
+      Setting Java 25.0.4+7 as the default
+      Creating toolchains.xml for JDK version 25 from temurin
       Writing to /home/runner/.m2/toolchains.xml
 
       Java configuration:
         Distribution: temurin
-        Version: 17.0.20+8
-        Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-8/x64
+        Version: 25.0.4+7
+        Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/25.0.4-7/x64
     ```
 
     Given the above output as an example, update the `release-verify-signatures` workflow like so:
@@ -110,7 +110,7 @@ Release candidate versions
       from ASCIIdoc to Markdown and remove line wraps. Include only
       changes/additions since the previous release or pre-release.
     - Note the JDK version shown by `java -version` in step 3.
-      For example: `openjdk version "17.0.7" 2023-04-18`.
+      For example: `openjdk version "25.0.4" 2026-07-21`.
 
 11. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
 
@@ -184,15 +184,15 @@ Release versions
 
     ```
     Installed distributions
-      Resolved Java 17.0.20+8 from tool-cache
-      Setting Java 17.0.20+8 as the default
-      Creating toolchains.xml for JDK version 17 from temurin
+      Resolved Java 25.0.4+7 from tool-cache
+      Setting Java 25.0.4+7 as the default
+      Creating toolchains.xml for JDK version 25 from temurin
       Writing to /home/runner/.m2/toolchains.xml
 
       Java configuration:
         Distribution: temurin
-        Version: 17.0.20+8
-        Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.20-8/x64
+        Version: 25.0.4+7
+        Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/25.0.4-7/x64
     ```
 
     Given the above output as an example, update the `release-verify-signatures` workflow like so:
@@ -257,7 +257,7 @@ Release versions
       from ASCIIdoc to Markdown and remove line wraps. Include all changes since
       the previous release (not just changes since the previous pre-release).
     - Note the JDK version shown by `java -version` in step 6.
-      For example: `openjdk version "17.0.7" 2023-04-18`.
+      For example: `openjdk version "25.0.4" 2026-07-21`.
 
 17. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
 

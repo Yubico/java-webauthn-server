@@ -78,7 +78,8 @@ implementation("com.yubico:webauthn-server-core:2.9.0")
 ----------
 
 NOTE: You may need additional dependencies with JCA providers to support some signature algorithms.
-In particular, OpenJDK 14 and earlier does not include providers for the EdDSA family of algorithms.
+In particular, OpenJDK 14 and earlier does not include providers for the EdDSA family of algorithms
+and OpenJDK 23 and earlier does not include providers for ML-DSA.
 The library will log warnings if you try to configure it for algorithms with no JCA provider available.
 
 

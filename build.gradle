@@ -63,8 +63,8 @@ allprojects {
 
 task checkJavaVersionBeforeRelease {
   doFirst {
-    if (JavaVersion.current() != JavaVersion.VERSION_17) {
-      throw new RuntimeException('Release must be built using JDK 17. Current JDK version: ' + JavaVersion.current())
+    if (JavaVersion.current() != JavaVersion.VERSION_25) {
+      throw new RuntimeException('Release must be built using JDK 25. Current JDK version: ' + JavaVersion.current())
     }
   }
 }
