@@ -923,7 +923,9 @@ object TestAuthenticator {
         (TpmAlgHash.SHA512, TpmAlgAsym.RSA)
       case COSEAlgorithmIdentifier.RS1 => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
       case COSEAlgorithmIdentifier.EdDSA | COSEAlgorithmIdentifier.Ed25519 |
-          COSEAlgorithmIdentifier.Ed448 =>
+          COSEAlgorithmIdentifier.Ed448 | COSEAlgorithmIdentifier.ML_DSA_44 |
+          COSEAlgorithmIdentifier.ML_DSA_65 |
+          COSEAlgorithmIdentifier.ML_DSA_87 =>
         ???
     }
     val hashFunc = hashId match {
@@ -974,7 +976,10 @@ object TestAuthenticator {
                   COSEAlgorithmIdentifier.RS512 |
                   COSEAlgorithmIdentifier.EdDSA |
                   COSEAlgorithmIdentifier.Ed25519 |
-                  COSEAlgorithmIdentifier.Ed448 =>
+                  COSEAlgorithmIdentifier.Ed448 |
+                  COSEAlgorithmIdentifier.ML_DSA_44 |
+                  COSEAlgorithmIdentifier.ML_DSA_65 |
+                  COSEAlgorithmIdentifier.ML_DSA_87 =>
                 ???
             }),
             // kdf_scheme: ??? (unused?)
