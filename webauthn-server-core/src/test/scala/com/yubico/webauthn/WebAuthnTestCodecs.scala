@@ -109,10 +109,7 @@ object WebAuthnTestCodecs {
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 
-  def mlDsaPublicKeyToCose(
-      key: PublicKey,
-      alg: COSEAlgorithmIdentifier,
-  ): ByteArray = {
+  def mlDsaPublicKeyToRaw( key: PublicKey): ByteArray = {
     val encoded = key.getEncoded
     val algId: Array[Byte] =
       Try(encoded.slice(4, 17)).getOrElse(
@@ -129,10 +126,17 @@ object WebAuthnTestCodecs {
       else
         throw new IllegalArgumentException("Unknown ML-DSA ASN.1 OID prefix")
 
+    new ByteArray(encoded.takeRight(keyBytesLength))
+  }
+
+  def mlDsaPublicKeyToCose(
+      key: PublicKey,
+      alg: COSEAlgorithmIdentifier,
+  ): ByteArray = {
     val coseKey: java.util.Map[Long, Any] = new java.util.HashMap[Long, Any]
     coseKey.put(1L, 7L) // Key type: AKP
     coseKey.put(3L, alg.getId)
-    coseKey.put(-1L, encoded.takeRight(keyBytesLength))
+    coseKey.put(-1L, mlDsaPublicKeyToRaw(key))
     new ByteArray(CBORObject.FromObject(coseKey).EncodeToBytes)
   }
 

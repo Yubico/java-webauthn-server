@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn
 
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.test.Util
@@ -34,12 +35,10 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
+
 import java.security.interfaces.ECPublicKey
 import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.util.Try
-
-import com.upokecenter.cbor.CBORObject
-import com.yubico.internal.util.JacksonCodecs
 
 @RunWith(classOf[JUnitRunner])
 class WebAuthnCodecsSpec
@@ -141,9 +140,58 @@ class WebAuthnCodecsSpec
     }
 
     describe("The importCosePublicKey method") {
-      describe("rejects ML-DSA public keys that contain a private key (-2) attribute:") {
+      describe(
+        "rejects ML-DSA public keys that contain a private key (-2) attribute:"
+      ) {
         assume(Util.mldsaAvailable)
-        for (alg <- List(COSEAlgorithmIdentifier.ML_DSA_44, COSEAlgorithmIdentifier.ML_DSA_65, COSEAlgorithmIdentifier.ML_DSA_87)) {
+        for (
+          alg <- List(
+            COSEAlgorithmIdentifier.ML_DSA_44,
+            COSEAlgorithmIdentifier.ML_DSA_65,
+            COSEAlgorithmIdentifier.ML_DSA_87,
+          )
+        ) {
+          it(alg.name()) {
+            val keypair = TestAuthenticator.generateMlDsaKeypair(alg)
+            val publicKeyOnly = Map(
+              1 -> 7, // kty: AKP
+              3 -> alg.getId,
+              -1 -> WebAuthnTestCodecs.mlDsaPublicKeyToRaw(keypair.getPublic),
+            )
+            val publicKeyAndPrivateKey =
+              publicKeyOnly + (-2 -> keypair.getPrivate.getEncoded)
+            val pubOnlyBytes = new ByteArray(
+              JacksonCodecs.cbor().writeValueAsBytes(publicKeyOnly.asJava)
+            )
+            val pubAndPriBytes = new ByteArray(
+              JacksonCodecs
+                .cbor()
+                .writeValueAsBytes(publicKeyAndPrivateKey.asJava)
+            )
+            println(s"pubOnlyBytes: ${pubOnlyBytes.getHex}")
+            println(s"pubAndPriBytes: ${pubAndPriBytes.getHex}")
+
+            val importedPublic =
+              WebAuthnCodecs.importCosePublicKey(pubOnlyBytes)
+            importedPublic should not be null
+            an[IllegalArgumentException] should be thrownBy {
+              WebAuthnCodecs.importCosePublicKey(pubAndPriBytes)
+            }
+          }
+        }
+      }
+
+      describe(
+        "rejects ML-DSA public keys of wrong lengths:"
+      ) {
+        assume(Util.mldsaAvailable)
+        for (
+          alg <- List(
+            COSEAlgorithmIdentifier.ML_DSA_44,
+            COSEAlgorithmIdentifier.ML_DSA_65,
+            COSEAlgorithmIdentifier.ML_DSA_87,
+          )
+        ) {
           it(alg.name()) {
             val keypair = TestAuthenticator.generateMlDsaKeypair(alg)
             val publicKeyOnly = Map(
@@ -151,13 +199,21 @@ class WebAuthnCodecsSpec
               3 -> alg.getId,
               -1 -> keypair.getPublic.getEncoded,
             )
-            val publicKeyAndPrivateKey = publicKeyOnly + (-2 -> keypair.getPrivate.getEncoded)
-            val pubOnlyBytes = new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(publicKeyOnly.asJava))
-            val pubAndPriBytes = new ByteArray(JacksonCodecs.cbor().writeValueAsBytes(publicKeyAndPrivateKey.asJava))
+            val publicKeyAndPrivateKey =
+              publicKeyOnly + (-2 -> keypair.getPrivate.getEncoded)
+            val pubOnlyBytes = new ByteArray(
+              JacksonCodecs.cbor().writeValueAsBytes(publicKeyOnly.asJava)
+            )
+            val pubAndPriBytes = new ByteArray(
+              JacksonCodecs
+                .cbor()
+                .writeValueAsBytes(publicKeyAndPrivateKey.asJava)
+            )
             println(s"pubOnlyBytes: ${pubOnlyBytes.getHex}")
             println(s"pubAndPriBytes: ${pubAndPriBytes.getHex}")
 
-            val importedPublic = WebAuthnCodecs.importCosePublicKey(pubOnlyBytes)
+            val importedPublic =
+              WebAuthnCodecs.importCosePublicKey(pubOnlyBytes)
             importedPublic should not be null
             an[IllegalArgumentException] should be thrownBy {
               WebAuthnCodecs.importCosePublicKey(pubAndPriBytes)

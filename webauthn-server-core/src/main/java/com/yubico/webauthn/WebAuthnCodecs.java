@@ -332,6 +332,9 @@ final class WebAuthnCodecs {
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
     final ByteArray algorithmId = mlDsaAlgorithmId(alg);
+    if (cose.ContainsKey(CBORObject.FromObject(-2))) {
+      throw new IllegalArgumentException("COSE ML-DSA public key must not include attribute \"priv\" (-2)");
+    }
     final byte[] rawKey = cose.get(CBORObject.FromObject(-1)).GetByteString();
     final byte[] x509Key =
         BinaryUtil.encodeDerSequence(
