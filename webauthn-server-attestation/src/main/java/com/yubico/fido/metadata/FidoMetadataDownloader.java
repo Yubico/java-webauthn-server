@@ -270,8 +270,8 @@ public final class FidoMetadataDownloader {
        *
        * <pre>
        * downloadTrustRoot(
-       *   new URL("https://secure.globalsign.com/cacert/root-r3.crt"),
-       *   Collections.singleton(ByteArray.fromHex("cbb522d7b7f127ad6a0113865bdf1cd4102e7d0759af635a7cf4720dc963c53b"))
+       *   new URL("https://secure.globalsign.com/cacert/rootr46.crt"),
+       *   Collections.singleton(ByteArray.fromHex("4fa3126d8d3a11d1c4855a4f807cbad6cf919d3a5a88b03bea2c6372d93c40c9"))
        * )
        * </pre>
        *
@@ -283,10 +283,10 @@ public final class FidoMetadataDownloader {
       public Step3 useDefaultTrustRoot() {
         try {
           return downloadTrustRoot(
-              new URL("https://secure.globalsign.com/cacert/root-r3.crt"),
+              new URL("https://secure.globalsign.com/cacert/rootr46.crt"),
               Collections.singleton(
                   ByteArray.fromHex(
-                      "cbb522d7b7f127ad6a0113865bdf1cd4102e7d0759af635a7cf4720dc963c53b")));
+                      "4fa3126d8d3a11d1c4855a4f807cbad6cf919d3a5a88b03bea2c6372d93c40c9")));
         } catch (MalformedURLException e) {
           throw new RuntimeException(
               "Bad hard-coded trust root certificate URL. Please file a bug report.", e);
