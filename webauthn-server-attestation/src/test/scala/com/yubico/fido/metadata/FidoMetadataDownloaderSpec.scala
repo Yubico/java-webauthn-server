@@ -42,7 +42,6 @@ import java.security.SecureRandom
 import java.security.cert.CRL
 import java.security.cert.CertPathValidatorException
 import java.security.cert.CertPathValidatorException.BasicReason
-import java.security.cert.CertificateExpiredException
 import java.security.cert.PKIXReason
 import java.security.cert.X509Certificate
 import java.time.Clock
@@ -1383,9 +1382,6 @@ class FidoMetadataDownloaderSpec
               )
             }
             thrown should not be null
-            thrown.getReason should be(
-              CertPathValidatorException.BasicReason.INVALID_SIGNATURE
-            )
           }
 
           it("x5u with three certs requires a CRL for each CA certificate.") {
@@ -2021,7 +2017,6 @@ class FidoMetadataDownloaderSpec
                 .build()
             ).getPayload
           }
-          thrown.getCause shouldBe a[CertificateExpiredException]
         }
 
         it("If verifyDownloadsOnly is set, the signature is ignored when loading from cache.") {
@@ -2114,7 +2109,7 @@ class FidoMetadataDownloaderSpec
           blob.getNo should equal(blobNo)
         }
 
-        it("A cross-signed trust root cert appearing in the cert path validates successfully.") {
+        describe("A cross-signed root CA cert appearing in the cert path") {
           val (unrelatedRootCert, unrelatedRootKeypair, unrelatedRootName) =
             makeTrustRootCert(distinguishedName =
               "CN=Yubico java-webauthn-server unit tests UNRELATED CA, O=Yubico"
@@ -2156,8 +2151,8 @@ class FidoMetadataDownloaderSpec
             LocalDate.parse("2022-01-19"),
           )
 
-          for (trustRoot <- List(newRootCert, oldRootCert)) {
-            val blob = load(
+          def loadWithTrustRoot(trustRoot: X509Certificate): MetadataBLOB = {
+            load(
               FidoMetadataDownloader
                 .builder()
                 .expectLegalHeader(
@@ -2169,24 +2164,34 @@ class FidoMetadataDownloaderSpec
                 .useCrls(crls.asJava)
                 .build()
             )
+          }
+
+          def checkSuccess(trustRoot: X509Certificate): Unit = {
+            val blob = loadWithTrustRoot(trustRoot)
             blob should not be null
           }
 
-          val thrown = the[CertPathValidatorException] thrownBy {
-            load(
-              FidoMetadataDownloader
-                .builder()
-                .expectLegalHeader(
-                  "Kom ihåg att du aldrig får snyta dig i mattan!"
-                )
-                .useTrustRoot(unrelatedRootCert)
-                .useBlob(blobJwt)
-                .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
-                .useCrls(crls.asJava)
-                .build()
-            )
+          it(
+            "validates successfully if the cross-signed root cert is trusted."
+          ) {
+            checkSuccess(newRootCert)
           }
-          thrown.getReason should be(PKIXReason.NO_TRUST_ANCHOR)
+
+          it(
+            "validates successfully if the cross-signing root cert is trusted."
+          ) {
+            checkSuccess(oldRootCert)
+          }
+
+          it("fails validation if the trust root is unrelated.") {
+            val thrown = the[CertPathValidatorException] thrownBy {
+              loadWithTrustRoot(unrelatedRootCert)
+            }
+            List(
+              PKIXReason.NO_TRUST_ANCHOR,
+              BasicReason.UNSPECIFIED,
+            ) should contain(thrown.getReason)
+          }
         }
       }
 

@@ -56,7 +56,9 @@ import java.security.Signature;
 import java.security.SignatureException;
 import java.security.cert.CRL;
 import java.security.cert.CRLException;
-import java.security.cert.CertPath;
+import java.security.cert.CertPathBuilder;
+import java.security.cert.CertPathBuilderException;
+import java.security.cert.CertPathBuilderResult;
 import java.security.cert.CertPathValidator;
 import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertStore;
@@ -64,10 +66,13 @@ import java.security.cert.CertStoreParameters;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CollectionCertStoreParameters;
+import java.security.cert.PKIXBuilderParameters;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
+import java.security.cert.X509CertSelector;
 import java.security.cert.X509Certificate;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -1269,20 +1274,45 @@ public final class FidoMetadataDownloader {
     }
 
     final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-    final CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
-    final CertPath blobCertPath = certFactory.generateCertPath(certChain);
-    final PKIXParameters pathParams =
-        new PKIXParameters(Collections.singleton(new TrustAnchor(trustRootCertificate, null)));
+    final Set<TrustAnchor> trustAnchors =
+        Collections.singleton(new TrustAnchor(trustRootCertificate, null));
+
+    final X509CertSelector targetConstraints = new X509CertSelector();
+    targetConstraints.setCertificate(leafCert);
+    final PKIXBuilderParameters pathBuilderParams =
+        new PKIXBuilderParameters(trustAnchors, targetConstraints);
+    pathBuilderParams.addCertStore(
+        CertStore.getInstance(
+            "Collection",
+            new CollectionCertStoreParameters(certChain.subList(1, certChain.size()))));
+    // Revocation will be checked by the CertPathValidator instead
+    pathBuilderParams.setRevocationEnabled(false);
+
+    final PKIXParameters pathValidationParams = new PKIXParameters(trustAnchors);
+
     if (certStore != null) {
-      pathParams.addCertStore(certStore);
+      pathBuilderParams.addCertStore(certStore);
+      pathValidationParams.addCertStore(certStore);
     }
 
     // Parse CRLDistributionPoints ourselves so users don't have to set the
     // `com.sun.security.enableCRLDP=true` system property
-    fetchCrlDistributionPoints(certChain, certFactory).ifPresent(pathParams::addCertStore);
+    fetchCrlDistributionPoints(certChain, certFactory)
+        .ifPresent(pathValidationParams::addCertStore);
 
-    pathParams.setDate(Date.from(clock.instant()));
-    cpv.validate(blobCertPath, pathParams);
+    final Instant now = clock.instant();
+    pathBuilderParams.setDate(Date.from(now));
+    pathValidationParams.setDate(Date.from(now));
+
+    final CertPathBuilder cpb = CertPathBuilder.getInstance("PKIX");
+    final CertPathBuilderResult certPathResult;
+    try {
+      certPathResult = cpb.build(pathBuilderParams);
+    } catch (CertPathBuilderException e) {
+      throw new CertPathValidatorException(e);
+    }
+    final CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
+    cpv.validate(certPathResult.getCertPath(), pathValidationParams);
 
     return parseResult.blob;
   }
