@@ -46,7 +46,7 @@ class FidoMetadataDownloaderIntegrationTest
             .fetchHeaderCertChain(
               trustRootCert,
               downloader
-                .parseBlob(TestCaches.blobCache.get)
+                .parseBlob(TestCaches.blobCache.get.getBytes)
                 .getBlob
                 .getHeader,
             )
