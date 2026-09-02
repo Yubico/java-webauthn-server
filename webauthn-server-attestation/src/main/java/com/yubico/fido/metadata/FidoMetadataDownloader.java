@@ -935,7 +935,7 @@ public final class FidoMetadataDownloader {
         return cached;
 
       } else {
-        ByteArray downloadedBytes = downloadResult.getContent();
+        byte[] downloadedBytes = downloadResult.getContent();
         final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloadedBytes, trustRoot);
         log.debug("New BLOB downloaded.");
 
@@ -956,12 +956,12 @@ public final class FidoMetadataDownloader {
         log.debug("Writing new BLOB to cache...");
         if (blobCacheFile != null) {
           try (FileOutputStream f = new FileOutputStream(blobCacheFile)) {
-            f.write(downloadedBytes.getBytes());
+            f.write(downloadedBytes);
           }
         }
 
         if (blobCacheConsumer != null) {
-          blobCacheConsumer.accept(downloadedBytes);
+          blobCacheConsumer.accept(new ByteArray(downloadedBytes));
         }
 
         return Optional.of(downloadedBlob);
@@ -1018,11 +1018,11 @@ public final class FidoMetadataDownloader {
 
       X509Certificate cert = null;
       if (cachedContents.isPresent()) {
-        final ByteArray verifiedCachedContents = verifyHash(cachedContents.get(), trustRootSha256);
+        final byte[] verifiedCachedContents =
+            verifyHash(cachedContents.get().getBytes(), trustRootSha256);
         if (verifiedCachedContents != null) {
           try {
-            final X509Certificate cachedCert =
-                CertificateParser.parseDer(verifiedCachedContents.getBytes());
+            final X509Certificate cachedCert = CertificateParser.parseDer(verifiedCachedContents);
             cachedCert.checkValidity(Date.from(clock.instant()));
             cert = cachedCert;
           } catch (CertificateException e) {
@@ -1032,23 +1032,23 @@ public final class FidoMetadataDownloader {
       }
 
       if (cert == null) {
-        final ByteArray downloaded = verifyHash(download(trustRootUrl), trustRootSha256);
+        final byte[] downloaded = verifyHash(download(trustRootUrl), trustRootSha256);
         if (downloaded == null) {
           throw new DigestException(
               "Downloaded trust root certificate matches none of the acceptable hashes.");
         }
 
-        cert = CertificateParser.parseDer(downloaded.getBytes());
+        cert = CertificateParser.parseDer(downloaded);
         cert.checkValidity(Date.from(clock.instant()));
 
         if (trustRootCacheFile != null) {
           try (FileOutputStream f = new FileOutputStream(trustRootCacheFile)) {
-            f.write(downloaded.getBytes());
+            f.write(downloaded);
           }
         }
 
         if (trustRootCacheConsumer != null) {
-          trustRootCacheConsumer.accept(downloaded);
+          trustRootCacheConsumer.accept(new ByteArray(downloaded));
         }
       }
 
@@ -1083,8 +1083,7 @@ public final class FidoMetadataDownloader {
           FidoMetadataDownloaderException {
     if (blobJwt != null) {
       return Optional.of(
-          parseAndMaybeVerifyBlob(
-              new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate));
+          parseAndMaybeVerifyBlob(blobJwt.getBytes(StandardCharsets.UTF_8), trustRootCertificate));
 
     } else {
       return Optional.empty();
@@ -1110,7 +1109,7 @@ public final class FidoMetadataDownloader {
     return cachedContents.map(
         cached -> {
           try {
-            return parseAndMaybeVerifyBlob(cached, trustRootCertificate);
+            return parseAndMaybeVerifyBlob(cached.getBytes(), trustRootCertificate);
           } catch (Exception e) {
             log.warn("Failed to read or parse cached BLOB.", e);
             return null;
@@ -1121,7 +1120,7 @@ public final class FidoMetadataDownloader {
   Optional<ByteArray> readCacheFile(File cacheFile) throws IOException {
     if (cacheFile.exists() && cacheFile.canRead() && cacheFile.isFile()) {
       try (FileInputStream f = new FileInputStream(cacheFile)) {
-        return Optional.of(readAll(f));
+        return Optional.of(new ByteArray(readAll(f)));
       } catch (FileNotFoundException e) {
         throw new RuntimeException(
             "This exception should be impossible, please file a bug report.", e);
@@ -1131,7 +1130,7 @@ public final class FidoMetadataDownloader {
     }
   }
 
-  private ByteArray download(URL url) throws IOException {
+  private byte[] download(URL url) throws IOException {
     final DownloadResult downloadResult = download(url, Optional.empty());
     if (downloadResult.isOk()) {
       return downloadResult.getContent();
@@ -1203,7 +1202,7 @@ public final class FidoMetadataDownloader {
     return DownloadResult.ok(readAll(conn.getInputStream()));
   }
 
-  private MetadataBLOB parseAndVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
+  private MetadataBLOB parseAndVerifyBlob(byte[] jwt, X509Certificate trustRootCertificate)
       throws CertPathValidatorException,
           InvalidAlgorithmParameterException,
           CertificateException,
@@ -1216,7 +1215,7 @@ public final class FidoMetadataDownloader {
     return verifyBlob(parseBlob(jwt), trustRootCertificate);
   }
 
-  private MetadataBLOB parseAndMaybeVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
+  private MetadataBLOB parseAndMaybeVerifyBlob(byte[] jwt, X509Certificate trustRootCertificate)
       throws CertPathValidatorException,
           InvalidAlgorithmParameterException,
           CertificateException,
@@ -1307,8 +1306,8 @@ public final class FidoMetadataDownloader {
         "Exited without finding a certification path or failing to validate any certification path. This should be impossible, please file a bug report.");
   }
 
-  ParseResult parseBlob(ByteArray jwt) throws IOException, Base64UrlException {
-    Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
+  ParseResult parseBlob(byte[] jwt) throws IOException, Base64UrlException {
+    Scanner s = new Scanner(new ByteArrayInputStream(jwt)).useDelimiter("\\.");
     final ByteArray jwtHeader = ByteArray.fromBase64Url(s.next());
     final ByteArray jwtPayload = ByteArray.fromBase64Url(s.next());
     final ByteArray jwtSignature = ByteArray.fromBase64Url(s.next());
@@ -1335,18 +1334,18 @@ public final class FidoMetadataDownloader {
     return JacksonCodecs.jsonWithDefaultEnums();
   }
 
-  private static ByteArray readAll(InputStream is) throws IOException {
-    return new ByteArray(BinaryUtil.readAll(is));
+  private static byte[] readAll(InputStream is) throws IOException {
+    return BinaryUtil.readAll(is);
   }
 
   /**
    * @return <code>contents</code> if its SHA-256 hash matches any element of <code>
    *     acceptedCertSha256</code>, otherwise <code>null</code>.
    */
-  private static ByteArray verifyHash(ByteArray contents, Set<ByteArray> acceptedCertSha256)
+  private static byte[] verifyHash(byte[] contents, Set<ByteArray> acceptedCertSha256)
       throws NoSuchAlgorithmException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
-    final ByteArray hash = new ByteArray(digest.digest(contents.getBytes()));
+    final ByteArray hash = new ByteArray(digest.digest(contents));
     if (acceptedCertSha256.stream().anyMatch(hash::equals)) {
       return contents;
     } else {
@@ -1379,7 +1378,7 @@ public final class FidoMetadataDownloader {
       }
       List<X509Certificate> certs = new ArrayList<>();
       for (String pem :
-          new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
+          new String(download(x5u), StandardCharsets.UTF_8)
               .trim()
               .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+")) {
         X509Certificate x509Certificate = CertificateParser.parsePem(pem);
@@ -1439,8 +1438,7 @@ public final class FidoMetadataDownloader {
                     log.debug("Attempting to download CRL distribution point: {}", crldpUrl);
                     try {
                       return Optional.of(
-                          certFactory.generateCRL(
-                              new ByteArrayInputStream(download(crldpUrl).getBytes())));
+                          certFactory.generateCRL(new ByteArrayInputStream(download(crldpUrl))));
                     } catch (CRLException e) {
                       log.warn("Failed to import CRL from distribution point: {}", crldpUrl, e);
                       return Optional.<CRL>empty();
@@ -1461,17 +1459,17 @@ public final class FidoMetadataDownloader {
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   private static class DownloadResult {
     private boolean notModified;
-    private Optional<ByteArray> content;
+    private Optional<byte[]> content;
 
     static DownloadResult notModified() {
       return new DownloadResult(true, Optional.empty());
     }
 
-    static DownloadResult ok(@NonNull ByteArray content) {
+    static DownloadResult ok(@NonNull byte[] content) {
       return new DownloadResult(false, Optional.of(content));
     }
 
-    ByteArray getContent() {
+    byte[] getContent() {
       return content.get();
     }
 
