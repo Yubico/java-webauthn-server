@@ -43,6 +43,7 @@ import java.security.cert.CRL
 import java.security.cert.CertPathValidatorException
 import java.security.cert.CertPathValidatorException.BasicReason
 import java.security.cert.CertificateExpiredException
+import java.security.cert.PKIXReason
 import java.security.cert.X509Certificate
 import java.time.Clock
 import java.time.Instant
@@ -113,8 +114,9 @@ class FidoMetadataDownloaderSpec
       isCa: Boolean = false,
       name: String =
         "CN=Yubico java-webauthn-server unit tests blob cert, O=Yubico",
+      certKeypair: Option[KeyPair] = None,
   ): (X509Certificate, KeyPair, X500Name) = {
-    val keypair = TestAuthenticator.generateEcKeypair()
+    val keypair = certKeypair getOrElse TestAuthenticator.generateEcKeypair()
     val x500Name = new X500Name(name)
     (
       TestAuthenticator.buildCertificate(
@@ -2110,6 +2112,81 @@ class FidoMetadataDownloaderSpec
           ).getPayload
           blob should not be null
           blob.getNo should equal(blobNo)
+        }
+
+        it("A cross-signed trust root cert appearing in the cert path validates successfully.") {
+          val (unrelatedRootCert, unrelatedRootKeypair, unrelatedRootName) =
+            makeTrustRootCert(distinguishedName =
+              "CN=Yubico java-webauthn-server unit tests UNRELATED CA, O=Yubico"
+            )
+          val (oldRootCert, oldRootKeypair, oldRootName) =
+            makeTrustRootCert(distinguishedName =
+              "CN=Yubico java-webauthn-server unit tests OLD CA, O=Yubico"
+            )
+          val (newRootCert, newCaKeypair, newCaName) =
+            makeTrustRootCert(distinguishedName =
+              "CN=Yubico java-webauthn-server unit tests NEW CA, O=Yubico"
+            )
+          val (crossCert, _, _) = makeCert(
+            oldRootKeypair,
+            oldRootName,
+            name = newCaName.toString,
+            certKeypair = Some(newCaKeypair),
+            isCa = true,
+          )
+          val (blobCert, blobKeypair, _) = makeCert(newCaKeypair, newCaName)
+          val crls = List(
+            (oldRootName, oldRootKeypair),
+            (newCaName, newCaKeypair),
+            (unrelatedRootName, unrelatedRootKeypair),
+          ).map({
+            case (name, keypair) =>
+              TestAuthenticator.buildCrl(
+                name,
+                keypair.getPrivate,
+                "SHA256withECDSA",
+                CertValidFrom,
+                CertValidTo,
+              )
+          })
+
+          val blobJwt = makeBlob(
+            List(blobCert, crossCert),
+            blobKeypair,
+            LocalDate.parse("2022-01-19"),
+          )
+
+          for (trustRoot <- List(newRootCert, oldRootCert)) {
+            val blob = load(
+              FidoMetadataDownloader
+                .builder()
+                .expectLegalHeader(
+                  "Kom ihåg att du aldrig får snyta dig i mattan!"
+                )
+                .useTrustRoot(trustRoot)
+                .useBlob(blobJwt)
+                .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
+                .useCrls(crls.asJava)
+                .build()
+            )
+            blob should not be null
+          }
+
+          val thrown = the[CertPathValidatorException] thrownBy {
+            load(
+              FidoMetadataDownloader
+                .builder()
+                .expectLegalHeader(
+                  "Kom ihåg att du aldrig får snyta dig i mattan!"
+                )
+                .useTrustRoot(unrelatedRootCert)
+                .useBlob(blobJwt)
+                .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))
+                .useCrls(crls.asJava)
+                .build()
+            )
+          }
+          thrown.getReason should be(PKIXReason.NO_TRUST_ANCHOR)
         }
       }
 
