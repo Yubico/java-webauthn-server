@@ -1271,7 +1271,6 @@ public final class FidoMetadataDownloader {
 
     final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
     final CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
-    final CertPath blobCertPath = certFactory.generateCertPath(certChain);
     final PKIXParameters pathParams =
         new PKIXParameters(Collections.singleton(new TrustAnchor(trustRootCertificate, null)));
     if (certStore != null) {
@@ -1283,9 +1282,29 @@ public final class FidoMetadataDownloader {
     fetchCrlDistributionPoints(certChain, certFactory).ifPresent(pathParams::addCertStore);
 
     pathParams.setDate(Date.from(clock.instant()));
-    cpv.validate(blobCertPath, pathParams);
 
-    return parseResult.blob;
+    // Try validating first the full cert path, and if that fails retry by omitting one cert at a
+    // time from the end.
+    // This enables "short-circuiting" the cert path if the trust anchor appears in the cert path,
+    // as was the case in August 2026 when the new trust anchor "R46" appeared last in the cert path
+    // signed by the previous trust anchor "R3".
+    CertPathValidatorException firstError = null;
+    for (int pathLen = certChain.size(); pathLen >= 1; --pathLen) {
+      final CertPath blobCertPath = certFactory.generateCertPath(certChain.subList(0, pathLen));
+      try {
+        cpv.validate(blobCertPath, pathParams);
+        return parseResult.blob;
+      } catch (CertPathValidatorException e) {
+        if (firstError == null) {
+          firstError = e;
+        }
+        if (pathLen == 1) {
+          throw firstError;
+        }
+      }
+    }
+    throw new IllegalStateException(
+        "Exited without finding a certification path or failing to validate any certification path. This should be impossible, please file a bug report.");
   }
 
   ParseResult parseBlob(ByteArray jwt) throws IOException, Base64UrlException {

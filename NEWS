@@ -16,6 +16,12 @@ Changes:
 
 * Default `FidoMetadataDownloader` trust root changed from GlobalSign R3 to R46.
   The default is used if using the builder method `useDefaultTrustRoot()`.
+* If `FidoMetadataDownloader` fails to validate the MDS trust path, it will now
+  retry the validation with the trust path truncated one certificate at a time.
+  This enables successfully validating metadata BLOBs with a cross-signed trust
+  root cert in the trust path during a transition grace period before MDS
+  migrates to a new trust root.
+  See: https://github.com/Yubico/java-webauthn-server/issues/498
 
 
 == Version 2.9.0 ==
