@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason;
 import com.yubico.internal.util.BinaryUtil;
 import com.yubico.internal.util.CertificateParser;
+import com.yubico.internal.util.CollectionUtil;
 import com.yubico.internal.util.OptionalUtil;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.exception.Base64UrlException;
@@ -72,6 +73,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -87,9 +89,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import lombok.extern.jackson.Jacksonized;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -108,8 +112,8 @@ import lombok.extern.slf4j.Slf4j;
 public final class FidoMetadataDownloader {
 
   @NonNull private final Set<String> expectedLegalHeaders;
-  private final X509Certificate trustRootCertificate;
-  private final URL trustRootUrl;
+  private final Set<TrustAnchor> trustAnchors;
+  private final List<URL> trustRootUrls;
   private final Set<ByteArray> trustRootSha256;
   private final File trustRootCacheFile;
   private final Supplier<Optional<ByteArray>> trustRootCacheSupplier;
@@ -144,8 +148,8 @@ public final class FidoMetadataDownloader {
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   public static class FidoMetadataDownloaderBuilder {
     @NonNull private final Set<String> expectedLegalHeaders;
-    private final X509Certificate trustRootCertificate;
-    private final URL trustRootUrl;
+    private final Set<TrustAnchor> trustAnchors;
+    private final List<URL> trustRootUrls;
     private final Set<ByteArray> trustRootSha256;
     private final File trustRootCacheFile;
     private final Supplier<Optional<ByteArray>> trustRootCacheSupplier;
@@ -171,8 +175,8 @@ public final class FidoMetadataDownloader {
     public FidoMetadataDownloader build() {
       return new FidoMetadataDownloader(
           expectedLegalHeaders,
-          trustRootCertificate,
-          trustRootUrl,
+          trustAnchors,
+          trustRootUrls,
           trustRootSha256,
           trustRootCacheFile,
           trustRootCacheSupplier,
@@ -250,11 +254,12 @@ public final class FidoMetadataDownloader {
      * <ol>
      *   <li>Use the default download URL and certificate hash. This is the main intended use case.
      *       See {@link #useDefaultTrustRoot()}.
-     *   <li>Use a custom download URL and certificate hash. This is for future-proofing in case the
-     *       trust root certificate changes and there is no new release of this library. See {@link
-     *       #downloadTrustRoot(URL, Set)}.
-     *   <li>Use a pre-retrieved trust root certificate. It is up to you to perform any integrity
-     *       checks and cache it as desired. See {@link #useTrustRoot(X509Certificate)}.
+     *   <li>Use custom download URLs and certificate hashes. This is for future-proofing in case
+     *       the upstream trust roots change and there is no new release of this library. See {@link
+     *       #downloadTrustRoot(URL, Set)} and {@link #downloadTrustRoots(List, Set)}.
+     *   <li>Use a pre-retrieved trust root certificate or set of trust anchors. It is up to you to
+     *       perform any integrity checks and caching as desired. See {@link
+     *       #useTrustRoot(X509Certificate)} and {@link #useTrustRoots(Set)}.
      * </ol>
      */
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -271,7 +276,7 @@ public final class FidoMetadataDownloader {
        * <pre>
        * downloadTrustRoot(
        *   new URL("https://secure.globalsign.com/cacert/rootr46.crt"),
-       *   Collections.singleton(ByteArray.fromHex("4fa3126d8d3a11d1c4855a4f807cbad6cf919d3a5a88b03bea2c6372d93c40c9"))
+       *   Collections.singletonList(ByteArray.fromHex("4fa3126d8d3a11d1c4855a4f807cbad6cf919d3a5a88b03bea2c6372d93c40c9"))
        * )
        * </pre>
        *
@@ -279,6 +284,7 @@ public final class FidoMetadataDownloader {
        * library release.
        *
        * @see #downloadTrustRoot(URL, Set)
+       * @see #downloadTrustRoots(List, Set)
        */
       public Step3 useDefaultTrustRoot() {
         try {
@@ -306,26 +312,79 @@ public final class FidoMetadataDownloader {
        * <p>If the cert is downloaded, it is also written to the cache {@link File} or {@link
        * Consumer} configured in the {@link Step3 next step}.
        *
+       * <p>This is an alias of <code>
+       * downloadTrustRoots(Collections.singletonList(url), acceptedCertSha256)</code>. See {@link
+       * #downloadTrustRoots(List, Set)}.
+       *
        * @param url the HTTP URL to download. It MUST use the <code>https:</code> scheme.
        * @param acceptedCertSha256 a set of SHA-256 hashes to verify the downloaded certificate
        *     against. The downloaded certificate MUST match at least one of these hashes.
        * @throws IllegalArgumentException if <code>url</code> is not a HTTPS URL.
+       * @see #downloadTrustRoots(List, Set)
        */
       public Step3 downloadTrustRoot(@NonNull URL url, @NonNull Set<ByteArray> acceptedCertSha256) {
-        if (!"https".equals(url.getProtocol())) {
+        return downloadTrustRoots(Collections.singletonList(url), acceptedCertSha256);
+      }
+
+      /**
+       * Download the trust root certificate from the given HTTPS <code>url</code> and verify its
+       * SHA-256 hash against <code>acceptedCertSha256</code>.
+       *
+       * <p>The certificate will be downloaded if it does not exist in the cache, or if the cached
+       * certificate is not currently valid.
+       *
+       * <p>If the cert is downloaded, it is also written to the cache {@link File} or {@link
+       * Consumer} configured in the {@link Step3 next step}.
+       *
+       * @param urls a non-empty list of HTTPS URLs to download. Each URL MUST use the <code>https:
+       *     </code> scheme.
+       * @param acceptedCertSha256 a set of SHA-256 hashes to verify downloaded certificates
+       *     against. Each downloaded certificate MUST match at least one of these hashes.
+       * @throws IllegalArgumentException if <code>urls</code> is empty or if any element of <code>
+       *     urls</code> is not a HTTPS URL.
+       * @see #downloadTrustRoot(URL, Set)
+       */
+      public Step3 downloadTrustRoots(
+          @NonNull List<URL> urls, @NonNull Set<ByteArray> acceptedCertSha256) {
+        if (urls.isEmpty()) {
+          throw new IllegalArgumentException(
+              "List of trust certificate download URLs must not be empty.");
+        }
+        if (!urls.stream().allMatch(u -> "https".equals(u.getProtocol()))) {
           throw new IllegalArgumentException("Trust certificate download URL must be a HTTPS URL.");
         }
-        return new Step3(this, null, url, acceptedCertSha256);
+        return new Step3(this, null, CollectionUtil.immutableList(urls), acceptedCertSha256);
       }
 
       /**
        * Use the given trust root certificate. It is the caller's responsibility to perform any
        * integrity checks and/or caching logic.
        *
+       * <p>This is a shortcut for {@link #useTrustRoots(Set)} with <code>trustRootCertificate
+       * </code> imported into a singleton set.
+       *
        * @param trustRootCertificate the certificate to use as the FIDO Metadata Service trust root.
+       * @see #useTrustRoots(Set)
        */
       public Step4 useTrustRoot(@NonNull X509Certificate trustRootCertificate) {
-        return new Step4(new Step3(this, trustRootCertificate, null, null), null, null, null);
+        return useTrustRoots(Collections.singleton(importTrustAnchor(trustRootCertificate)));
+      }
+
+      /**
+       * Use the given set of trust anchors. It is the caller's responsibility to perform any
+       * integrity checks and/or caching logic.
+       *
+       * @param trustAnchors the trust anchors to use as the FIDO Metadata Service trust root. The
+       *     set will be copied, so subsequent modifications to <code>trustAnchors</code> will not
+       *     affect the <code>FidoMetadataDownloader</code> instance.
+       * @see #useTrustRoot(X509Certificate)
+       */
+      public Step4 useTrustRoots(@NonNull Set<TrustAnchor> trustAnchors) {
+        return new Step4(
+            new Step3(this, CollectionUtil.immutableSet(trustAnchors), null, null),
+            null,
+            null,
+            null);
       }
     }
 
@@ -335,28 +394,32 @@ public final class FidoMetadataDownloader {
      * <p>This step offers two mutually exclusive options:
      *
      * <ol>
-     *   <li>Cache the trust root certificate in a {@link File}. See {@link
+     *   <li>Cache trust root certificates in a {@link File}. See {@link
      *       Step3#useTrustRootCacheFile(File)}.
-     *   <li>Cache the trust root certificate using a {@link Supplier} to read the cache and a
-     *       {@link Consumer} to write the cache. See {@link Step3#useTrustRootCache(Supplier,
-     *       Consumer)}.
+     *   <li>Cache trust root certificates using a {@link Supplier} to read the cache and a {@link
+     *       Consumer} to write the cache. See {@link Step3#useTrustRootCache(Supplier, Consumer)}.
      * </ol>
      */
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Step3 {
       @NonNull private final Step2 step2;
-      private final X509Certificate trustRootCertificate;
-      private final URL trustRootUrl;
+      private final Set<TrustAnchor> trustAnchors;
+      private final List<URL> trustRootUrls;
       private final Set<ByteArray> trustRootSha256;
 
       /**
-       * Cache the trust root certificate in the file <code>cacheFile</code>.
+       * Cache trust root certificates in the file <code>cacheFile</code>.
        *
-       * <p>If <code>cacheFile</code> exists, is a normal file, is readable, matches one of the
-       * SHA-256 hashes configured in the previous step, and contains a currently valid X.509
-       * certificate, then it will be used as the trust root for the FIDO Metadata Service blob.
+       * <p>If <code>cacheFile</code> exists, is a normal file and is readable, then trust root
+       * certificates will be attempted to be read from this file. The internal format of the file
+       * is opaque and subject to change without a major version release of the library.
        *
-       * <p>Otherwise, the trust root certificate will be downloaded and written to this file.
+       * <p>If reading from the cache fails, then trust root certificates will instead be downloaded
+       * and written to this file.
+       *
+       * <p>The cache is invalidated whenever the configured list of trust root download URLs
+       * changes or differs in length from the number of cached certificates, or whenever any cached
+       * certificate matches none of the configured SHA-256 hashes.
        */
       public Step4 useTrustRootCacheFile(@NonNull File cacheFile) {
         return new Step4(this, cacheFile, null, null);
@@ -366,24 +429,30 @@ public final class FidoMetadataDownloader {
        * Cache the trust root certificate using a {@link Supplier} to read the cache, and using a
        * {@link Consumer} to write the cache.
        *
-       * <p>If <code>getCachedTrustRootCert</code> returns non-empty, the value matches one of the
-       * SHA-256 hashes configured in the previous step, and is a currently valid X.509 certificate,
-       * then it will be used as the trust root for the FIDO Metadata Service blob.
+       * <p>If <code>getCachedTrustRootCerts</code> returns non-empty, then trust root certificates
+       * will be attempted to be read from the contained {@link ByteArray}. The internal format of
+       * the byte array is opaque and subject to change without a major version release of the
+       * library.
        *
-       * <p>Otherwise, the trust root certificate will be downloaded and written to <code>
-       * writeCachedTrustRootCert</code>.
+       * <p>If the supplier returns empty or reading from the contained byte array fails, then trust
+       * root certificates will be downloaded and written to <code>
+       * writeCachedTrustRootCerts</code>.
        *
-       * @param getCachedTrustRootCert a {@link Supplier} that fetches the cached trust root
-       *     certificate if it exists. MUST NOT return <code>null</code>. The returned value, if
-       *     present, MUST be the trust root certificate in X.509 DER format.
-       * @param writeCachedTrustRootCert a {@link Consumer} that accepts the trust root certificate
-       *     in X.509 DER format and writes it to the cache. Its argument will never be <code>null
-       *     </code>.
+       * <p>The cache is invalidated whenever the configured list of trust root download URLs
+       * changes or differs in length from the number of cached certificates, or whenever any cached
+       * certificate matches none of the configured SHA-256 hashes.
+       *
+       * @param getCachedTrustRootCerts a {@link Supplier} that fetches cached trust root
+       *     certificates if they exist. MUST NOT return <code>null</code>. The format of the
+       *     returned value, if present, is opaque to the supplier.
+       * @param writeCachedTrustRootCerts a {@link Consumer} that accepts trust root certificates in
+       *     an unspecified opaque format and writes it to the cache. Its argument will never be
+       *     <code>null</code>.
        */
       public Step4 useTrustRootCache(
-          @NonNull Supplier<Optional<ByteArray>> getCachedTrustRootCert,
-          @NonNull Consumer<ByteArray> writeCachedTrustRootCert) {
-        return new Step4(this, null, getCachedTrustRootCert, writeCachedTrustRootCert);
+          @NonNull Supplier<Optional<ByteArray>> getCachedTrustRootCerts,
+          @NonNull Consumer<ByteArray> writeCachedTrustRootCerts) {
+        return new Step4(this, null, getCachedTrustRootCerts, writeCachedTrustRootCerts);
       }
     }
 
@@ -539,8 +608,8 @@ public final class FidoMetadataDownloader {
         Consumer<ByteArray> blobCacheConsumer) {
       return new FidoMetadataDownloaderBuilder(
           step5.step4.step3.step2.expectedLegalHeaders,
-          step5.step4.step3.trustRootCertificate,
-          step5.step4.step3.trustRootUrl,
+          step5.step4.step3.trustAnchors,
+          step5.step4.step3.trustRootUrls,
           step5.step4.step3.trustRootSha256,
           step5.step4.trustRootCacheFile,
           step5.step4.trustRootCacheSupplier,
@@ -603,8 +672,9 @@ public final class FidoMetadataDownloader {
      * Use the provided {@link X509Certificate}s as trust roots for HTTPS downloads.
      *
      * <p>This is primarily useful when setting {@link Step2#downloadTrustRoot(URL, Set)
-     * downloadTrustRoot} and/or {@link Step4#downloadBlob(URL) downloadBlob} to download from
-     * custom servers instead of the defaults.
+     * downloadTrustRoot} or {@link Step2#downloadTrustRoots(List, Set) downloadTrustRoots} and/or
+     * {@link Step4#downloadBlob(URL) downloadBlob} to download from custom servers instead of the
+     * defaults.
      *
      * <p>If provided, these will be used for downloading
      *
@@ -786,15 +856,15 @@ public final class FidoMetadataDownloader {
           UnexpectedLegalHeader,
           DigestException,
           FidoMetadataDownloaderException {
-    final X509Certificate trustRoot = retrieveTrustRootCert();
+    final Set<TrustAnchor> trustAnchors = retrieveTrustAnchors();
 
-    final Optional<MetadataBLOB> explicit = loadExplicitBlobOnly(trustRoot);
+    final Optional<MetadataBLOB> explicit = loadExplicitBlobOnly(trustAnchors);
     if (explicit.isPresent()) {
       log.debug("Explicit BLOB is set - disregarding cache and download.");
       return explicit.get();
     }
 
-    final Optional<MetadataBLOB> cached = loadCachedBlobOnly(trustRoot);
+    final Optional<MetadataBLOB> cached = loadCachedBlobOnly(trustAnchors);
     if (cached.isPresent()) {
       log.debug("Cached BLOB exists, checking expiry date...");
       if (cached
@@ -814,7 +884,7 @@ public final class FidoMetadataDownloader {
       log.debug("Cached BLOB does not exist or is invalid.");
     }
 
-    return refreshBlobInternal(trustRoot, cached).get();
+    return refreshBlobInternal(trustAnchors, cached).get();
   }
 
   /**
@@ -889,26 +959,26 @@ public final class FidoMetadataDownloader {
           UnexpectedLegalHeader,
           DigestException,
           FidoMetadataDownloaderException {
-    final X509Certificate trustRoot = retrieveTrustRootCert();
+    final Set<TrustAnchor> trustAnchors = retrieveTrustAnchors();
 
-    final Optional<MetadataBLOB> explicit = loadExplicitBlobOnly(trustRoot);
+    final Optional<MetadataBLOB> explicit = loadExplicitBlobOnly(trustAnchors);
     if (explicit.isPresent()) {
       log.debug("Explicit BLOB is set - disregarding cache and download.");
       return explicit.get();
     }
 
-    final Optional<MetadataBLOB> cached = loadCachedBlobOnly(trustRoot);
+    final Optional<MetadataBLOB> cached = loadCachedBlobOnly(trustAnchors);
     if (cached.isPresent()) {
       log.debug("Cached BLOB exists, proceeding to compare against fresh BLOB...");
     } else {
       log.debug("Cached BLOB does not exist or is invalid.");
     }
 
-    return refreshBlobInternal(trustRoot, cached).get();
+    return refreshBlobInternal(trustAnchors, cached).get();
   }
 
   private Optional<MetadataBLOB> refreshBlobInternal(
-      @NonNull X509Certificate trustRoot, @NonNull Optional<MetadataBLOB> cached)
+      @NonNull Set<TrustAnchor> trustAnchors, @NonNull Optional<MetadataBLOB> cached)
       throws CertPathValidatorException,
           InvalidAlgorithmParameterException,
           Base64UrlException,
@@ -935,8 +1005,8 @@ public final class FidoMetadataDownloader {
         return cached;
 
       } else {
-        ByteArray downloadedBytes = downloadResult.getContent();
-        final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloadedBytes, trustRoot);
+        byte[] downloadedBytes = downloadResult.getContent();
+        final MetadataBLOB downloadedBlob = parseAndVerifyBlob(downloadedBytes, trustAnchors);
         log.debug("New BLOB downloaded.");
 
         if (cached.isPresent()) {
@@ -956,12 +1026,12 @@ public final class FidoMetadataDownloader {
         log.debug("Writing new BLOB to cache...");
         if (blobCacheFile != null) {
           try (FileOutputStream f = new FileOutputStream(blobCacheFile)) {
-            f.write(downloadedBytes.getBytes());
+            f.write(downloadedBytes);
           }
         }
 
         if (blobCacheConsumer != null) {
-          blobCacheConsumer.accept(downloadedBytes);
+          blobCacheConsumer.accept(new ByteArray(downloadedBytes));
         }
 
         return Optional.of(downloadedBlob);
@@ -1002,11 +1072,11 @@ public final class FidoMetadataDownloader {
    *     cache file (if any) failed.
    * @throws NoSuchAlgorithmException if the SHA-256 algorithm is not available.
    */
-  private X509Certificate retrieveTrustRootCert()
+  private Set<TrustAnchor> retrieveTrustAnchors()
       throws CertificateException, DigestException, IOException, NoSuchAlgorithmException {
 
-    if (trustRootCertificate != null) {
-      return trustRootCertificate;
+    if (trustAnchors != null) {
+      return trustAnchors;
 
     } else {
       final Optional<ByteArray> cachedContents;
@@ -1016,44 +1086,51 @@ public final class FidoMetadataDownloader {
         cachedContents = trustRootCacheSupplier.get();
       }
 
-      X509Certificate cert = null;
-      if (cachedContents.isPresent()) {
-        final ByteArray verifiedCachedContents = verifyHash(cachedContents.get(), trustRootSha256);
-        if (verifiedCachedContents != null) {
-          try {
-            final X509Certificate cachedCert =
-                CertificateParser.parseDer(verifiedCachedContents.getBytes());
-            cachedCert.checkValidity(Date.from(clock.instant()));
-            cert = cachedCert;
-          } catch (CertificateException e) {
-            // Fall through
+      Set<X509Certificate> certs =
+          cachedContents
+              .flatMap(cc -> readTrustAnchorsCache(new ByteArrayInputStream(cc.getBytes())))
+              .orElseGet(HashSet::new);
+
+      if (certs.isEmpty()) {
+        List<byte[]> downloadedChunks = new ArrayList<>();
+        for (URL trustRootUrl : trustRootUrls) {
+          final byte[] downloaded = verifyHash(download(trustRootUrl), trustRootSha256);
+          if (downloaded == null) {
+            throw new DigestException(
+                "Downloaded trust root certificate matches none of the acceptable hashes.");
           }
-        }
-      }
 
-      if (cert == null) {
-        final ByteArray downloaded = verifyHash(download(trustRootUrl), trustRootSha256);
-        if (downloaded == null) {
-          throw new DigestException(
-              "Downloaded trust root certificate matches none of the acceptable hashes.");
+          final X509Certificate cert = CertificateParser.parseDer(downloaded);
+          cert.checkValidity(Date.from(clock.instant()));
+          certs.add(cert);
+          downloadedChunks.add(downloaded);
         }
 
-        cert = CertificateParser.parseDer(downloaded.getBytes());
-        cert.checkValidity(Date.from(clock.instant()));
-
+        final TrustRootsCacheValue cacheValue =
+            new TrustRootsCacheValue(
+                trustRootUrls.stream().map(URL::toString).collect(Collectors.toList()),
+                downloadedChunks);
         if (trustRootCacheFile != null) {
           try (FileOutputStream f = new FileOutputStream(trustRootCacheFile)) {
-            f.write(downloaded.getBytes());
+            com.yubico.internal.util.JacksonCodecs.cbor().writeValue(f, cacheValue);
           }
         }
 
         if (trustRootCacheConsumer != null) {
-          trustRootCacheConsumer.accept(downloaded);
+          trustRootCacheConsumer.accept(
+              new ByteArray(
+                  com.yubico.internal.util.JacksonCodecs.cbor().writeValueAsBytes(cacheValue)));
         }
       }
 
-      return cert;
+      return certs.stream()
+          .map(FidoMetadataDownloader::importTrustAnchor)
+          .collect(Collectors.toSet());
     }
+  }
+
+  static TrustAnchor importTrustAnchor(X509Certificate trustRootCertificate) {
+    return new TrustAnchor(trustRootCertificate, null);
   }
 
   /**
@@ -1071,7 +1148,7 @@ public final class FidoMetadataDownloader {
    * @throws FidoMetadataDownloaderException if the explicitly configured BLOB (if any) has a bad
    *     signature.
    */
-  private Optional<MetadataBLOB> loadExplicitBlobOnly(X509Certificate trustRootCertificate)
+  private Optional<MetadataBLOB> loadExplicitBlobOnly(Set<TrustAnchor> trustAnchors)
       throws Base64UrlException,
           CertPathValidatorException,
           CertificateException,
@@ -1083,15 +1160,14 @@ public final class FidoMetadataDownloader {
           FidoMetadataDownloaderException {
     if (blobJwt != null) {
       return Optional.of(
-          parseAndMaybeVerifyBlob(
-              new ByteArray(blobJwt.getBytes(StandardCharsets.UTF_8)), trustRootCertificate));
+          parseAndMaybeVerifyBlob(blobJwt.getBytes(StandardCharsets.UTF_8), trustAnchors));
 
     } else {
       return Optional.empty();
     }
   }
 
-  private Optional<MetadataBLOB> loadCachedBlobOnly(X509Certificate trustRootCertificate) {
+  private Optional<MetadataBLOB> loadCachedBlobOnly(Set<TrustAnchor> trustAnchors) {
 
     final Optional<ByteArray> cachedContents;
     if (blobCacheFile != null) {
@@ -1110,7 +1186,7 @@ public final class FidoMetadataDownloader {
     return cachedContents.map(
         cached -> {
           try {
-            return parseAndMaybeVerifyBlob(cached, trustRootCertificate);
+            return parseAndMaybeVerifyBlob(cached.getBytes(), trustAnchors);
           } catch (Exception e) {
             log.warn("Failed to read or parse cached BLOB.", e);
             return null;
@@ -1121,7 +1197,7 @@ public final class FidoMetadataDownloader {
   Optional<ByteArray> readCacheFile(File cacheFile) throws IOException {
     if (cacheFile.exists() && cacheFile.canRead() && cacheFile.isFile()) {
       try (FileInputStream f = new FileInputStream(cacheFile)) {
-        return Optional.of(readAll(f));
+        return Optional.of(new ByteArray(readAll(f)));
       } catch (FileNotFoundException e) {
         throw new RuntimeException(
             "This exception should be impossible, please file a bug report.", e);
@@ -1131,7 +1207,39 @@ public final class FidoMetadataDownloader {
     }
   }
 
-  private ByteArray download(URL url) throws IOException {
+  Optional<Set<X509Certificate>> readTrustAnchorsCache(InputStream is) {
+    try {
+      TrustRootsCacheValue cache =
+          com.yubico.internal.util.JacksonCodecs.cbor().readValue(is, TrustRootsCacheValue.class);
+      if (cache.urls.equals(trustRootUrls.stream().map(URL::toString).collect(Collectors.toList()))
+          && cache.urls.size() == cache.certsDer.size()) {
+        Set<X509Certificate> cachedCerts = new HashSet<>();
+        for (byte[] der : cache.certsDer) {
+          X509Certificate cachedCert = CertificateParser.parseDer(der);
+          final byte[] verifiedCachedContents =
+              verifyHash(cachedCert.getEncoded(), trustRootSha256);
+          if (verifiedCachedContents != null) {
+            cachedCert.checkValidity(Date.from(clock.instant()));
+          } else {
+            log.debug(
+                "Cached trust root certificate does not match any acceptable trust root SHA-256 hash.");
+            return Optional.empty();
+          }
+          cachedCerts.add(cachedCert);
+        }
+        return Optional.of(cachedCerts);
+      } else {
+        log.debug(
+            "Cached trust root certificate URLs differ from current configuration, or number of URLs does not equal number of cached certificates - ignoring cache.");
+        return Optional.empty();
+      }
+    } catch (IOException | CertificateException | NoSuchAlgorithmException e) {
+      log.debug("Failed to read trust root certificates from cache", e);
+      return Optional.empty();
+    }
+  }
+
+  private byte[] download(URL url) throws IOException {
     final DownloadResult downloadResult = download(url, Optional.empty());
     if (downloadResult.isOk()) {
       return downloadResult.getContent();
@@ -1203,7 +1311,7 @@ public final class FidoMetadataDownloader {
     return DownloadResult.ok(readAll(conn.getInputStream()));
   }
 
-  private MetadataBLOB parseAndVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
+  private MetadataBLOB parseAndVerifyBlob(byte[] jwt, Set<TrustAnchor> trustAnchors)
       throws CertPathValidatorException,
           InvalidAlgorithmParameterException,
           CertificateException,
@@ -1213,10 +1321,10 @@ public final class FidoMetadataDownloader {
           InvalidKeyException,
           Base64UrlException,
           FidoMetadataDownloaderException {
-    return verifyBlob(parseBlob(jwt), trustRootCertificate);
+    return verifyBlob(parseBlob(jwt), trustAnchors);
   }
 
-  private MetadataBLOB parseAndMaybeVerifyBlob(ByteArray jwt, X509Certificate trustRootCertificate)
+  private MetadataBLOB parseAndMaybeVerifyBlob(byte[] jwt, Set<TrustAnchor> trustAnchors)
       throws CertPathValidatorException,
           InvalidAlgorithmParameterException,
           CertificateException,
@@ -1229,11 +1337,11 @@ public final class FidoMetadataDownloader {
     if (verifyDownloadsOnly) {
       return parseBlob(jwt).blob;
     } else {
-      return verifyBlob(parseBlob(jwt), trustRootCertificate);
+      return verifyBlob(parseBlob(jwt), trustAnchors);
     }
   }
 
-  private MetadataBLOB verifyBlob(ParseResult parseResult, X509Certificate trustRootCertificate)
+  private MetadataBLOB verifyBlob(ParseResult parseResult, Set<TrustAnchor> trustAnchors)
       throws IOException,
           CertificateException,
           NoSuchAlgorithmException,
@@ -1243,7 +1351,7 @@ public final class FidoMetadataDownloader {
           InvalidAlgorithmParameterException,
           FidoMetadataDownloaderException {
     final MetadataBLOBHeader header = parseResult.blob.getHeader();
-    final List<X509Certificate> certChain = fetchHeaderCertChain(trustRootCertificate, header);
+    final List<X509Certificate> certChain = fetchHeaderCertChain(trustAnchors, header);
     final X509Certificate leafCert = certChain.get(0);
 
     final Signature signature;
@@ -1271,8 +1379,7 @@ public final class FidoMetadataDownloader {
 
     final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
     final CertPathValidator cpv = CertPathValidator.getInstance("PKIX");
-    final PKIXParameters pathParams =
-        new PKIXParameters(Collections.singleton(new TrustAnchor(trustRootCertificate, null)));
+    final PKIXParameters pathParams = new PKIXParameters(trustAnchors);
     if (certStore != null) {
       pathParams.addCertStore(certStore);
     }
@@ -1307,8 +1414,8 @@ public final class FidoMetadataDownloader {
         "Exited without finding a certification path or failing to validate any certification path. This should be impossible, please file a bug report.");
   }
 
-  ParseResult parseBlob(ByteArray jwt) throws IOException, Base64UrlException {
-    Scanner s = new Scanner(new ByteArrayInputStream(jwt.getBytes())).useDelimiter("\\.");
+  ParseResult parseBlob(byte[] jwt) throws IOException, Base64UrlException {
+    Scanner s = new Scanner(new ByteArrayInputStream(jwt)).useDelimiter("\\.");
     final ByteArray jwtHeader = ByteArray.fromBase64Url(s.next());
     final ByteArray jwtPayload = ByteArray.fromBase64Url(s.next());
     final ByteArray jwtSignature = ByteArray.fromBase64Url(s.next());
@@ -1335,18 +1442,18 @@ public final class FidoMetadataDownloader {
     return JacksonCodecs.jsonWithDefaultEnums();
   }
 
-  private static ByteArray readAll(InputStream is) throws IOException {
-    return new ByteArray(BinaryUtil.readAll(is));
+  private static byte[] readAll(InputStream is) throws IOException {
+    return BinaryUtil.readAll(is);
   }
 
   /**
    * @return <code>contents</code> if its SHA-256 hash matches any element of <code>
    *     acceptedCertSha256</code>, otherwise <code>null</code>.
    */
-  private static ByteArray verifyHash(ByteArray contents, Set<ByteArray> acceptedCertSha256)
+  private static byte[] verifyHash(byte[] contents, Set<ByteArray> acceptedCertSha256)
       throws NoSuchAlgorithmException {
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
-    final ByteArray hash = new ByteArray(digest.digest(contents.getBytes()));
+    final ByteArray hash = new ByteArray(digest.digest(contents));
     if (acceptedCertSha256.stream().anyMatch(hash::equals)) {
       return contents;
     } else {
@@ -1364,7 +1471,7 @@ public final class FidoMetadataDownloader {
 
   /** Parse the header cert chain and download any certificates as necessary. */
   List<X509Certificate> fetchHeaderCertChain(
-      X509Certificate trustRootCertificate, MetadataBLOBHeader header)
+      Set<TrustAnchor> trustAnchors, MetadataBLOBHeader header)
       throws IOException, CertificateException {
     if (header.getX5u().isPresent()) {
       final URL x5u = header.getX5u().get();
@@ -1379,7 +1486,7 @@ public final class FidoMetadataDownloader {
       }
       List<X509Certificate> certs = new ArrayList<>();
       for (String pem :
-          new String(download(x5u).getBytes(), StandardCharsets.UTF_8)
+          new String(download(x5u), StandardCharsets.UTF_8)
               .trim()
               .split("\\n+-----END CERTIFICATE-----\\n+-----BEGIN CERTIFICATE-----\\n+")) {
         X509Certificate x509Certificate = CertificateParser.parsePem(pem);
@@ -1389,7 +1496,14 @@ public final class FidoMetadataDownloader {
     } else if (header.getX5c().isPresent()) {
       return header.getX5c().get();
     } else {
-      return Collections.singletonList(trustRootCertificate);
+      return trustAnchors.stream()
+          .map(TrustAnchor::getTrustedCert)
+          .findFirst()
+          .map(Collections::singletonList)
+          .orElseThrow(
+              () ->
+                  new IllegalArgumentException(
+                      "x5u and x5c both missing from BLOB header, and no given trust anchor could be interpreted as an X509Certificate."));
     }
   }
 
@@ -1439,8 +1553,7 @@ public final class FidoMetadataDownloader {
                     log.debug("Attempting to download CRL distribution point: {}", crldpUrl);
                     try {
                       return Optional.of(
-                          certFactory.generateCRL(
-                              new ByteArrayInputStream(download(crldpUrl).getBytes())));
+                          certFactory.generateCRL(new ByteArrayInputStream(download(crldpUrl))));
                     } catch (CRLException e) {
                       log.warn("Failed to import CRL from distribution point: {}", crldpUrl, e);
                       return Optional.<CRL>empty();
@@ -1461,17 +1574,17 @@ public final class FidoMetadataDownloader {
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   private static class DownloadResult {
     private boolean notModified;
-    private Optional<ByteArray> content;
+    private Optional<byte[]> content;
 
     static DownloadResult notModified() {
       return new DownloadResult(true, Optional.empty());
     }
 
-    static DownloadResult ok(@NonNull ByteArray content) {
+    static DownloadResult ok(@NonNull byte[] content) {
       return new DownloadResult(false, Optional.of(content));
     }
 
-    ByteArray getContent() {
+    byte[] getContent() {
       return content.get();
     }
 
@@ -1491,5 +1604,13 @@ public final class FidoMetadataDownloader {
 
     /** Propagate the failure by re-throwing the exception. */
     THROW;
+  }
+
+  @Value
+  @Builder
+  @Jacksonized
+  static class TrustRootsCacheValue {
+    List<String> urls;
+    List<byte[]> certsDer;
   }
 }

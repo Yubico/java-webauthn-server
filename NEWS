@@ -22,6 +22,27 @@ Changes:
   root cert in the trust path during a transition grace period before MDS
   migrates to a new trust root.
   See: https://github.com/Yubico/java-webauthn-server/issues/498
+* The internal format of the `FidoMetadataDownloader` trust root cache has
+  changed and is now opaque. This will invalidate the trust root cache and cause
+  a re-download of the trust root certificate.
+* The `FidoMetadataDownloader` trust root cache will now be invalidated and
+  cause a re-download if the set of trust root download URLs changes. Changing
+  the set of acceptable SHA-256 hashes does not directly invalidate the cache,
+  but may indirectly invalidate the cache unless each cached certificate matches
+  some of the given SHA-256 hashes.
+* Parameters `getCachedTrustRootCert` and `writeCachedTrustRootCert` in
+  `FidoMetadataDownloader` builder method `useTrustRootCache` renamed to
+  `getCachedTrustRootCerts` and `writeCachedTrustRootCerts` in JavaDoc.
+
+New features:
+
+* New `FidoMetadataDownloader` builder methods.
+  These enable trusting multiple trust roots, for example to ensure a smooth
+  transition when MDS migrates to a new trust root:
+ ** `downloadTrustRoots(List<URL>, Set<ByteArray>)` as alternative to
+    `downloadTrustRoot(URL, Set<ByteArray>)`
+ ** `useTrustRoots(Set<TrustAnchor>)` as alternative to
+    `useTrustRoot(X509Certificate)`
 
 
 == Version 2.9.0 ==

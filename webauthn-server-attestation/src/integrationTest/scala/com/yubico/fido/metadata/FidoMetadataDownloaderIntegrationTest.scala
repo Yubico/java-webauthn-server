@@ -12,6 +12,7 @@ import org.scalatest.tags.Network
 import org.scalatest.tags.Slow
 import org.scalatestplus.junit.JUnitRunner
 
+import java.util.Collections
 import scala.jdk.CollectionConverters.ListHasAsScala
 
 @Slow
@@ -37,16 +38,25 @@ class FidoMetadataDownloaderIntegrationTest
       blob should not be null
       val trustRootCert =
         CertificateParser.parseDer(
-          TestCaches.trustRootCache.get.getBytes
+          com.yubico.internal.util.JacksonCodecs
+            .cbor()
+            .readValue(
+              TestCaches.trustRootCache.get.getBytes,
+              classOf[FidoMetadataDownloader.TrustRootsCacheValue],
+            )
+            .getCertsDer
+            .get(0)
         )
 
       val certChain = TestCaches
         .cacheSynchronized(
           downloader
             .fetchHeaderCertChain(
-              trustRootCert,
+              Collections.singleton(
+                FidoMetadataDownloader.importTrustAnchor(trustRootCert)
+              ),
               downloader
-                .parseBlob(TestCaches.blobCache.get)
+                .parseBlob(TestCaches.blobCache.get.getBytes)
                 .getBlob
                 .getHeader,
             )
