@@ -1,11 +1,21 @@
 == Version 2.10.0 (unreleased) ==
 
+`webauthn-server-core`:
+
 New features:
 
 * Added support for ML-DSA-44, ML-DSA-65 and ML-DSA-87. This requires JRE 24 or
   later, or a third-party JCA provider. ML-DSA is enabled by default as the
   least preferred credential key algorithms; see
   `RelyingPartyBuilder.preferredPubkeyParams`.
+
+
+`webauthn-server-attestation`:
+
+Changes:
+
+* Default `FidoMetadataDownloader` trust root changed from GlobalSign R3 to R46.
+  The default is used if using the builder method `useDefaultTrustRoot()`.
 
 
 == Version 2.9.0 ==
