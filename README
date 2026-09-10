@@ -857,3 +857,9 @@ Developers site].
 === Development
 
 See the link:https://github.com/Yubico/java-webauthn-server/blob/main/doc/development.md[developer docs].
+
+
+[#report-sec-issues]
+=== Reporting security issues
+
+See link:https://github.com/Yubico/java-webauthn-server/blob/main/SECURITY.md[`SECURITY.md`].
