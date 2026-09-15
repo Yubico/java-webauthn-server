@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.yubico.fido.metadata.FidoMetadataDownloader.CachePolicyDecision
 import com.yubico.fido.metadata.FidoMetadataDownloader.FidoMetadataDownloaderBuilder
 import com.yubico.fido.metadata.FidoMetadataDownloader.TrustRootsCacheValue
+import com.yubico.fido.metadata.FidoMetadataDownloader.importTrustAnchor
 import com.yubico.fido.metadata.FidoMetadataDownloaderException.Reason
 import com.yubico.internal.util.BinaryUtil
 import com.yubico.internal.util.JacksonCodecs
@@ -1958,7 +1959,13 @@ class FidoMetadataDownloaderSpec
         }
 
         it("Missing x5c means the trust root cert is used as the signer.") {
-          val (trustRootCert, caKeypair, caName) = makeTrustRootCert()
+          val (trustRootCert, caKeypair, caName) =
+            makeTrustRootCert(distinguishedName =
+              "CN=Yubico java-webauthn-server unit tests CA 1, O=Yubico"
+            )
+          val (trustRootCert0, _, _) = makeTrustRootCert(distinguishedName =
+            "CN=Yubico java-webauthn-server unit tests CA 0, O=Yubico"
+          )
           val blobJwt =
             makeBlob(
               caKeypair,
@@ -1987,7 +1994,9 @@ class FidoMetadataDownloaderSpec
               .expectLegalHeader(
                 "Kom ihåg att du aldrig får snyta dig i mattan!"
               )
-              .useTrustRoot(trustRootCert)
+              .useTrustRoots(
+                Set(trustRootCert0, trustRootCert).map(importTrustAnchor).asJava
+              )
               .useBlob(blobJwt)
               .useCrls(crls.asJava)
               .clock(Clock.fixed(CertValidFrom, ZoneOffset.UTC))

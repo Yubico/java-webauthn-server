@@ -1351,7 +1351,42 @@ public final class FidoMetadataDownloader {
           InvalidAlgorithmParameterException,
           FidoMetadataDownloaderException {
     final MetadataBLOBHeader header = parseResult.blob.getHeader();
-    final List<X509Certificate> certChain = fetchHeaderCertChain(trustAnchors, header);
+    final Optional<List<X509Certificate>> certChain = fetchHeaderCertChain(trustAnchors, header);
+    if (certChain.isPresent()) {
+      return tryVerifyBlob(parseResult, trustAnchors, certChain.get());
+    } else {
+      log.debug(
+          "x5u and x5c both missing from BLOB header. Falling back to using trust anchors as BLOB signer.");
+      for (TrustAnchor ta : trustAnchors) {
+        final X509Certificate cert = ta.getTrustedCert();
+        if (cert != null) {
+          try {
+            return tryVerifyBlob(parseResult, trustAnchors, Collections.singletonList(cert));
+          } catch (FidoMetadataDownloaderException e) {
+            if (e.getReason() == Reason.BAD_SIGNATURE) {
+              log.debug("Failed to verify BLOB with trust anchor: {}", ta);
+            } else {
+              throw e;
+            }
+          } catch (SignatureException | CertPathValidatorException e) {
+            log.debug("Failed to verify BLOB with trust anchor: {}", ta);
+          }
+        }
+      }
+      throw new IllegalArgumentException("Failed to verify BLOB with any trust anchor.");
+    }
+  }
+
+  private MetadataBLOB tryVerifyBlob(
+      ParseResult parseResult, Set<TrustAnchor> trustAnchors, List<X509Certificate> certChain)
+      throws CertificateException,
+          NoSuchAlgorithmException,
+          InvalidKeyException,
+          SignatureException,
+          CertPathValidatorException,
+          InvalidAlgorithmParameterException,
+          FidoMetadataDownloaderException {
+    final MetadataBLOBHeader header = parseResult.blob.getHeader();
     final X509Certificate leafCert = certChain.get(0);
 
     final Signature signature;
@@ -1470,7 +1505,7 @@ public final class FidoMetadataDownloader {
   }
 
   /** Parse the header cert chain and download any certificates as necessary. */
-  List<X509Certificate> fetchHeaderCertChain(
+  Optional<List<X509Certificate>> fetchHeaderCertChain(
       Set<TrustAnchor> trustAnchors, MetadataBLOBHeader header)
       throws IOException, CertificateException {
     if (header.getX5u().isPresent()) {
@@ -1492,18 +1527,11 @@ public final class FidoMetadataDownloader {
         X509Certificate x509Certificate = CertificateParser.parsePem(pem);
         certs.add(x509Certificate);
       }
-      return certs;
+      return Optional.of(certs);
     } else if (header.getX5c().isPresent()) {
-      return header.getX5c().get();
+      return Optional.of(header.getX5c().get());
     } else {
-      return trustAnchors.stream()
-          .map(TrustAnchor::getTrustedCert)
-          .findFirst()
-          .map(Collections::singletonList)
-          .orElseThrow(
-              () ->
-                  new IllegalArgumentException(
-                      "x5u and x5c both missing from BLOB header, and no given trust anchor could be interpreted as an X509Certificate."));
+      return Optional.empty();
     }
   }
 

@@ -60,6 +60,7 @@ class FidoMetadataDownloaderIntegrationTest
                 .getBlob
                 .getHeader,
             )
+            .get
         )
         .asScala :+ trustRootCert
       for { cert <- certChain } {
