@@ -1,11 +1,48 @@
 == Version 2.10.0 (unreleased) ==
 
+`webauthn-server-core`:
+
 New features:
 
 * Added support for ML-DSA-44, ML-DSA-65 and ML-DSA-87. This requires JRE 24 or
   later, or a third-party JCA provider. ML-DSA is enabled by default as the
   least preferred credential key algorithms; see
   `RelyingPartyBuilder.preferredPubkeyParams`.
+
+
+`webauthn-server-attestation`:
+
+Changes:
+
+* Default `FidoMetadataDownloader` trust root changed from GlobalSign R3 to R46.
+  The default is used if using the builder method `useDefaultTrustRoot()`.
+* If `FidoMetadataDownloader` fails to validate the MDS trust path, it will now
+  retry the validation with the trust path truncated one certificate at a time.
+  This enables successfully validating metadata BLOBs with a cross-signed trust
+  root cert in the trust path during a transition grace period before MDS
+  migrates to a new trust root.
+  See: https://github.com/Yubico/java-webauthn-server/issues/498
+* The internal format of the `FidoMetadataDownloader` trust root cache has
+  changed and is now opaque. This will invalidate the trust root cache and cause
+  a re-download of the trust root certificate.
+* The `FidoMetadataDownloader` trust root cache will now be invalidated and
+  cause a re-download if the set of trust root download URLs changes. Changing
+  the set of acceptable SHA-256 hashes does not directly invalidate the cache,
+  but may indirectly invalidate the cache unless each cached certificate matches
+  some of the given SHA-256 hashes.
+* Parameters `getCachedTrustRootCert` and `writeCachedTrustRootCert` in
+  `FidoMetadataDownloader` builder method `useTrustRootCache` renamed to
+  `getCachedTrustRootCerts` and `writeCachedTrustRootCerts` in JavaDoc.
+
+New features:
+
+* New `FidoMetadataDownloader` builder methods.
+  These enable trusting multiple trust roots, for example to ensure a smooth
+  transition when MDS migrates to a new trust root:
+ ** `downloadTrustRoots(List<URL>, Set<ByteArray>)` as alternative to
+    `downloadTrustRoot(URL, Set<ByteArray>)`
+ ** `useTrustRoots(Set<TrustAnchor>)` as alternative to
+    `useTrustRoot(X509Certificate)`
 
 
 == Version 2.9.0 ==
