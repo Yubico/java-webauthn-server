@@ -12,7 +12,6 @@ import org.scalatest.tags.Network
 import org.scalatest.tags.Slow
 import org.scalatestplus.junit.JUnitRunner
 
-import java.util.Collections
 import scala.jdk.CollectionConverters.ListHasAsScala
 
 @Slow
@@ -52,13 +51,10 @@ class FidoMetadataDownloaderIntegrationTest
         .cacheSynchronized(
           downloader
             .fetchHeaderCertChain(
-              Collections.singleton(
-                FidoMetadataDownloader.importTrustAnchor(trustRootCert)
-              ),
               downloader
                 .parseBlob(TestCaches.blobCache.get.getBytes)
                 .getBlob
-                .getHeader,
+                .getHeader
             )
             .get
         )

@@ -1351,7 +1351,7 @@ public final class FidoMetadataDownloader {
           InvalidAlgorithmParameterException,
           FidoMetadataDownloaderException {
     final MetadataBLOBHeader header = parseResult.blob.getHeader();
-    final Optional<List<X509Certificate>> certChain = fetchHeaderCertChain(trustAnchors, header);
+    final Optional<List<X509Certificate>> certChain = fetchHeaderCertChain(header);
     if (certChain.isPresent()) {
       return tryVerifyBlob(parseResult, trustAnchors, certChain.get());
     } else {
@@ -1505,8 +1505,7 @@ public final class FidoMetadataDownloader {
   }
 
   /** Parse the header cert chain and download any certificates as necessary. */
-  Optional<List<X509Certificate>> fetchHeaderCertChain(
-      Set<TrustAnchor> trustAnchors, MetadataBLOBHeader header)
+  Optional<List<X509Certificate>> fetchHeaderCertChain(MetadataBLOBHeader header)
       throws IOException, CertificateException {
     if (header.getX5u().isPresent()) {
       final URL x5u = header.getX5u().get();
