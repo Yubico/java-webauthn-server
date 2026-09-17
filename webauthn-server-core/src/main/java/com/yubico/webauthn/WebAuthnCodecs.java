@@ -41,6 +41,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 final class WebAuthnCodecs {
 
@@ -234,6 +235,9 @@ final class WebAuthnCodecs {
       throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
     CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
     final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
+    final CBORObject algCbor = cose.get(CBORObject.FromObject(3));
+    validateKtyMatchesAlg(kty, algCbor);
+
     switch (kty) {
       case 1:
         return importCoseEdDsaPublicKey(cose);
@@ -245,6 +249,47 @@ final class WebAuthnCodecs {
         return importCoseMlDsaPublicKey(cose);
       default:
         throw new IllegalArgumentException("Unsupported key type: " + kty);
+    }
+  }
+
+  private static void validateKtyMatchesAlg(int kty, CBORObject alg) {
+    if (alg == null) {
+      throw new IllegalArgumentException("COSE key is missing required \"alg\" (3) attribute");
+    }
+    Optional<COSEAlgorithmIdentifier> algId = COSEAlgorithmIdentifier.fromId(alg.AsInt32());
+    if (!algId.isPresent()) {
+      return;
+    }
+    final int expectedKty = getExpectedKty(algId.get());
+    if (kty != expectedKty) {
+      throw new IllegalArgumentException(
+          String.format(
+              "COSE key type (kty: %d) does not match algorithm (alg: %s, expected kty: %d)",
+              kty, algId.get(), expectedKty));
+    }
+  }
+
+  private static int getExpectedKty(COSEAlgorithmIdentifier alg) {
+    switch (alg) {
+      case EdDSA:
+      case Ed25519:
+      case Ed448:
+        return 1; // OKP
+      case ES256:
+      case ES384:
+      case ES512:
+        return 2; // EC2
+      case RS1:
+      case RS256:
+      case RS384:
+      case RS512:
+        return 3; // RSA
+      case ML_DSA_44:
+      case ML_DSA_65:
+      case ML_DSA_87:
+        return 7; // AKP
+      default:
+        throw new IllegalArgumentException("Unknown algorithm: " + alg);
     }
   }
 
