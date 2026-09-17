@@ -81,6 +81,9 @@ object Util {
   def algorithmAvailable(javaAlgName: String): Boolean =
     Try(KeyFactory.getInstance(javaAlgName)).isSuccess
   def eddsaAvailable: Boolean = algorithmAvailable("EdDSA")
-  def mldsaAvailable: Boolean = algorithmAvailable("ML-DSA")
+  def mldsaAvailable: Boolean =
+    algorithmAvailable("ML-DSA") && Try(
+      Class.forName("NamedParameterSpec")
+    ).isSuccess
 
 }
