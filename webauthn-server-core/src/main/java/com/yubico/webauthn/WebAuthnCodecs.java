@@ -254,7 +254,8 @@ final class WebAuthnCodecs {
 
   private static void validateKtyMatchesAlg(int kty, CBORObject alg) {
     if (alg == null) {
-      return;
+      throw new IllegalArgumentException(
+          "COSE key is missing required \"alg\" (3) attribute");
     }
     Optional<COSEAlgorithmIdentifier> algId = COSEAlgorithmIdentifier.fromId(alg.AsInt32());
     if (!algId.isPresent()) {
