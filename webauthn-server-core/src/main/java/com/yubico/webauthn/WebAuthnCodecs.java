@@ -376,6 +376,9 @@ final class WebAuthnCodecs {
   private static PublicKey importCoseMlDsaPublicKey(CBORObject cose)
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
+    final COSEAlgorithmIdentifier coseAlg =
+        COSEAlgorithmIdentifier.fromId(alg)
+            .orElseThrow(() -> new IllegalArgumentException("Unknown algorithm: " + alg));
     final ByteArray algorithmId = mlDsaAlgorithmId(alg);
     if (cose.ContainsKey(CBORObject.FromObject(-2))) {
       throw new IllegalArgumentException(
@@ -386,11 +389,7 @@ final class WebAuthnCodecs {
         BinaryUtil.encodeDerSequence(
             algorithmId.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
 
-    KeyFactory kFact =
-        KeyFactory.getInstance(
-            getJavaAlgorithmName(
-                COSEAlgorithmIdentifier.fromId(alg)
-                    .orElseThrow(() -> new IllegalArgumentException("Unknown algorithm: " + alg))));
+    KeyFactory kFact = KeyFactory.getInstance(getJavaAlgorithmName(coseAlg));
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
   }
 
