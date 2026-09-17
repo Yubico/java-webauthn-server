@@ -142,9 +142,15 @@ class WebAuthnCodecsSpec
       describe(
         "rejects public keys whose kty does not match the claimed alg:"
       ) {
-        assume(Util.mldsaAvailable)
         for (
           alg <- List(
+            COSEAlgorithmIdentifier.EdDSA,
+            COSEAlgorithmIdentifier.Ed25519,
+            COSEAlgorithmIdentifier.Ed448,
+            COSEAlgorithmIdentifier.RS1,
+            COSEAlgorithmIdentifier.RS256,
+            COSEAlgorithmIdentifier.RS384,
+            COSEAlgorithmIdentifier.RS512,
             COSEAlgorithmIdentifier.ML_DSA_44,
             COSEAlgorithmIdentifier.ML_DSA_65,
             COSEAlgorithmIdentifier.ML_DSA_87,
