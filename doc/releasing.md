@@ -42,12 +42,12 @@ Release candidate versions
     ```
 
  5. Wait for the ["build" workflow][workflow-build] to finish.
-    Download the `java-webauthn-server-artifacts-17-temurin.sha256sum` artifact
+    Download the `java-webauthn-server-artifacts-25-temurin.sha256sum` artifact
     and verify that the artifact checksums match artifacts built locally:
 
     ```
     $ VERSION=0.1.0-SNAPSHOT ./gradlew primaryPublishJar
-    $ sha256sum -c java-webauthn-server-artifacts-17-temurin.sha256sum
+    $ sha256sum -c java-webauthn-server-artifacts-25-temurin.sha256sum
     ```
 
  6. Update the Java version in the [`release-verify-signatures`
@@ -74,7 +74,7 @@ Release candidate versions
     ```yaml
     strategy:
       matrix:
-        java: ["17.0.20"]
+        java: ["25.0.4"]
     ```
 
     Commit this change, if any.
@@ -168,12 +168,12 @@ Release versions
 
  8. Open the latest relevant run of the ["build" workflow][workflow-build],
     or push a temporary branch and wait for this workflow to finish.
-    Download the `java-webauthn-server-artifacts-17-temurin.sha256sum` artifact
+    Download the `java-webauthn-server-artifacts-25-temurin.sha256sum` artifact
     and verify that the artifact checksums match artifacts built locally:
 
     ```
     $ VERSION=0.1.0-SNAPSHOT ./gradlew primaryPublishJar
-    $ sha256sum -c java-webauthn-server-artifacts-17-temurin.sha256sum
+    $ sha256sum -c java-webauthn-server-artifacts-25-temurin.sha256sum
     ```
 
  9. Update the Java version in the [`release-verify-signatures`
@@ -200,7 +200,7 @@ Release versions
     ```yaml
     strategy:
       matrix:
-        java: ["17.0.20"]
+        java: ["25.0.4"]
     ```
 
     Amend this change, if any, into the merge commit.
@@ -218,11 +218,11 @@ Release versions
     ```
 
 12. Wait for the ["build" workflow][workflow-build] to finish.
-    Download the `artifact-checksums-java17-temurin` artifact,
+    Download the `artifact-checksums-java25-temurin` artifact,
     unpack it and verify that the artifact checksums match artifacts built locally:
 
     ```
-    $ unzip artifact-checksums-java17-temurin.zip
+    $ unzip artifact-checksums-java25-temurin.zip
     $ VERSION=0.1.0-SNAPSHOT ./gradlew primaryPublishJar
     $ sha256sum -c java-webauthn-server-artifacts.sha256sum
     ```
