@@ -24,6 +24,7 @@
 
 package com.yubico.webauthn
 
+import com.yubico.internal.util.JacksonCodecs
 import com.yubico.webauthn.data.ByteArray
 import com.yubico.webauthn.data.COSEAlgorithmIdentifier
 import com.yubico.webauthn.test.Util
@@ -36,6 +37,7 @@ import org.scalatestplus.junit.JUnitRunner
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.security.interfaces.ECPublicKey
+import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.util.Try
 
 @RunWith(classOf[JUnitRunner])
@@ -132,6 +134,50 @@ class WebAuthnCodecsSpec
         for (alg <- COSEAlgorithmIdentifier.values()) {
           it(alg.name()) {
             WebAuthnCodecs.getJavaAlgorithmName(alg) should not be null
+          }
+        }
+      }
+    }
+    describe("The importCosePublicKey method") {
+      describe(
+        "rejects public keys whose kty does not match the claimed alg:"
+      ) {
+        assume(Util.mldsaAvailable)
+        for (
+          alg <- List(
+            COSEAlgorithmIdentifier.ML_DSA_44,
+            COSEAlgorithmIdentifier.ML_DSA_65,
+            COSEAlgorithmIdentifier.ML_DSA_87,
+          )
+        ) {
+          it(s"kty EC2 with alg ${alg.name()} (${alg.getId})") {
+            val pubkey =
+              TestAuthenticator
+                .generateEcKeypair()
+                .getPublic
+                .asInstanceOf[ECPublicKey]
+            val rawEcKey = WebAuthnCodecs.ecPublicKeyToRaw(pubkey).getBytes
+            val validEcKey = Map(
+              1 -> 2, // kty: EC2
+              3 -> COSEAlgorithmIdentifier.ES256.getId,
+              -1 -> 1, // crv: P-256
+              -2 -> rawEcKey.slice(1, 33), // x
+              -3 -> rawEcKey.slice(33, 65), // y
+            )
+            val hybridKey = validEcKey + (3 -> alg.getId)
+            val validEcKeyBytes = new ByteArray(
+              JacksonCodecs.cbor().writeValueAsBytes(validEcKey.asJava)
+            )
+            val hybridKeyBytes = new ByteArray(
+              JacksonCodecs.cbor().writeValueAsBytes(hybridKey.asJava)
+            )
+
+            val importedValid =
+              WebAuthnCodecs.importCosePublicKey(validEcKeyBytes)
+            importedValid should not be null
+            an[IllegalArgumentException] should be thrownBy {
+              WebAuthnCodecs.importCosePublicKey(hybridKeyBytes)
+            }
           }
         }
       }
