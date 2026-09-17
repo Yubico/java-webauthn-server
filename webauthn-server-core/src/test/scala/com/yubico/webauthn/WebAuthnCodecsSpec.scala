@@ -228,6 +228,36 @@ class WebAuthnCodecsSpec
         }
       }
 
+      it("rejects ML-DSA public keys of wrong lengths.") {
+        assume(Util.mldsaAvailable)
+        forAll(for {
+          alg <- Gen.oneOf(
+            COSEAlgorithmIdentifier.ML_DSA_44,
+            COSEAlgorithmIdentifier.ML_DSA_65,
+            COSEAlgorithmIdentifier.ML_DSA_87,
+          )
+          keypair = TestAuthenticator.generateMlDsaKeypair(alg)
+          pkRaw = keypair.getPublic.getEncoded
+          len <- Gen.chooseNum(0, pkRaw.length * 2, pkRaw.length) suchThat {
+            _ != pkRaw.length
+          }
+        } yield (alg, pkRaw, len)) {
+          case (alg, pkRaw, len) =>
+            val publicKey = Map(
+              1 -> 7, // kty: AKP
+              3 -> alg.getId,
+              -1 -> (pkRaw.slice(0, len) ++ pkRaw.slice(0, len - pkRaw.length)),
+            )
+            val pubKeyBytes = new ByteArray(
+              JacksonCodecs.cbor().writeValueAsBytes(publicKey.asJava)
+            )
+
+            an[IllegalArgumentException] should be thrownBy {
+              WebAuthnCodecs.importCosePublicKey(pubKeyBytes)
+            }
+        }
+      }
+
     }
   }
 }

@@ -293,6 +293,19 @@ final class WebAuthnCodecs {
     }
   }
 
+  private static int getMlDsaPubKeySize(COSEAlgorithmIdentifier alg) {
+    switch (alg) {
+      case ML_DSA_44:
+        return 1312;
+      case ML_DSA_65:
+        return 1952;
+      case ML_DSA_87:
+        return 2592;
+      default:
+        throw new IllegalArgumentException("Unknown ML-DSA algorithm: " + alg);
+    }
+  }
+
   private static PublicKey importCoseRsaPublicKey(CBORObject cose)
       throws NoSuchAlgorithmException, InvalidKeySpecException {
     RSAPublicKeySpec spec =
@@ -385,6 +398,13 @@ final class WebAuthnCodecs {
           "COSE ML-DSA public key must not include attribute \"priv\" (-2)");
     }
     final byte[] rawKey = cose.get(CBORObject.FromObject(-1)).GetByteString();
+    final int expectLength = getMlDsaPubKeySize(coseAlg);
+    if (rawKey.length != expectLength) {
+      throw new IllegalArgumentException(
+          String.format(
+              "%s public key must be %d bytes, was: %s", coseAlg, expectLength, rawKey.length));
+    }
+
     final byte[] x509Key =
         BinaryUtil.encodeDerSequence(
             algorithmId.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
