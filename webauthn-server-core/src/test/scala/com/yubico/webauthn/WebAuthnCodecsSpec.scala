@@ -138,6 +138,7 @@ class WebAuthnCodecsSpec
         }
       }
     }
+
     describe("The importCosePublicKey method") {
       describe(
         "rejects public keys whose kty does not match the claimed alg:"
