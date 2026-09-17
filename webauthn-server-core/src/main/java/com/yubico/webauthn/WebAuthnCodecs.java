@@ -270,33 +270,27 @@ final class WebAuthnCodecs {
   }
 
   private static int getExpectedKty(COSEAlgorithmIdentifier alg) {
-    final int expectedKty;
     switch (alg) {
       case EdDSA:
       case Ed25519:
       case Ed448:
-        expectedKty = 1; // OKP
-        break;
+        return 1; // OKP
       case ES256:
       case ES384:
       case ES512:
-        expectedKty = 2; // EC2
-        break;
+        return 2; // EC2
       case RS1:
       case RS256:
       case RS384:
       case RS512:
-        expectedKty = 3; // RSA
-        break;
+        return 3; // RSA
       case ML_DSA_44:
       case ML_DSA_65:
       case ML_DSA_87:
-        expectedKty = 7; // AKP
-        break;
+        return 7; // AKP
       default:
         throw new IllegalArgumentException("Unknown algorithm: " + alg);
     }
-    return expectedKty;
   }
 
   private static PublicKey importCoseRsaPublicKey(CBORObject cose)
