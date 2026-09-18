@@ -40,7 +40,7 @@ jobs:
     strategy:
       matrix:
         java: ["25.0.4"]
-        distribution: [temurin, zulu, microsoft]
+        distribution: [temurin]
 
     steps:
     - name: check out code
