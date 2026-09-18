@@ -2,6 +2,12 @@
 
 `webauthn-server-core`:
 
+Changes:
+
+* Log about malformed origin URL during registration or assertion response
+  processing demoted from error level to debug level. A warning log for the same
+  error remains at `RelyingParty` or `RelyingPartyV2` construction time.
+
 New features:
 
 * Added support for ML-DSA-44, ML-DSA-65 and ML-DSA-87. This requires JRE 24 or
