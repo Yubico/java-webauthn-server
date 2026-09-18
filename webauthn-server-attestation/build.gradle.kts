@@ -48,6 +48,14 @@ dependencies {
   testImplementation("org.slf4j:slf4j-api")
 }
 
+val mdsCacheDir = project.layout.buildDirectory.dir("fido-mds-cache").get().asFile
+tasks.register("makeMdsCacheDir") {
+  outputs.dir(mdsCacheDir)
+  doLast {
+    mdsCacheDir.mkdirs()
+  }
+}
+
 val integrationTest = tasks.register<Test>("integrationTest") {
   description = "Runs integration tests."
   group = "verification"
@@ -55,10 +63,8 @@ val integrationTest = tasks.register<Test>("integrationTest") {
   testClassesDirs = sourceSets["integrationTest"].output.classesDirs
   classpath = sourceSets["integrationTest"].runtimeClasspath
   shouldRunAfter(tasks.test)
-  val mdsCacheDir = project.layout.buildDirectory.dir("fido-mds-cache").get().asFile
-  mdsCacheDir.mkdirs()
+  dependsOn(tasks["makeMdsCacheDir"])
   environment("FIDO_MDS_CACHE_DIR", mdsCacheDir.absolutePath)
-  inputs.dir(mdsCacheDir)
 }
 tasks["check"].dependsOn(integrationTest)
 
