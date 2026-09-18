@@ -188,7 +188,76 @@ class WebAuthnCodecsSpec
           }
         }
       }
-    }
 
+      describe(
+        "rejects ML-DSA public keys that contain a private key (-2) attribute:"
+      ) {
+        for (
+          alg <- List(
+            COSEAlgorithmIdentifier.ML_DSA_44,
+            COSEAlgorithmIdentifier.ML_DSA_65,
+            COSEAlgorithmIdentifier.ML_DSA_87,
+          )
+        ) {
+          it(alg.name()) {
+            assume(Util.mldsaAvailable)
+            val keypair = TestAuthenticator.generateMlDsaKeypair(alg)
+            val publicKeyOnly = Map(
+              1 -> 7, // kty: AKP
+              3 -> alg.getId,
+              -1 -> WebAuthnTestCodecs.mlDsaPublicKeyToRaw(keypair.getPublic),
+            )
+            val publicKeyAndPrivateKey =
+              publicKeyOnly + (-2 -> keypair.getPrivate.getEncoded)
+            val pubOnlyBytes = new ByteArray(
+              JacksonCodecs.cbor().writeValueAsBytes(publicKeyOnly.asJava)
+            )
+            val pubAndPriBytes = new ByteArray(
+              JacksonCodecs
+                .cbor()
+                .writeValueAsBytes(publicKeyAndPrivateKey.asJava)
+            )
+
+            val importedPublic =
+              WebAuthnCodecs.importCosePublicKey(pubOnlyBytes)
+            importedPublic should not be null
+            an[IllegalArgumentException] should be thrownBy {
+              WebAuthnCodecs.importCosePublicKey(pubAndPriBytes)
+            }
+          }
+        }
+      }
+
+      it("rejects ML-DSA public keys of wrong lengths.") {
+        assume(Util.mldsaAvailable)
+        forAll(for {
+          alg <- Gen.oneOf(
+            COSEAlgorithmIdentifier.ML_DSA_44,
+            COSEAlgorithmIdentifier.ML_DSA_65,
+            COSEAlgorithmIdentifier.ML_DSA_87,
+          )
+          keypair = TestAuthenticator.generateMlDsaKeypair(alg)
+          pkRaw = keypair.getPublic.getEncoded
+          len <- Gen.chooseNum(0, pkRaw.length * 2, pkRaw.length) suchThat {
+            _ != pkRaw.length
+          }
+        } yield (alg, pkRaw, len)) {
+          case (alg, pkRaw, len) =>
+            val publicKey = Map(
+              1 -> 7, // kty: AKP
+              3 -> alg.getId,
+              -1 -> (pkRaw.slice(0, len) ++ pkRaw.slice(0, len - pkRaw.length)),
+            )
+            val pubKeyBytes = new ByteArray(
+              JacksonCodecs.cbor().writeValueAsBytes(publicKey.asJava)
+            )
+
+            an[IllegalArgumentException] should be thrownBy {
+              WebAuthnCodecs.importCosePublicKey(pubKeyBytes)
+            }
+        }
+      }
+
+    }
   }
 }

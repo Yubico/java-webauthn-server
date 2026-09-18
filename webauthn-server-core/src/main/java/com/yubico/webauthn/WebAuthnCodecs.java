@@ -293,6 +293,19 @@ final class WebAuthnCodecs {
     }
   }
 
+  private static int getMlDsaPubKeySize(COSEAlgorithmIdentifier alg) {
+    switch (alg) {
+      case ML_DSA_44:
+        return 1312;
+      case ML_DSA_65:
+        return 1952;
+      case ML_DSA_87:
+        return 2592;
+      default:
+        throw new IllegalArgumentException("Unknown ML-DSA algorithm: " + alg);
+    }
+  }
+
   private static PublicKey importCoseRsaPublicKey(CBORObject cose)
       throws NoSuchAlgorithmException, InvalidKeySpecException {
     RSAPublicKeySpec spec =
@@ -376,27 +389,37 @@ final class WebAuthnCodecs {
   private static PublicKey importCoseMlDsaPublicKey(CBORObject cose)
       throws InvalidKeySpecException, NoSuchAlgorithmException {
     final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
-    final ByteArray algorithmId = mlDsaAlgorithmId(alg);
+    final COSEAlgorithmIdentifier coseAlg =
+        COSEAlgorithmIdentifier.fromId(alg)
+            .orElseThrow(() -> new IllegalArgumentException("Unknown algorithm: " + alg));
+    final ByteArray algorithmId = mlDsaAlgorithmId(coseAlg);
+    if (cose.ContainsKey(CBORObject.FromObject(-2))) {
+      throw new IllegalArgumentException(
+          "COSE ML-DSA public key must not include attribute \"priv\" (-2)");
+    }
     final byte[] rawKey = cose.get(CBORObject.FromObject(-1)).GetByteString();
+    final int expectLength = getMlDsaPubKeySize(coseAlg);
+    if (rawKey.length != expectLength) {
+      throw new IllegalArgumentException(
+          String.format(
+              "%s public key must be %d bytes, was: %s", coseAlg, expectLength, rawKey.length));
+    }
+
     final byte[] x509Key =
         BinaryUtil.encodeDerSequence(
             algorithmId.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
 
-    KeyFactory kFact =
-        KeyFactory.getInstance(
-            getJavaAlgorithmName(
-                COSEAlgorithmIdentifier.fromId(alg)
-                    .orElseThrow(() -> new IllegalArgumentException("Unknown algorithm: " + alg))));
+    KeyFactory kFact = KeyFactory.getInstance(getJavaAlgorithmName(coseAlg));
     return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
   }
 
-  private static ByteArray mlDsaAlgorithmId(int alg) {
+  private static ByteArray mlDsaAlgorithmId(COSEAlgorithmIdentifier alg) {
     switch (alg) {
-      case -48:
+      case ML_DSA_44:
         return ML_DSA_44_ALG_ID;
-      case -49:
+      case ML_DSA_65:
         return ML_DSA_65_ALG_ID;
-      case -50:
+      case ML_DSA_87:
         return ML_DSA_87_ALG_ID;
       default:
         throw new IllegalArgumentException("Unsupported ML-DSA algorithm: " + alg);
