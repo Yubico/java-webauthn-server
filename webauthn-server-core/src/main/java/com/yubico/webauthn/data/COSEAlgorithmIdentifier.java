@@ -186,6 +186,7 @@ public enum COSEAlgorithmIdentifier {
    * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
    *     registry</a>
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9964">RFC 9964</a>
+   * @since 2.10.0
    */
   ML_DSA_44(-48),
 
@@ -197,6 +198,7 @@ public enum COSEAlgorithmIdentifier {
    * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
    *     registry</a>
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9964">RFC 9964</a>
+   * @since 2.10.0
    */
   ML_DSA_65(-49),
 
@@ -208,6 +210,7 @@ public enum COSEAlgorithmIdentifier {
    * @see <a href="https://www.iana.org/assignments/cose/cose.xhtml#algorithms">COSE Algorithms
    *     registry</a>
    * @see <a href="https://www.rfc-editor.org/rfc/rfc9964">RFC 9964</a>
+   * @since 2.10.0
    */
   ML_DSA_87(-50);
 
