@@ -17,11 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [17]
+        java: [25]
         distribution: [temurin]
 
     outputs:
-        report-java: 17
+        report-java: 25
         report-dist: temurin
 
     steps:
