@@ -323,7 +323,6 @@ class JsonIoSpec
             new TextNode(authenticatorAttachment),
           )
           val encoded = json.writeValueAsString(tree)
-          println(authenticatorAttachment)
           val decoded = json.readValue(encoded, tpe)
           decoded.getAuthenticatorAttachment.toScala should be(None)
         }
@@ -338,7 +337,6 @@ class JsonIoSpec
             new TextNode(authenticatorAttachment.getValue),
           )
           val encoded = json.writeValueAsString(tree)
-          println(authenticatorAttachment)
           val decoded = json.readValue(encoded, tpe)
 
           decoded.getAuthenticatorAttachment.toScala should equal(
