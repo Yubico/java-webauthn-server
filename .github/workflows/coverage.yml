@@ -7,6 +7,7 @@ on:
       - main
       - dependabot/gradle/info.solidsoft.gradle.pitest-gradle-pitest-plugin-*
       - 'release-*'
+      - 'pitest-*'
 
 jobs:
   test:
