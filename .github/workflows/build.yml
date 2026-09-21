@@ -106,6 +106,6 @@ jobs:
         name: test-reports-java${{ needs.test.outputs.report-java }}-${{ needs.test.outputs.report-dist }}-xml
 
     - name: Publish test results
-      uses: EnricoMi/publish-unit-test-result-action@v2
+      uses: EnricoMi/publish-unit-test-result-action@d0a4676d0e0b938bc201470d88276b7c74c712b3  # v2 => v2.24.0
       with:
         files: "**/*.xml"
