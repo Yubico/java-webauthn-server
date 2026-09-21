@@ -62,7 +62,7 @@ public class PublicKeyCredentialCreationOptionsTest {
   @Test
   public void filtersAlgorithmsToThoseAvailable() throws HexException {
     for (Provider prov : Security.getProviders()) {
-      if (prov.getName().contains("EC")) {
+      if (prov.getService("Signature", "SHA256withECDSA") != null) {
         Security.removeProvider(prov.getName());
       }
     }
@@ -113,7 +113,7 @@ public class PublicKeyCredentialCreationOptionsTest {
   @Test
   public void logsWarningIfAlgorithmNotAvailable() throws HexException {
     for (Provider prov : Security.getProviders()) {
-      if (prov.getName().contains("EC")) {
+      if (prov.getService("Signature", "SHA256withECDSA") != null) {
         Security.removeProvider(prov.getName());
       }
     }
