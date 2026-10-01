@@ -217,17 +217,7 @@ Release versions
     $ git push origin main
     ```
 
-12. Wait for the ["build" workflow][workflow-build] to finish.
-    Download the `artifact-checksums-java25-temurin` artifact,
-    unpack it and verify that the artifact checksums match artifacts built locally:
-
-    ```
-    $ unzip artifact-checksums-java25-temurin.zip
-    $ VERSION=0.1.0-SNAPSHOT ./gradlew primaryPublishJar
-    $ sha256sum -c java-webauthn-server-artifacts.sha256sum
-    ```
-
-13. Tag the merge commit with an `X.Y.Z` tag:
+12. Tag the merge commit with an `X.Y.Z` tag:
 
     ```
     $ git tag -a -s 1.4.0 -m "Release 1.4.0"
@@ -235,7 +225,7 @@ Release versions
 
     No tag body needed since that's included in the commit.
 
-14. Publish to Sonatype Maven Central Portal:
+13. Publish to Sonatype Maven Central Portal:
 
     ```
     $ ./gradlew publish jreleaserDeploy
@@ -244,13 +234,13 @@ Release versions
     If this fails, check if your user token has expired and needs to be replaced.
     See [Setup for publishing](./development.md#setup-for-publishing).
 
-15. Push the tag to GitHub:
+14. Push the tag to GitHub:
 
     ```
     $ git push origin 1.4.0
     ```
 
-16. Make GitHub release.
+15. Make GitHub release.
 
     - Use the new tag as the release tag.
     - Copy the release notes from `NEWS` into the GitHub release notes; reformat
@@ -259,7 +249,7 @@ Release versions
     - Note the JDK version shown by `java -version` in step 6.
       For example: `openjdk version "25.0.4" 2026-07-21`.
 
-17. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
+16. Check that the ["Reproducible binary" workflow][workflow-release] runs and succeeds.
 
 
 [workflow-build]: https://github.com/Yubico/java-webauthn-server/actions/workflows/build.yml
