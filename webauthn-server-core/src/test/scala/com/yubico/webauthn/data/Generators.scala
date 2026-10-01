@@ -1038,6 +1038,7 @@ object Generators {
               evalByCredential.asJava,
               eval,
             )
+          case (None, None) => ??? // Impossible given Gen.oneOf above
         }
       implicit val arbitraryPrfAuthenticationInput
           : Arbitrary[PrfAuthenticationInput] = Arbitrary(authenticationInput)

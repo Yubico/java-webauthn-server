@@ -19,30 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [8, 11, 17, 18]
+        java: [17, 21, 25]
         distribution: [temurin]
         include:
-          - java: 17
+          - java: 25
             distribution: zulu
-          - java: 17
+          - java: 25
             distribution: microsoft
 
     outputs:
-        report-java: 17
+        report-java: 25
         report-dist: temurin
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v6
-
-    - name: Set up JDK 17
-      uses: actions/setup-java@v5
-      with:
-        java-version: 17
-        distribution: ${{ matrix.distribution }}
-
-    - name: Compile libraries and tests
-      run: ./gradlew clean testClasses
+      uses: actions/checkout@v7
 
     - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v5
@@ -50,50 +41,53 @@ jobs:
         java-version: ${{ matrix.java }}
         distribution: ${{ matrix.distribution }}
 
-    - name: Run tests against JDK17-compiled code
-      run: ./gradlew test --exclude-task compileJava
-
-    - name: Archive HTML test report on failure
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@v5
-      with:
-        name: test-reports-java17-java${{ matrix.java }}-${{ matrix.distribution }}-html
-        path: "*/build/reports/**"
-
     - name: Build and test with JDK ${{ matrix.java }}
       run: ./gradlew clean test
 
     - name: Build archives
       run: ./gradlew assemble
 
-    - name: Archive HTML test report
+    - name: Run test using Java 25 runtime
+      run: ./gradlew testJava25
+
+    - name: Run test using Java 21 runtime
+      run: ./gradlew testJava21
+
+    - name: Run test using Java 17 runtime
+      run: ./gradlew testJava17
+
+    - name: Run test using Java 11 runtime
+      run: ./gradlew testJava11
+
+    - name: Run test using Java 8 runtime
+      run: ./gradlew testJava8
+
+    - name: Archive HTML test reports
       if: ${{ always() }}
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-html
         path: "*/build/reports/**"
 
-    - name: Archive JUnit test report
+    - name: Archive JUnit test reports
       if: ${{ always() }}
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: test-reports-java${{ matrix.java }}-${{ matrix.distribution }}-xml
         path: "*/build/test-results/**/*.xml"
 
     - name: Check binary reproducibility
-      if: ${{ matrix.java != 8 }}  # JDK 8 does not produce reproducible binaries
       run: |
         ./gradlew clean primaryPublishJar
-        find . -name '*.jar' | grep -v buildSrc | grep -v gradle-wrapper | xargs sha256sum | tee java-webauthn-server-artifacts.sha256sum
-        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts.sha256sum
-        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts.sha256sum
+        find . -name '*.jar' | grep -v buildSrc | grep -v gradle-wrapper | xargs sha256sum | tee java-webauthn-server-artifacts-${{ matrix.java }}-${{ matrix.distribution }}.sha256sum
+        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts-${{ matrix.java }}-${{ matrix.distribution }}.sha256sum
+        ./gradlew clean primaryPublishJar && sha256sum -c java-webauthn-server-artifacts-${{ matrix.java }}-${{ matrix.distribution }}.sha256sum
 
     - name: Archive artifact checksums
-      if: ${{ matrix.java != 8 }}  # JDK 8 does not produce reproducible binaries
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
-        name: artifact-checksums-java${{ matrix.java }}-${{ matrix.distribution }}
-        path: java-webauthn-server-artifacts.sha256sum
+        path: java-webauthn-server-artifacts-${{ matrix.java }}-${{ matrix.distribution }}.sha256sum
+        archive: false
 
   publish-test-results:
     name: Publish test results
@@ -107,7 +101,7 @@ jobs:
 
     steps:
     - name: Download artifacts
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v8
       with:
         name: test-reports-java${{ needs.test.outputs.report-java }}-${{ needs.test.outputs.report-dist }}-xml
 

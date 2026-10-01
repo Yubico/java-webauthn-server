@@ -75,6 +75,7 @@ import com.yubico.webauthn.extension.uvm.MatcherProtectionType
 import com.yubico.webauthn.extension.uvm.UserVerificationMethod
 import com.yubico.webauthn.test.Helpers
 import com.yubico.webauthn.test.RealExamples
+import com.yubico.webauthn.test.Util
 import com.yubico.webauthn.test.Util.toStepWithUtilities
 import org.bouncycastle.asn1.ASN1Encodable
 import org.bouncycastle.asn1.ASN1ObjectIdentifier
@@ -102,7 +103,6 @@ import java.io.IOException
 import java.math.BigInteger
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PrivateKey
@@ -2314,7 +2314,7 @@ class RelyingPartyV2RegistrationSpec
                           credKeyAlgorithm
                         )
                       ),
-                      keyAlgorithm = credKeyAlgorithm,
+                      keyAlgorithm = Some(credKeyAlgorithm),
                     )
                   )
 
@@ -2488,7 +2488,7 @@ class RelyingPartyV2RegistrationSpec
                 it("Fails when EC key has an inverted Y coordinate.") {
                   val (authData, keypair) =
                     TestAuthenticator.createAuthenticatorData(keyAlgorithm =
-                      COSEAlgorithmIdentifier.ES256
+                      Some(COSEAlgorithmIdentifier.ES256)
                     )
 
                   val cose = CBORObject.DecodeFromBytes(
@@ -2527,7 +2527,7 @@ class RelyingPartyV2RegistrationSpec
                 it("Fails when RSA key is unrelated.") {
                   val (authData, keypair) =
                     TestAuthenticator.createAuthenticatorData(keyAlgorithm =
-                      COSEAlgorithmIdentifier.RS256
+                      Some(COSEAlgorithmIdentifier.RS256)
                     )
                   val testData = (RegistrationTestData.from _).tupled(
                     makeCred(
@@ -2807,7 +2807,7 @@ class RelyingPartyV2RegistrationSpec
                   ) {
                     val testData = (RegistrationTestData.from _).tupled(
                       TestAuthenticator.createBasicAttestedCredential(
-                        keyAlgorithm = COSEAlgorithmIdentifier.ES256,
+                        keyAlgorithm = Some(COSEAlgorithmIdentifier.ES256),
                         attestationMaker = AttestationMaker.tpm(
                           AttestationSigner.selfsigned(
                             alg = COSEAlgorithmIdentifier.ES256,
@@ -4306,7 +4306,7 @@ class RelyingPartyV2RegistrationSpec
             )
             val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
 
-            if (Try(KeyFactory.getInstance("EdDSA")).isSuccess) {
+            if (Util.eddsaAvailable) {
               pubKeyCredParams should contain(
                 PublicKeyCredentialParameters.EdDSA
               )
@@ -4353,7 +4353,7 @@ class RelyingPartyV2RegistrationSpec
 
             val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
 
-            if (Try(KeyFactory.getInstance("EdDSA")).isSuccess) {
+            if (Util.eddsaAvailable) {
               pubKeyCredParams should contain(
                 PublicKeyCredentialParameters.Ed448
               )
@@ -4396,6 +4396,62 @@ class RelyingPartyV2RegistrationSpec
             pubKeyCredParams map (_.getAlg) should contain(
               COSEAlgorithmIdentifier.RS512
             )
+          }
+
+          for {
+            (param, alg, javaAlgName) <- List(
+              (
+                PublicKeyCredentialParameters.ML_DSA_44,
+                COSEAlgorithmIdentifier.ML_DSA_44,
+                "ML-DSA-44",
+              ),
+              (
+                PublicKeyCredentialParameters.ML_DSA_65,
+                COSEAlgorithmIdentifier.ML_DSA_65,
+                "ML-DSA-65",
+              ),
+              (
+                PublicKeyCredentialParameters.ML_DSA_87,
+                COSEAlgorithmIdentifier.ML_DSA_87,
+                "ML-DSA-87",
+              ),
+            )
+          } it(s"${alg}, when available.") {
+            // The RelyingParty constructor call needs to be here inside the `it` call in order to have the right JCA provider environment
+            val rp = RelyingParty
+              .builder()
+              .identity(
+                RelyingPartyIdentity
+                  .builder()
+                  .id("localhost")
+                  .name("Test party")
+                  .build()
+              )
+              .credentialRepositoryV2(Helpers.CredentialRepositoryV2.empty)
+              .build()
+
+            val pkcco = rp.startRegistration(
+              StartRegistrationOptions
+                .builder()
+                .user(
+                  UserIdentity
+                    .builder()
+                    .name("foo")
+                    .displayName("Foo")
+                    .id(ByteArray.fromHex("aabbccdd"))
+                    .build()
+                )
+                .build()
+            )
+            val pubKeyCredParams = pkcco.getPubKeyCredParams.asScala
+
+            if (Util.algorithmAvailable(javaAlgName)) {
+              pubKeyCredParams should contain(param)
+              pubKeyCredParams map (_.getAlg) should contain(alg)
+            } else {
+              pubKeyCredParams should not contain (param)
+              pubKeyCredParams map (_.getAlg) should not contain (alg)
+            }
           }
         }
 

@@ -41,6 +41,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 final class WebAuthnCodecs {
 
@@ -87,6 +88,69 @@ final class WebAuthnCodecs {
             0x2B,
             101,
             113
+          });
+
+  static final ByteArray ML_DSA_44_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (11 bytes)
+            0x30,
+            0x0B,
+            // OID (9 bytes)
+            0x06,
+            0x09,
+            // OID 2.16.840.1.101.3.4.3.17
+            0x60,
+            (byte) 0x86,
+            0x48,
+            0x01,
+            0x65,
+            0x03,
+            0x04,
+            0x03,
+            0x11
+          });
+
+  static final ByteArray ML_DSA_65_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (11 bytes)
+            0x30,
+            0x0B,
+            // OID (9 bytes)
+            0x06,
+            0x09,
+            // OID 2.16.840.1.101.3.4.3.18
+            0x60,
+            (byte) 0x86,
+            0x48,
+            0x01,
+            0x65,
+            0x03,
+            0x04,
+            0x03,
+            0x12
+          });
+
+  static final ByteArray ML_DSA_87_ALG_ID =
+      new ByteArray(
+          new byte[] {
+            // SEQUENCE (11 bytes)
+            0x30,
+            0x0B,
+            // OID (9 bytes)
+            0x06,
+            0x09,
+            // OID 2.16.840.1.101.3.4.3.19
+            0x60,
+            (byte) 0x86,
+            0x48,
+            0x01,
+            0x65,
+            0x03,
+            0x04,
+            0x03,
+            0x13
           });
 
   // See: https://www.iana.org/assignments/cose/cose.xhtml#elliptic-curves
@@ -171,6 +235,9 @@ final class WebAuthnCodecs {
       throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
     CBORObject cose = CBORObject.DecodeFromBytes(key.getBytes());
     final int kty = cose.get(CBORObject.FromObject(1)).AsInt32();
+    final CBORObject algCbor = cose.get(CBORObject.FromObject(3));
+    validateKtyMatchesAlg(kty, algCbor);
+
     switch (kty) {
       case 1:
         return importCoseEdDsaPublicKey(cose);
@@ -178,8 +245,64 @@ final class WebAuthnCodecs {
         return importCoseEcdsaPublicKey(cose);
       case 3:
         return importCoseRsaPublicKey(cose);
+      case 7:
+        return importCoseMlDsaPublicKey(cose);
       default:
         throw new IllegalArgumentException("Unsupported key type: " + kty);
+    }
+  }
+
+  private static void validateKtyMatchesAlg(int kty, CBORObject alg) {
+    if (alg == null) {
+      throw new IllegalArgumentException("COSE key is missing required \"alg\" (3) attribute");
+    }
+    Optional<COSEAlgorithmIdentifier> algId = COSEAlgorithmIdentifier.fromId(alg.AsInt32());
+    if (!algId.isPresent()) {
+      return;
+    }
+    final int expectedKty = getExpectedKty(algId.get());
+    if (kty != expectedKty) {
+      throw new IllegalArgumentException(
+          String.format(
+              "COSE key type (kty: %d) does not match algorithm (alg: %s, expected kty: %d)",
+              kty, algId.get(), expectedKty));
+    }
+  }
+
+  private static int getExpectedKty(COSEAlgorithmIdentifier alg) {
+    switch (alg) {
+      case EdDSA:
+      case Ed25519:
+      case Ed448:
+        return 1; // OKP
+      case ES256:
+      case ES384:
+      case ES512:
+        return 2; // EC2
+      case RS1:
+      case RS256:
+      case RS384:
+      case RS512:
+        return 3; // RSA
+      case ML_DSA_44:
+      case ML_DSA_65:
+      case ML_DSA_87:
+        return 7; // AKP
+      default:
+        throw new IllegalArgumentException("Unknown algorithm: " + alg);
+    }
+  }
+
+  private static int getMlDsaPubKeySize(COSEAlgorithmIdentifier alg) {
+    switch (alg) {
+      case ML_DSA_44:
+        return 1312;
+      case ML_DSA_65:
+        return 1952;
+      case ML_DSA_87:
+        return 2592;
+      default:
+        throw new IllegalArgumentException("Unknown ML-DSA algorithm: " + alg);
     }
   }
 
@@ -263,6 +386,46 @@ final class WebAuthnCodecs {
     }
   }
 
+  private static PublicKey importCoseMlDsaPublicKey(CBORObject cose)
+      throws InvalidKeySpecException, NoSuchAlgorithmException {
+    final int alg = cose.get(CBORObject.FromObject(3)).AsInt32();
+    final COSEAlgorithmIdentifier coseAlg =
+        COSEAlgorithmIdentifier.fromId(alg)
+            .orElseThrow(() -> new IllegalArgumentException("Unknown algorithm: " + alg));
+    final ByteArray algorithmId = mlDsaAlgorithmId(coseAlg);
+    if (cose.ContainsKey(CBORObject.FromObject(-2))) {
+      throw new IllegalArgumentException(
+          "COSE ML-DSA public key must not include attribute \"priv\" (-2)");
+    }
+    final byte[] rawKey = cose.get(CBORObject.FromObject(-1)).GetByteString();
+    final int expectLength = getMlDsaPubKeySize(coseAlg);
+    if (rawKey.length != expectLength) {
+      throw new IllegalArgumentException(
+          String.format(
+              "%s public key must be %d bytes, was: %s", coseAlg, expectLength, rawKey.length));
+    }
+
+    final byte[] x509Key =
+        BinaryUtil.encodeDerSequence(
+            algorithmId.getBytes(), BinaryUtil.encodeDerBitStringWithZeroUnused(rawKey));
+
+    KeyFactory kFact = KeyFactory.getInstance(getJavaAlgorithmName(coseAlg));
+    return kFact.generatePublic(new X509EncodedKeySpec(x509Key));
+  }
+
+  private static ByteArray mlDsaAlgorithmId(COSEAlgorithmIdentifier alg) {
+    switch (alg) {
+      case ML_DSA_44:
+        return ML_DSA_44_ALG_ID;
+      case ML_DSA_65:
+        return ML_DSA_65_ALG_ID;
+      case ML_DSA_87:
+        return ML_DSA_87_ALG_ID;
+      default:
+        throw new IllegalArgumentException("Unsupported ML-DSA algorithm: " + alg);
+    }
+  }
+
   static String getJavaAlgorithmName(COSEAlgorithmIdentifier alg) {
     switch (alg) {
       case EdDSA:
@@ -284,6 +447,12 @@ final class WebAuthnCodecs {
         return "SHA512withRSA";
       case RS1:
         return "SHA1withRSA";
+      case ML_DSA_44:
+        return "ML-DSA-44";
+      case ML_DSA_65:
+        return "ML-DSA-65";
+      case ML_DSA_87:
+        return "ML-DSA-87";
       default:
         throw new IllegalArgumentException("Unknown algorithm: " + alg);
     }

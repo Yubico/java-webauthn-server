@@ -24,7 +24,7 @@ jobs:
         until wget https://repo1.maven.org/maven2/com/yubico/webauthn-server-core/${{ github.ref_name }}/webauthn-server-core-${{ github.ref_name }}.jar.asc; do sleep 180; done
 
     - name: Store keyring and signatures as artifact
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: keyring-and-signatures
         retention-days: 1
@@ -39,12 +39,12 @@ jobs:
 
     strategy:
       matrix:
-        java: ["17.0.10"]
-        distribution: [temurin, zulu, microsoft]
+        java: ["25.0.4"]
+        distribution: [temurin]
 
     steps:
     - name: check out code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         ref: ${{ github.ref_name }}
 
@@ -68,7 +68,7 @@ jobs:
         done
 
     - name: Retrieve keyring and signatures
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v8
       with:
         name: keyring-and-signatures
 
@@ -87,7 +87,7 @@ jobs:
 
     steps:
     - name: Retrieve signatures
-      uses: actions/download-artifact@v6
+      uses: actions/download-artifact@v8
       with:
         name: keyring-and-signatures
 

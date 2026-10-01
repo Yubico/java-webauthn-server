@@ -1,6 +1,6 @@
 plugins {
   `java-library`
-  id("me.champeau.jmh") version "0.6.8"
+  id("me.champeau.jmh") version "0.7.3"
   `project-convention-java`
   `project-convention-scala`
   `project-convention-lombok`
@@ -65,4 +65,14 @@ tasks.withType(Jar::class) {
       "Specification-Release-Date" to "2021-04-08",
     ))
   }
+}
+
+tasks.register<JavaExec>("regenerateTestData") {
+  classpath = sourceSets.test.get().runtimeClasspath
+  mainClass = "com.yubico.webauthn.RegistrationTestDataGenerator"
+  description = "Generate code to paste into RegistrationTestData.scala"
+  group = "development"
+  javaLauncher.set(javaToolchains.launcherFor {
+    languageVersion.set(JavaLanguageVersion.of(25))
+  })
 }

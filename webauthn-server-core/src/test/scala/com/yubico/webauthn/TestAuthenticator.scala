@@ -85,6 +85,7 @@ import java.security.interfaces.RSAPublicKey
 import java.security.spec.ECGenParameterSpec
 import java.security.spec.ECPoint
 import java.security.spec.ECPublicKeySpec
+import java.security.spec.NamedParameterSpec
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
@@ -403,19 +404,25 @@ object TestAuthenticator {
       aaguid: ByteArray = Defaults.aaguid,
       authenticatorExtensions: Option[JsonNode] = None,
       credentialKeypair: Option[KeyPair] = None,
-      keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
+      keyAlgorithm: Option[COSEAlgorithmIdentifier] = None,
       flags: Option[AuthenticatorDataFlags] = None,
   ): (
       ByteArray,
       KeyPair,
   ) = {
     val keypair =
-      credentialKeypair.getOrElse(generateKeypair(algorithm = keyAlgorithm))
+      credentialKeypair.getOrElse(
+        generateKeypair(algorithm =
+          keyAlgorithm.getOrElse(Defaults.keyAlgorithm)
+        )
+      )
     val publicKeyCose = keypair.getPublic match {
       case pub: ECPublicKey      => WebAuthnTestCodecs.ecPublicKeyToCose(pub)
       case pub: BCEdDSAPublicKey => WebAuthnTestCodecs.eddsaPublicKeyToCose(pub)
       case pub: RSAPublicKey =>
-        WebAuthnTestCodecs.rsaPublicKeyToCose(pub, keyAlgorithm)
+        WebAuthnTestCodecs.rsaPublicKeyToCose(pub, keyAlgorithm.get)
+      case pub if pub.getAlgorithm == "ML-DSA" =>
+        WebAuthnTestCodecs.mlDsaPublicKeyToCose(pub, keyAlgorithm.get)
     }
 
     val authDataBytes: ByteArray = makeAuthDataBytes(
@@ -513,7 +520,7 @@ object TestAuthenticator {
   def createBasicAttestedCredential(
       aaguid: ByteArray = Defaults.aaguid,
       attestationMaker: AttestationMaker,
-      keyAlgorithm: COSEAlgorithmIdentifier = Defaults.keyAlgorithm,
+      keyAlgorithm: Option[COSEAlgorithmIdentifier] = None,
   ): (
       data.PublicKeyCredential[
         data.AuthenticatorAttestationResponse,
@@ -545,8 +552,9 @@ object TestAuthenticator {
       KeyPair,
       List[(X509Certificate, PrivateKey)],
   ) = {
-    val (authData, keypair) = createAuthenticatorData(credentialKeypair =
-      Some(generateKeypair(keyAlgorithm))
+    val (authData, keypair) = createAuthenticatorData(
+      credentialKeypair = Some(generateKeypair(keyAlgorithm)),
+      keyAlgorithm = Some(keyAlgorithm),
     )
     val signer = SelfAttestation(keypair, keyAlgorithm)
     createCredential(
@@ -915,7 +923,9 @@ object TestAuthenticator {
         (TpmAlgHash.SHA512, TpmAlgAsym.RSA)
       case COSEAlgorithmIdentifier.RS1 => (TpmAlgHash.SHA1, TpmAlgAsym.RSA)
       case COSEAlgorithmIdentifier.EdDSA | COSEAlgorithmIdentifier.Ed25519 |
-          COSEAlgorithmIdentifier.Ed448 =>
+          COSEAlgorithmIdentifier.Ed448 | COSEAlgorithmIdentifier.ML_DSA_44 |
+          COSEAlgorithmIdentifier.ML_DSA_65 |
+          COSEAlgorithmIdentifier.ML_DSA_87 =>
         ???
     }
     val hashFunc = hashId match {
@@ -966,7 +976,10 @@ object TestAuthenticator {
                   COSEAlgorithmIdentifier.RS512 |
                   COSEAlgorithmIdentifier.EdDSA |
                   COSEAlgorithmIdentifier.Ed25519 |
-                  COSEAlgorithmIdentifier.Ed448 =>
+                  COSEAlgorithmIdentifier.Ed448 |
+                  COSEAlgorithmIdentifier.ML_DSA_44 |
+                  COSEAlgorithmIdentifier.ML_DSA_65 |
+                  COSEAlgorithmIdentifier.ML_DSA_87 =>
                 ???
             }),
             // kdf_scheme: ??? (unused?)
@@ -1098,8 +1111,15 @@ object TestAuthenticator {
   ): ByteArray = {
     val jAlg = WebAuthnCodecs.getJavaAlgorithmName(alg)
 
-    // Need to use BouncyCastle provider here because JDK15 standard providers do not support secp256k1
-    val sig = Signature.getInstance(jAlg, new BouncyCastleProvider())
+    val sig = alg match {
+      case COSEAlgorithmIdentifier.ML_DSA_44 |
+          COSEAlgorithmIdentifier.ML_DSA_65 |
+          COSEAlgorithmIdentifier.ML_DSA_87 =>
+        Signature.getInstance(jAlg)
+      case _ =>
+        // Need to use BouncyCastle provider here because JDK15 standard providers do not support secp256k1
+        Signature.getInstance(jAlg, new BouncyCastleProvider())
+    }
 
     sig.initSign(key)
     sig.update(data.getBytes)
@@ -1117,6 +1137,10 @@ object TestAuthenticator {
       case COSEAlgorithmIdentifier.RS256 | COSEAlgorithmIdentifier.RS384 |
           COSEAlgorithmIdentifier.RS512 | COSEAlgorithmIdentifier.RS1 =>
         generateRsaKeypair()
+      case COSEAlgorithmIdentifier.ML_DSA_44 |
+          COSEAlgorithmIdentifier.ML_DSA_65 |
+          COSEAlgorithmIdentifier.ML_DSA_87 =>
+        generateMlDsaKeypair(algorithm)
     }
 
   def generateEcKeypair(curve: String = "secp256r1"): KeyPair = {
@@ -1135,6 +1159,15 @@ object TestAuthenticator {
     // Need to use BouncyCastle provider here because JDK before 14 does not support EdDSA
     val keyPairGenerator =
       KeyPairGenerator.getInstance(alg, new BouncyCastleProvider())
+    keyPairGenerator.generateKeyPair()
+  }
+
+  def generateMlDsaKeypair(
+      algorithm: COSEAlgorithmIdentifier
+  ): KeyPair = {
+    val alg = WebAuthnCodecs.getJavaAlgorithmName(algorithm)
+    val keyPairGenerator = KeyPairGenerator.getInstance("ML-DSA")
+    keyPairGenerator.initialize(new NamedParameterSpec(alg))
     keyPairGenerator.generateKeyPair()
   }
 
@@ -1312,9 +1345,15 @@ object TestAuthenticator {
       val signerBuilder = new JcaContentSignerBuilder(
         WebAuthnCodecs.getJavaAlgorithmName(signingAlg)
       )
-        .setProvider(
-          new BouncyCastleProvider()
-        ) // Needed because JDK15 standard providers do not support secp256k1
+      signingAlg match {
+        case COSEAlgorithmIdentifier.ML_DSA_44 |
+            COSEAlgorithmIdentifier.ML_DSA_65 |
+            COSEAlgorithmIdentifier.ML_DSA_87 =>
+        case _ =>
+          signerBuilder.setProvider(
+            new BouncyCastleProvider()
+          ) // Needed because JDK15 standard providers do not support secp256k1
+      }
 
       builder.build(signerBuilder.build(signingKey)).getEncoded
     })

@@ -16,12 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [17]
+        java: [25]
         distribution: [temurin]
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
 
     - name: Set up JDK
       uses: actions/setup-java@v5

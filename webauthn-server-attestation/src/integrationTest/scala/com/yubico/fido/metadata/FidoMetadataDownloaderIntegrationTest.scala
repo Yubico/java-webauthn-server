@@ -13,8 +13,6 @@ import org.scalatest.tags.Slow
 import org.scalatestplus.junit.JUnitRunner
 
 import scala.jdk.CollectionConverters.ListHasAsScala
-import scala.util.Success
-import scala.util.Try
 
 @Slow
 @Network
@@ -28,31 +26,37 @@ class FidoMetadataDownloaderIntegrationTest
     val downloader = cachedDefaultSettingsDownloader.build()
 
     it("downloads and verifies the root cert and BLOB successfully.") {
-      val blob = Try(TestCaches.cacheSynchronized(downloader.loadCachedBlob))
-      blob shouldBe a[Success[_]]
-      blob.get should not be null
+      val blob = TestCaches.cacheSynchronized(downloader.loadCachedBlob)
+      blob should not be null
     }
 
     it(
       "does not encounter any CRLDistributionPoints entries in unknown format."
     ) {
-      val blob = Try(TestCaches.cacheSynchronized(downloader.loadCachedBlob))
-      blob shouldBe a[Success[_]]
+      val blob = TestCaches.cacheSynchronized(downloader.loadCachedBlob)
+      blob should not be null
       val trustRootCert =
         CertificateParser.parseDer(
-          TestCaches.trustRootCache.get.getBytes
+          com.yubico.internal.util.JacksonCodecs
+            .cbor()
+            .readValue(
+              TestCaches.trustRootCache.get.getBytes,
+              classOf[FidoMetadataDownloader.TrustRootsCacheValue],
+            )
+            .getCertsDer
+            .get(0)
         )
 
       val certChain = TestCaches
         .cacheSynchronized(
           downloader
             .fetchHeaderCertChain(
-              trustRootCert,
               downloader
-                .parseBlob(TestCaches.blobCache.get)
+                .parseBlob(TestCaches.blobCache.get.getBytes)
                 .getBlob
-                .getHeader,
+                .getHeader
             )
+            .get
         )
         .asScala :+ trustRootCert
       for { cert <- certChain } {
@@ -86,9 +90,8 @@ class FidoMetadataDownloaderIntegrationTest
       .build()
 
     it("downloads and parses the BLOB successfully.") {
-      val blob = Try(TestCaches.cacheSynchronized(downloader.loadCachedBlob))
-      blob shouldBe a[Success[_]]
-      blob.get should not be null
+      val blob = TestCaches.cacheSynchronized(downloader.loadCachedBlob)
+      blob should not be null
     }
   }
 

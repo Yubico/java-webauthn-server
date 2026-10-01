@@ -230,6 +230,9 @@ public class RelyingPartyV2<C extends CredentialRecord> {
    *   <li>{@link PublicKeyCredentialParameters#RS256 RS256}
    *   <li>{@link PublicKeyCredentialParameters#RS384 RS384}
    *   <li>{@link PublicKeyCredentialParameters#RS512 RS512}
+   *   <li>{@link PublicKeyCredentialParameters#ML_DSA_44 ML_DSA_44}
+   *   <li>{@link PublicKeyCredentialParameters#ML_DSA_65 ML_DSA_65}
+   *   <li>{@link PublicKeyCredentialParameters#ML_DSA_87 ML_DSA_87}
    * </ol>
    *
    * @see PublicKeyCredentialCreationOptions#getAttestation()
@@ -247,7 +250,10 @@ public class RelyingPartyV2<C extends CredentialRecord> {
               PublicKeyCredentialParameters.Ed448,
               PublicKeyCredentialParameters.RS256,
               PublicKeyCredentialParameters.RS384,
-              PublicKeyCredentialParameters.RS512));
+              PublicKeyCredentialParameters.RS512,
+              PublicKeyCredentialParameters.ML_DSA_44,
+              PublicKeyCredentialParameters.ML_DSA_65,
+              PublicKeyCredentialParameters.ML_DSA_87));
 
   /**
    * If <code>true</code>, the origin matching rule is relaxed to allow any port number.
