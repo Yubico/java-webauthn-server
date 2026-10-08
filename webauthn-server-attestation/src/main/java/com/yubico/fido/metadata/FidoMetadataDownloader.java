@@ -343,6 +343,7 @@ public final class FidoMetadataDownloader {
        * @throws IllegalArgumentException if <code>urls</code> is empty or if any element of <code>
        *     urls</code> is not a HTTPS URL.
        * @see #downloadTrustRoot(URL, Set)
+       * @since 2.10.0
        */
       public Step3 downloadTrustRoots(
           @NonNull List<URL> urls, @NonNull Set<ByteArray> acceptedCertSha256) {
@@ -378,6 +379,7 @@ public final class FidoMetadataDownloader {
        *     set will be copied, so subsequent modifications to <code>trustAnchors</code> will not
        *     affect the <code>FidoMetadataDownloader</code> instance.
        * @see #useTrustRoot(X509Certificate)
+       * @since 2.10.0
        */
       public Step4 useTrustRoots(@NonNull Set<TrustAnchor> trustAnchors) {
         return new Step4(

@@ -151,6 +151,8 @@ public class PublicKeyCredentialParameters {
    * PublicKeyCredentialType#PUBLIC_KEY}.
    *
    * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   *
+   * @since 2.10.0
    */
   public static final PublicKeyCredentialParameters ML_DSA_44 =
       builder().alg(COSEAlgorithmIdentifier.ML_DSA_44).build();
@@ -160,6 +162,8 @@ public class PublicKeyCredentialParameters {
    * PublicKeyCredentialType#PUBLIC_KEY}.
    *
    * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   *
+   * @since 2.10.0
    */
   public static final PublicKeyCredentialParameters ML_DSA_65 =
       builder().alg(COSEAlgorithmIdentifier.ML_DSA_65).build();
@@ -169,6 +173,8 @@ public class PublicKeyCredentialParameters {
    * PublicKeyCredentialType#PUBLIC_KEY}.
    *
    * <p>Note: This algorithm requires a Java runtime that supports ML-DSA (Java 24 or later).
+   *
+   * @since 2.10.0
    */
   public static final PublicKeyCredentialParameters ML_DSA_87 =
       builder().alg(COSEAlgorithmIdentifier.ML_DSA_87).build();

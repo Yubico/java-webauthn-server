@@ -1,6 +1,12 @@
-== Version 2.10.0 (unreleased) ==
+== Version 2.10.0 ==
 
 `webauthn-server-core`:
+
+Changes:
+
+* Log about malformed origin URL during registration or assertion response
+  processing demoted from error level to debug level. A warning log for the same
+  error remains at `RelyingParty` or `RelyingPartyV2` construction time.
 
 New features:
 
