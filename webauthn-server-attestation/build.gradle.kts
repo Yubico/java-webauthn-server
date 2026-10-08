@@ -65,6 +65,7 @@ val integrationTest = tasks.register<Test>("integrationTest") {
   shouldRunAfter(tasks.test)
   dependsOn(tasks["makeMdsCacheDir"])
   environment("FIDO_MDS_CACHE_DIR", mdsCacheDir.absolutePath)
+  inputs.dir(mdsCacheDir)
 }
 tasks["check"].dependsOn(integrationTest)
 
