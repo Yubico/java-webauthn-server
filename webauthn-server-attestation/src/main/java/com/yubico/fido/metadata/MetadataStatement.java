@@ -134,10 +134,10 @@ public class MetadataStatement {
 
   /**
    * @see <a
-   *     href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.0-ps-20210518.html#metadata-statement-format">FIDO
+   *     href="https://fidoalliance.org/specs/mds/fido-metadata-statement-v3.1.1-ps-20260105.html#ref-for-dom-metadatastatement-userverificationdetails">FIDO
    *     Metadata Statement</a>
    */
-  @NonNull Set<Set<VerificationMethodDescriptor>> userVerificationDetails;
+  Set<Set<VerificationMethodDescriptor>> userVerificationDetails;
 
   /**
    * @see <a
@@ -296,7 +296,7 @@ public class MetadataStatement {
       @NonNull Set<AuthenticationAlgorithm> authenticationAlgorithms,
       @NonNull Set<PublicKeyRepresentationFormat> publicKeyAlgAndEncodings,
       @NonNull Set<AuthenticatorAttestationType> attestationTypes,
-      @NonNull Set<Set<VerificationMethodDescriptor>> userVerificationDetails,
+      Set<Set<VerificationMethodDescriptor>> userVerificationDetails,
       @NonNull Set<KeyProtectionType> keyProtection,
       Boolean isKeyRestricted,
       Boolean isFreshUserVerificationRequired,
