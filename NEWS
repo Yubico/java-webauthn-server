@@ -1,3 +1,13 @@
+== Version 2.10.1 (unreleased) ==
+
+`webauthn-server-attestation`:
+
+Fixes:
+
+* `MetadataStatement.userVerificationDetails` updated from spec version 3.0 to
+  3.1 where it is no longer required.
+
+
 == Version 2.10.0 ==
 
 `webauthn-server-core`:
