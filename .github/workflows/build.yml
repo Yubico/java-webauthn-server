@@ -16,7 +16,8 @@ jobs:
   test:
     name: JDK ${{ matrix.java }} ${{ matrix.distribution }}
 
-    runs-on: ubuntu-latest
+    # ubuntu-26.04 does not include Java 8
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         java: [17, 21, 25]
