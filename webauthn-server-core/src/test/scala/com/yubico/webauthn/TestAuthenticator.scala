@@ -310,6 +310,27 @@ object TestAuthenticator {
         ): JsonNode =
           makeNoneAttestationStatement()
       }
+
+    /** A "none"-format attestation statement whose attStmt map is non-empty,
+      * for testing rejection of statements that do not conform to the "none"
+      * attestation statement format defined in WebAuthn Level 3, Section 8.7.
+      */
+    def noneWithNonEmptyStatement(): AttestationMaker =
+      new AttestationMaker {
+        override val format = "none"
+        override def certChain = Nil
+        override def makeAttestationStatement(
+            authDataBytes: ByteArray,
+            clientDataJson: ByteArray,
+        ): JsonNode =
+          jsonMap { f =>
+            Map(
+              "junk" -> f.textNode(
+                "This property makes the attStmt map non-empty, violating the none attestation statement format."
+              )
+            )
+          }
+      }
   }
 
   sealed trait AttestationSigner {

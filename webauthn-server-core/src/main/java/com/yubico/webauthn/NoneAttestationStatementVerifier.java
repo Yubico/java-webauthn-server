@@ -38,6 +38,12 @@ final class NoneAttestationStatementVerifier implements AttestationStatementVeri
   @Override
   public boolean verifyAttestationSignature(
       AttestationObject attestationObject, ByteArray clientDataJsonHash) {
+    if (attestationObject.getAttestationStatement().size() > 0) {
+      throw new IllegalArgumentException(
+          "\"none\" attestation statement format requires the \"attStmt\" property to be an empty map; it has "
+              + attestationObject.getAttestationStatement().size()
+              + " properties.");
+    }
     return true;
   }
 }
